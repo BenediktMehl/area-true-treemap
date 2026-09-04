@@ -1,7 +1,15 @@
 export { TreemapLayout } from "./layout";
 export { TreemapConfigBuilder, DEFAULT_CONFIG } from "./config";
 export type { TreemapConfig, LabelConfig } from "./config";
-export { SortingOption, LabelPosition, DEFAULT_ASPECT_RATIO } from "./squarify";
+export {
+    SortingOption,
+    LabelPosition,
+    DEFAULT_ASPECT_RATIO,
+    DEFAULT_FLOOR_LABEL_CONFIG,
+    getFloorLabelPadding,
+    floorLabelSizeResolver,
+} from "./squarify";
+export type { FloorLabelConfig, LabelSizeResolver, SquarifyNode, SquarifyRow } from "./squarify";
 export type { TreeNode, TreemapRect, LayoutOptions } from "./types";
 
 // d3-hierarchy-compatible API (drop-in for consumers like CodeCharta)

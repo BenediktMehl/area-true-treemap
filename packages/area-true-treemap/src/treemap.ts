@@ -1,5 +1,16 @@
 import { HierarchyNode } from "./hierarchy";
-import { squarify, shrink, SquarifyNode, SortingOption, LabelPosition, DEFAULT_ASPECT_RATIO } from "./squarify";
+import {
+    squarify,
+    shrink,
+    SquarifyNode,
+    SortingOption,
+    LabelPosition,
+    DEFAULT_ASPECT_RATIO,
+    DEFAULT_FLOOR_LABEL_CONFIG,
+    FloorLabelConfig,
+    floorLabelSizeResolver,
+    LabelSizeResolver,
+} from "./squarify";
 
 /**
  * A fluent, `d3-hierarchy`-compatible treemap layout.
@@ -50,6 +61,16 @@ export interface Treemap<T> {
     /** Reserve space for folder labels on the top `topLevels` levels. */
     labels(topLevels: number, sizeRatio?: number): this;
 
+    /** Use CodeCharta-style variable (per-folder) label sizing instead of a fixed height. */
+    floorLabels(overrides?: Partial<FloorLabelConfig>): this;
+
+    /**
+     * Custom label-size function, evaluated per node during layout — the direct
+     * equivalent of CodeCharta's `paddingRight(node => …)`. Takes precedence over
+     * `labels()` and `floorLabels()`.
+     */
+    labelSize(resolver: LabelSizeResolver): this;
+
     /** Where folder labels are placed. */
     labelPosition(position: LabelPosition): this;
 
@@ -75,6 +96,8 @@ interface TreemapState<T> {
     applySiblingMargin: boolean;
     labelTopLevels: number;
     labelSizeRatio: number;
+    floorConfig?: FloorLabelConfig;
+    labelResolver?: LabelSizeResolver;
     labelPosition: LabelPosition;
     collapseFolders: boolean;
     sortingOption: SortingOption;
@@ -125,10 +148,15 @@ export function treemap<T>(): Treemap<T> {
         const shortSide = Math.min(state.width, state.height);
         const margin = state.marginFraction * shortSide;
         const labelsEnabled = state.labelTopLevels > 0;
-        const labelLength = state.labelSizeRatio * shortSide;
+        // Custom function > CodeCharta-style variable sizing > fixed size.
+        const labelSize: LabelSizeResolver =
+            state.labelResolver ??
+            (state.floorConfig
+                ? floorLabelSizeResolver(state.floorConfig)
+                : () => state.labelSizeRatio * shortSide);
         const innerHalf = state.applySiblingMargin ? margin / 2 : 0;
 
-        squarify(sq, margin, innerHalf, state.sortingOption, labelsEnabled, labelLength, state.labelPosition, state.aspectRatio);
+        squarify(sq, margin, innerHalf, state.sortingOption, labelsEnabled, labelSize, state.labelPosition, state.aspectRatio);
 
         if (state.applySiblingMargin) {
             shrink(sq, margin);
@@ -174,6 +202,29 @@ export function treemap<T>(): Treemap<T> {
             state.labelSizeRatio = sizeRatio;
         }
         state.labelTopLevels = topLevels;
+        state.floorConfig = undefined; // fixed-size labels
+        state.labelResolver = undefined;
+        return layout;
+    };
+
+    layout.floorLabels = (overrides: Partial<FloorLabelConfig> = {}) => {
+        const floor = { ...DEFAULT_FLOOR_LABEL_CONFIG, ...overrides };
+        for (const [name, value] of Object.entries(floor)) {
+            if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+                throw new Error(`floorLabels(): ${name} must be a non-negative finite number, got ${value}`);
+            }
+        }
+        state.floorConfig = floor;
+        state.labelResolver = undefined;
+        return layout;
+    };
+
+    layout.labelSize = (resolver: LabelSizeResolver) => {
+        if (typeof resolver !== "function") {
+            throw new Error(`labelSize(): expected a function, got ${typeof resolver}`);
+        }
+        state.labelResolver = resolver;
+        state.floorConfig = undefined;
         return layout;
     };
 
@@ -245,6 +296,7 @@ function build<T>(node: HierarchyNode<T>, depth: number, state: TreemapState<T>)
         children: children.map((built) => built.sq),
         rows: [],
         hasLabel: !isLeaf && depth > 0 && depth <= state.labelTopLevels,
+        labelSize: 0,
         x0: 0,
         y0: 0,
         x1: 0,

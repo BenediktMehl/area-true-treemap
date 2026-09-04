@@ -25,6 +25,8 @@ export interface SquarifyNode {
     children: SquarifyNode[];
     rows: SquarifyRow[];
     hasLabel: boolean;
+    /** Reserved label-strip thickness (0 when the node has no label). */
+    labelSize: number;
     x0: number;
     y0: number;
     x1: number;
@@ -55,13 +57,64 @@ export enum LabelPosition {
 }
 
 /**
+ * Parameters for CodeCharta-style variable floor-label sizing, ported 1:1 from
+ * `treeMapGenerator.ts` (`getFloorLabelPadding`).
+ */
+export interface FloorLabelConfig {
+    /** Label strip scaling for the root folder (depth 0), as a fraction of its width. */
+    rootScaling: number;
+    /** Label strip scaling for sub-folders (depth > 0), as a fraction of their width. */
+    subScaling: number;
+    /** Minimum label strip thickness for the root folder (absolute layout units). */
+    rootMin: number;
+    /** Minimum label strip thickness for sub-folders (absolute layout units). */
+    subMin: number;
+    /** Maximum label strip thickness, as a fraction of the folder's width. */
+    maxFraction: number;
+}
+
+/** CodeCharta's default floor-label sizing (root 3.5% / sub 2.8%, min 120/95, capped at 15%). */
+export const DEFAULT_FLOOR_LABEL_CONFIG: FloorLabelConfig = {
+    rootScaling: 0.035,
+    subScaling: 0.028,
+    rootMin: 120,
+    subMin: 95,
+    maxFraction: 0.15,
+};
+
+/** Resolves the reserved label-strip thickness for a single node. */
+export type LabelSizeResolver = (node: SquarifyNode) => number;
+
+/**
+ * Variable per-folder label size, ported 1:1 from CodeCharta's
+ * `getFloorLabelPadding(folderWidth, depth)`: proportional to the folder's own
+ * width, clamped to a depth-dependent minimum, and never larger than a fixed
+ * fraction of the folder. This is what lets differently sized folders reserve
+ * differently sized label strips instead of one global label height.
+ */
+export function getFloorLabelPadding(
+    folderWidth: number,
+    depth: number,
+    config: FloorLabelConfig = DEFAULT_FLOOR_LABEL_CONFIG,
+): number {
+    const labelScaling = depth === 0 ? config.rootScaling : config.subScaling;
+    const minimumPadding = depth === 0 ? config.rootMin : config.subMin;
+    return Math.min(Math.max(folderWidth * labelScaling, minimumPadding), folderWidth * config.maxFraction);
+}
+
+/** Build a {@link LabelSizeResolver} from a floor-label configuration. */
+export function floorLabelSizeResolver(config: FloorLabelConfig): LabelSizeResolver {
+    return node => getFloorLabelPadding(node.x1 - node.x0, node.depth, config);
+}
+
+/**
  * Recursively lay out `parent` and all of its descendants in place.
  *
  * @param margin        Absolute outer gap (in layout units) between a node and its children.
  * @param innerHalf     Half of the sibling gap (0 when sibling margins are off).
  * @param sortingOption Order in which siblings are placed.
  * @param labelsEnabled Whether folder labels reserve space.
- * @param labelLength   Absolute height (in layout units) reserved per label.
+ * @param labelSize     Resolves the reserved label-strip thickness per node (fixed or variable).
  * @param labelPosition Where labels are placed.
  * @param aspectRatio   Target aspect ratio for the squarify heuristic.
  */
@@ -71,14 +124,14 @@ export function squarify(
     innerHalf: number,
     sortingOption: SortingOption,
     labelsEnabled: boolean,
-    labelLength: number,
+    labelSize: LabelSizeResolver,
     labelPosition: LabelPosition,
     aspectRatio: number,
 ): void {
-    squarifyNode(parent, margin, innerHalf, sortingOption, labelsEnabled, labelLength, labelPosition, aspectRatio);
+    squarifyNode(parent, margin, innerHalf, sortingOption, labelsEnabled, labelSize, labelPosition, aspectRatio);
     for (const child of parent.children) {
         if (child.children.length > 0) {
-            squarify(child, margin, innerHalf, sortingOption, labelsEnabled, labelLength, labelPosition, aspectRatio);
+            squarify(child, margin, innerHalf, sortingOption, labelsEnabled, labelSize, labelPosition, aspectRatio);
         }
     }
 }
@@ -89,7 +142,7 @@ function squarifyNode(
     innerHalf: number,
     sortingOption: SortingOption,
     labelsEnabled: boolean,
-    labelLength: number,
+    labelSize: LabelSizeResolver,
     labelPosition: LabelPosition,
     aspectRatio: number,
 ): void {
@@ -119,14 +172,19 @@ function squarifyNode(
     // margin (like d3's treemap, where paddingTop/... overrides paddingOuter),
     // so the free area there is the label length only — not margin + label.
     if (needsLabel) {
+        // Resolve the strip thickness for this specific folder. The resolver can
+        // return a fixed value or a variable one proportional to the folder width
+        // (CodeCharta's getFloorLabelPadding). The folder's full extent is read
+        // before the outer margin is applied, matching d3's paddingRight(node).
+        parent.labelSize = labelSize(parent);
         if (labelPosition === LabelPosition.BOTTOM) {
-            y1 = parent.y1 - labelLength;
+            y1 = parent.y1 - parent.labelSize;
         } else if (labelPosition === LabelPosition.LEFT) {
-            x0 = parent.x0 + labelLength;
+            x0 = parent.x0 + parent.labelSize;
         } else if (labelPosition === LabelPosition.RIGHT) {
-            x1 = parent.x1 - labelLength;
+            x1 = parent.x1 - parent.labelSize;
         } else {
-            y0 = parent.y0 + labelLength;
+            y0 = parent.y0 + parent.labelSize;
         }
     }
 

@@ -8,7 +8,7 @@
 
 - Area-true rectangles: proportional areas, no node vanishes.
 - Configurable relative gaps between sibling nodes.
-- Optional folder labels for the top N hierarchy levels.
+- Optional folder labels for the top N hierarchy levels, either fixed-size or CodeCharta-style variable per-folder sizing.
 - Collapsing of single-child folder chains.
 - Configurable sorting (descending / ascending / none).
 - Fluent **builder pattern** for configuration.
@@ -95,7 +95,9 @@ the hierarchy in place (like `d3-treemap`) and returns the root; every node — 
 | `value(accessor)` | `(node) => number` | — | Area accessor (like d3's `.sum()`). Optional if you call `.sum()` on the hierarchy instead. |
 | `margin(fraction)` | `number` (0–1) | `0.015` | Relative outer gap between a node and its children, as a fraction of the shorter canvas side. |
 | `applySiblingMargin(value)` | `boolean` | `true` | Also inset every node by `margin/2` so siblings are separated by a full `margin`. |
-| `labels(topLevels, sizeRatio?)` | `number, number` | `3, 0.05` | Reserve space for folder labels on the top N levels. |
+| `labels(topLevels, sizeRatio?)` | `number, number` | `3, 0.05` | Reserve space for folder labels on the top N levels (fixed size). |
+| `floorLabels(overrides?)` | `object` | — | Use CodeCharta-style variable per-folder label sizing (see below). |
+| `labelSize(resolver)` | `(node) => number` | — | Custom label-size function, evaluated per folder during layout (like CodeCharta's `paddingRight`). |
 | `labelPosition(position)` | `LabelPosition` | `TOP` | Where labels are placed. |
 | `collapseFolders(value)` | `boolean` | `false` | Merge single-child folder chains (all folded nodes share the rectangle). |
 | `sorting(option)` | `SortingOption` | `DESCENDING` | Order in which siblings are placed. |
@@ -180,6 +182,8 @@ const config = TreemapLayout.builder()
 | `collapseFolders(value)` | `boolean` | `true` | Merge single-child folder chains into a combined name (`a/b/c`). |
 | `sorting(value)` | `SortingOption` | `DESCENDING` | Order in which siblings are placed. |
 | `labels(topLevels, sizeRatio)` | `number, number` | `3, 0.05` | Number of top levels that get a label and label height as fraction (0–1). |
+| `floorLabels(overrides?)` | `object` | — | Use CodeCharta-style variable per-folder label sizing (see below). |
+| `labelSize(resolver)` | `(node) => number` | — | Custom label-size function, evaluated per folder during layout (like CodeCharta's `paddingRight`). |
 | `labelPosition(position)` | `LabelPosition` | `TOP` | Where labels are placed: `top`, `bottom`, `left`, or `right`. |
 | `aspectRatio(value)` | `number` | `1.618` | Target aspect ratio for the squarify heuristic. |
 | `build()` | — | — | Returns a resolved, immutable `TreemapConfig`. |
@@ -193,6 +197,66 @@ const config = TreemapLayout.builder()
 - **labels** — `topLevels` reserves space for folder labels on the top N levels (thesis recommends 2–5). `sizeRatio` is the label height as a fraction of the canvas (thesis recommends 3%–10%).
 - **collapseFolders** — whether to merge single-child folder chains (thesis default: `true`).
 - **sorting** — the thesis default is descending by size.
+
+### Variable floor labels (CodeCharta-compatible)
+
+By default every labeled folder reserves the same fixed `sizeRatio` strip. Call
+`.floorLabels()` to switch to CodeCharta's variable sizing instead — each folder
+reserves a strip proportional to **its own width**, ported 1:1 from CodeCharta's
+`getFloorLabelPadding(folderWidth, depth)`:
+
+```ts
+Math.min(Math.max(folderWidth * scaling, minimumPadding), folderWidth * maxFraction)
+// scaling:        0.035 for the root (depth 0) / 0.028 for sub-folders
+// minimumPadding: 120 for the root / 95 for sub-folders
+// maxFraction:    0.15 (never more than 15% of the folder)
+```
+
+```ts
+const config = TreemapLayout.builder()
+  .labels(3, 0.05)   // topLevels, fixed sizeRatio (replaced by floorLabels below)
+  .floorLabels()     // enable variable per-folder sizing
+  .labelPosition(LabelPosition.RIGHT) // CodeCharta puts labels on the right
+  .build();
+
+// Or tweak individual parameters:
+TreemapLayout.builder().floorLabels({ rootScaling: 0.04, subScaling: 0.03 }).build();
+```
+
+The `treemap()` d3-compatible API has the same method: `treemap().floorLabels()`. The
+resolved strip thickness is exposed on each `TreemapRect` as `labelSize` (0 for
+unlabeled nodes). The `getFloorLabelPadding()` function and `DEFAULT_FLOOR_LABEL_CONFIG`
+are exported directly so consumers (e.g. a CodeCharta floor-label drawer) can reproduce
+the same numbers.
+
+### Custom label function (drop-in for CodeCharta's `paddingRight`)
+
+Instead of `.floorLabels()`, you can pass an arbitrary function — exactly how
+CodeCharta configures d3's treemap. The function is called once per labeled folder
+with the laid-out node (fields `x0`, `x1`, `y0`, `y1`, `depth`, `name`) and returns
+the reserved strip thickness:
+
+```ts
+// CodeCharta today (d3):
+//   treemap().paddingRight(node => getFloorLabelPadding(node.x1 - node.x0, node.depth))
+//
+// area-true-treemap:
+const config = TreemapLayout.builder()
+  .labels(3, 0.05)
+  .labelSize((node) => getFloorLabelPadding(node.x1 - node.x0, node.depth))
+  .labelPosition(LabelPosition.RIGHT)
+  .build();
+
+// d3-compatible API:
+treemap<CodeMapNode>()
+  .size([width, height])
+  .margin(marginFraction)
+  .labelSize((node) => getFloorLabelPadding(node.x1 - node.x0, node.depth))
+  .labelPosition(LabelPosition.RIGHT)
+```
+
+The resolver type is `LabelSizeResolver = (node: SquarifyNode) => number` and is
+exported; `.labelSize()` takes precedence over `labels()` and `floorLabels()`.
 
 ## API
 
@@ -212,7 +276,7 @@ The returned `TreemapRect[]` contains absolute coordinates starting at `(0, 0)`.
 
 ### Exported types
 
-`TreeNode`, `TreemapRect`, `TreemapConfig`, `LabelConfig`, `LayoutOptions`, `SortingOption`, `LabelPosition`, `DEFAULT_CONFIG`, `DEFAULT_ASPECT_RATIO`.
+`TreeNode`, `TreemapRect`, `TreemapConfig`, `LabelConfig`, `FloorLabelConfig`, `LayoutOptions`, `SortingOption`, `LabelPosition`, `DEFAULT_CONFIG`, `DEFAULT_ASPECT_RATIO`, `DEFAULT_FLOOR_LABEL_CONFIG`, `getFloorLabelPadding`, `floorLabelSizeResolver`, `LabelSizeResolver`, `SquarifyNode`, `SquarifyRow`.
 
 From the d3-compatible API: `hierarchy`, `treemap`, `HierarchyNode`, `HierarchyLink`, `HierarchyChildrenAccessor`, `Treemap`, `AreaValue`.
 

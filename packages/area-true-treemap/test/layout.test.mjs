@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { TreemapLayout, TreemapConfigBuilder, SortingOption, LabelPosition } from "../dist/index.js";
+import {
+    TreemapLayout,
+    TreemapConfigBuilder,
+    SortingOption,
+    LabelPosition,
+    getFloorLabelPadding,
+    DEFAULT_FLOOR_LABEL_CONFIG,
+} from "../dist/index.js";
 
 const tree = {
   name: "root",
@@ -101,6 +108,70 @@ test("applySiblingMargin false leaves siblings touching", () => {
   const sorted = [...rects].sort((p, q) => p.y - q.y || p.x - q.x);
   const [first, second] = sorted;
   assert.ok(Math.abs(gapBetween(first, second)) < 1e-6, "siblings should share an edge when applySiblingMargin is false");
+});
+
+test("getFloorLabelPadding matches CodeCharta's formula", () => {
+  const cfg = DEFAULT_FLOOR_LABEL_CONFIG;
+  const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `expected ${a} ≈ ${b}`);
+  // Below the min/max clamps (folder width < subMin / maxFraction) the strip is
+  // capped at maxFraction * width (15%).
+  close(getFloorLabelPadding(500, 0, cfg), 75); // min(max(17.5, 120), 75)
+  close(getFloorLabelPadding(500, 1, cfg), 75); // min(max(14, 95), 75)
+  // Wide folders enter the scaling band: root 3.5% / sub 2.8%.
+  close(getFloorLabelPadding(5000, 0, cfg), 175); // min(max(175, 120), 750)
+  close(getFloorLabelPadding(5000, 1, cfg), 140); // min(max(140, 95), 750)
+});
+
+test("floorLabels reserves a variable, per-folder label strip", () => {
+  const deepTree = {
+    name: "root",
+    children: [
+      { name: "small", attributes: { size: 100 }, children: [
+        { name: "s1", attributes: { size: 100 } },
+      ]},
+      { name: "large", attributes: { size: 400 }, children: [
+        { name: "l1", attributes: { size: 100 } },
+        { name: "l2", attributes: { size: 100 } },
+        { name: "l3", attributes: { size: 100 } },
+        { name: "l4", attributes: { size: 100 } },
+      ]},
+    ],
+  };
+  const config = new TreemapConfigBuilder()
+    .labels(2, 0.05)
+    .floorLabels()
+    .labelPosition(LabelPosition.RIGHT)
+    .build();
+  const rects = new TreemapLayout(config).compute(deepTree, { width: 1000, height: 1000 });
+  const labeled = rects.filter((r) => r.hasLabel);
+  assert.equal(labeled.length, 2, "both folders should carry a label");
+  const sizes = labeled.map((r) => r.labelSize);
+  assert.ok(sizes.every((s) => Number.isFinite(s) && s > 0), "labels reserve a positive strip");
+  assert.ok(new Set(sizes.map((s) => Math.round(s * 100))).size === 2, "differently sized folders get different strips");
+  for (const r of rects) {
+    assert.ok(r.width > 0 && r.height > 0, `${r.name} has positive size`);
+    assert.ok(r.x >= -1e-6 && r.y >= -1e-6 && r.x + r.width <= 1000 + 1e-6 && r.y + r.height <= 1000 + 1e-6);
+  }
+});
+
+test("labelSize() accepts a custom per-folder function", () => {
+  const folderTree = {
+    name: "root",
+    children: [
+      { name: "folder", attributes: { size: 100 }, children: [
+        { name: "f1", attributes: { size: 100 } },
+      ]},
+    ],
+  };
+  const config = new TreemapConfigBuilder()
+    .labels(2, 0.05)
+    .collapseFolders(false)
+    .labelSize((node) => node.depth * 10) // depth 1 → 10
+    .build();
+  const rects = new TreemapLayout(config).compute(folderTree, { width: 1000, height: 1000 });
+  const labeled = rects.filter((r) => r.hasLabel);
+  assert.equal(labeled.length, 1);
+  assert.equal(labeled[0].labelSize, 10);
 });
 
 test("empty input returns an empty list", () => {

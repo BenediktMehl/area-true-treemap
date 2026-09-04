@@ -1,4 +1,4 @@
-import { squarify, shrink, SquarifyNode } from "./squarify";
+import { squarify, shrink, SquarifyNode, floorLabelSizeResolver, LabelSizeResolver } from "./squarify";
 import { TreemapConfig, TreemapConfigBuilder } from "./config";
 import { LayoutOptions, TreeNode, TreemapRect } from "./types";
 
@@ -44,10 +44,15 @@ export class TreemapLayout {
         const shortSide = Math.min(width, height);
         const margin = config.margin * shortSide;
         const labelsEnabled = config.labels.topLevels > 0;
-        const labelLength = config.labels.sizeRatio * shortSide;
+        // Custom function > CodeCharta-style variable sizing > fixed size.
+        const labelSize: LabelSizeResolver =
+            config.labels.resolver ??
+            (config.labels.floor
+                ? floorLabelSizeResolver(config.labels.floor)
+                : () => config.labels.sizeRatio * shortSide);
         const innerHalf = config.applySiblingMargin ? margin / 2 : 0;
 
-        squarify(root, margin, innerHalf, config.sorting, labelsEnabled, labelLength, config.labels.position, config.aspectRatio);
+        squarify(root, margin, innerHalf, config.sorting, labelsEnabled, labelSize, config.labels.position, config.aspectRatio);
 
         // Optional sibling gap: shrink every node by margin/2 so siblings are
         // separated by a full margin (mirrors the CodeCharta improved algorithm).
@@ -87,6 +92,7 @@ export class TreemapLayout {
             children,
             rows: [],
             hasLabel: !isLeaf && depth > 0 && depth <= config.labels.topLevels,
+            labelSize: 0,
             x0: 0,
             y0: 0,
             x1: 0,
@@ -109,6 +115,7 @@ export class TreemapLayout {
                     depth: node.depth,
                     isLeaf: node.children.length === 0,
                     hasLabel: node.hasLabel,
+                    labelSize: node.hasLabel ? node.labelSize : 0,
                     value: node.originalValue,
                     attributes: node.attributes,
                 });

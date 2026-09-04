@@ -18,7 +18,7 @@ The algorithm is based on the concepts described in [Vergleich und Optimierung v
 
 - Area-true rectangles: proportional areas, no node vanishes.
 - Configurable relative gaps between sibling nodes.
-- Optional folder labels for the top N hierarchy levels.
+- Optional folder labels for the top N hierarchy levels — fixed-size or CodeCharta-style variable per-folder sizing.
 - Collapsing of single-child folder chains.
 - Configurable sorting (descending / ascending / none).
 - Fluent **builder pattern** for configuration.
@@ -136,6 +136,8 @@ const config = TreemapLayout.builder()
 | `collapseFolders(value)` | `boolean` | `true` | Merge single-child folder chains into a combined name (`a/b/c`). |
 | `sorting(value)` | `SortingOption` | `DESCENDING` | Order in which siblings are placed. |
 | `labels(topLevels, sizeRatio)` | `number, number` | `3, 0.05` | Number of top levels that get a label and label height as fraction (0–1). |
+| `floorLabels(overrides?)` | `object` | — | Use CodeCharta-style variable per-folder label sizing (see below). |
+| `labelSize(resolver)` | `(node) => number` | — | Custom label-size function per folder (like CodeCharta's `paddingRight(node => …)`). |
 | `labelPosition(position)` | `LabelPosition` | `TOP` | Where labels are placed: `top`, `bottom`, `left`, or `right`. |
 | `aspectRatio(value)` | `number` | `1.618` | Target aspect ratio for the squarify heuristic. |
 | `build()` | — | — | Returns a resolved, immutable `TreemapConfig`. |
@@ -146,6 +148,8 @@ const config = TreemapLayout.builder()
 
 - **margin** — the core "gap" feature. A value of `0.02` means a gap of roughly 2% of the canvas size between sibling nodes. Because the exact relative distance can only be determined after a layout pass, the value is an approximation based on the first pass (this matches the thesis finding of choosing between 0.5% and 3% relative distance).
 - **labels** — `topLevels` is the number of top hierarchy levels that reserve space for a folder label (thesis recommends N between 2 and 5). `sizeRatio` is the label height as a fraction of the canvas (thesis recommends L between 3% and 10%).
+- **floorLabels** — optional CodeCharta-style variable label sizing. Instead of one fixed `sizeRatio` strip, each folder reserves a strip proportional to its own width, clamped between a depth-dependent minimum and 15% of the folder: `min(max(folderWidth * scaling, minPadding), folderWidth * 0.15)`, with scaling `0.035` (root) / `0.028` (sub) and min `120` / `95` (ported from CodeCharta's `getFloorLabelPadding`). Call `.floorLabels()` (with optional parameter overrides) to enable it; `.labels(topLevels, sizeRatio)` switches back to fixed sizing.
+- **labelSize(resolver)** — pass an arbitrary function `(node) => number`, evaluated per folder during layout. This mirrors how CodeCharta passes `paddingRight(node => getFloorLabelPadding(node.x1 - node.x0, node.depth))` to d3's treemap, so the same call-site shape works. Takes precedence over `labels()` and `floorLabels()`. The resolver type `LabelSizeResolver = (node: SquarifyNode) => number` and `SquarifyNode` are exported.
 - **collapseFolders** — whether to merge single-child folder chains. This is a design decision left to the user; the thesis default is `true`.
 - **sorting** — the thesis default is descending by size.
 
@@ -171,7 +175,7 @@ Fluent builder as documented above. All setter methods return `this` for chainin
 
 ### Exported types
 
-`TreeNode`, `TreemapRect`, `TreemapConfig`, `LabelConfig`, `LayoutOptions`, `SortingOption`, `LabelPosition`, `DEFAULT_CONFIG`, `DEFAULT_ASPECT_RATIO`.
+`TreeNode`, `TreemapRect`, `TreemapConfig`, `LabelConfig`, `FloorLabelConfig`, `LayoutOptions`, `SortingOption`, `LabelPosition`, `DEFAULT_CONFIG`, `DEFAULT_ASPECT_RATIO`, `DEFAULT_FLOOR_LABEL_CONFIG`, `getFloorLabelPadding`, `floorLabelSizeResolver`, `LabelSizeResolver`, `SquarifyNode`, `SquarifyRow`.
 
 ## Demo
 

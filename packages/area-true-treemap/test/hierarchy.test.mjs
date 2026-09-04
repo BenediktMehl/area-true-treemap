@@ -102,6 +102,24 @@ test("round() snaps coordinates to integers", () => {
   }
 });
 
+test("treemap().floorLabels() produces a valid layout with variable labels", () => {
+  const root = hierarchy(tree).sum((d) => (d.children ? 0 : d.attributes?.size ?? 0));
+  treemap().size([1000, 1000]).labels(3, 0.05).floorLabels().labelPosition(LabelPosition.RIGHT)(root);
+  for (const node of root.descendants()) {
+    assert.ok(Number.isFinite(node.x0) && Number.isFinite(node.y0) && Number.isFinite(node.x1) && Number.isFinite(node.y1));
+    assert.ok(node.x1 >= node.x0 && node.y1 >= node.y0);
+  }
+});
+
+test("treemap().labelSize() accepts a custom function", () => {
+  const root = hierarchy(tree).sum((d) => (d.children ? 0 : d.attributes?.size ?? 0));
+  treemap().size([1000, 1000]).labels(3, 0.05).labelSize((node) => node.depth * 5).labelPosition(LabelPosition.RIGHT)(root);
+  for (const node of root.descendants()) {
+    assert.ok(Number.isFinite(node.x0) && Number.isFinite(node.y0) && Number.isFinite(node.x1) && Number.isFinite(node.y1));
+    assert.ok(node.x1 >= node.x0 && node.y1 >= node.y0);
+  }
+});
+
 test("label positions all produce valid, finite layouts", () => {
   for (const position of [LabelPosition.TOP, LabelPosition.BOTTOM, LabelPosition.LEFT, LabelPosition.RIGHT]) {
     const root = hierarchy(tree).sum((d) => (d.children ? 0 : d.attributes?.size ?? 0));

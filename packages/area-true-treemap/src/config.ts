@@ -1,13 +1,32 @@
-import { SortingOption, LabelPosition, DEFAULT_ASPECT_RATIO } from "./squarify";
+import {
+    SortingOption,
+    LabelPosition,
+    DEFAULT_ASPECT_RATIO,
+    DEFAULT_FLOOR_LABEL_CONFIG,
+    FloorLabelConfig,
+    LabelSizeResolver,
+} from "./squarify";
 
 /** Label configuration: which hierarchy levels get labels, how tall they are, and where they sit. */
 export interface LabelConfig {
     /** Number of top hierarchy levels that reserve space for a folder label. */
     topLevels: number;
-    /** Label height as a fraction (0..1) of the shorter canvas side. */
+    /** Label height as a fraction (0..1) of the shorter canvas side (fixed mode). */
     sizeRatio: number;
     /** Where the label is placed relative to its node. */
     position: LabelPosition;
+    /**
+     * When set, labels use CodeCharta-style variable per-folder sizing instead of
+     * the fixed `sizeRatio` (see {@link getFloorLabelPadding}). `undefined` = fixed mode.
+     */
+    floor?: FloorLabelConfig;
+    /**
+     * Custom label-size function, evaluated per node during layout (like
+     * CodeCharta's `paddingRight(node => …)`). Takes precedence over `sizeRatio`
+     * and `floor`. The function receives the folder node with its laid-out
+     * `x0/x1/y0/y1`, `depth` and `name` and returns the strip thickness.
+     */
+    resolver?: LabelSizeResolver;
 }
 
 /** Fully resolved, immutable layout configuration. */
@@ -111,7 +130,40 @@ export class TreemapConfigBuilder {
             throw new Error(`labels(): topLevels must be a non-negative integer, got ${topLevels}`);
         }
         assertRange(sizeRatio, 0, 1, "labels sizeRatio");
-        this.config.labels = { ...this.config.labels, topLevels, sizeRatio };
+        // Setting a fixed sizeRatio switches back to fixed (non-variable) labels.
+        this.config.labels = { ...this.config.labels, topLevels, sizeRatio, floor: undefined, resolver: undefined };
+        return this;
+    }
+
+    /**
+     * Use CodeCharta-style variable (per-folder) floor-label sizing instead of a
+     * single fixed label height. Each folder's label strip is proportional to the
+     * folder's own width and clamped to a minimum/maximum (see
+     * {@link getFloorLabelPadding}). Any parameter can be overridden; the defaults
+     * match CodeCharta (root 3.5% / sub 2.8%, min 120/95, max 15% of the folder).
+     */
+    floorLabels(overrides: Partial<FloorLabelConfig> = {}): this {
+        const floor = { ...DEFAULT_FLOOR_LABEL_CONFIG, ...overrides };
+        assertNonNegative(floor.rootScaling, "rootScaling");
+        assertNonNegative(floor.subScaling, "subScaling");
+        assertNonNegative(floor.rootMin, "rootMin");
+        assertNonNegative(floor.subMin, "subMin");
+        assertNonNegative(floor.maxFraction, "maxFraction");
+        this.config.labels = { ...this.config.labels, floor, resolver: undefined };
+        return this;
+    }
+
+    /**
+     * Pass a custom label-size function, evaluated per folder during layout.
+     * This mirrors how CodeCharta configures its floor labels —
+     * `treemap().paddingRight(node => getFloorLabelPadding(node.x1 - node.x0, node.depth))`
+     * — and takes precedence over both `labels(sizeRatio)` and `floorLabels()`.
+     */
+    labelSize(resolver: LabelSizeResolver): this {
+        if (typeof resolver !== "function") {
+            throw new Error(`labelSize(): expected a function, got ${typeof resolver}`);
+        }
+        this.config.labels = { ...this.config.labels, resolver, floor: undefined };
         return this;
     }
 
@@ -134,7 +186,10 @@ export class TreemapConfigBuilder {
     build(): TreemapConfig {
         return {
             ...this.config,
-            labels: { ...this.config.labels },
+            labels: {
+                ...this.config.labels,
+                floor: this.config.labels.floor ? { ...this.config.labels.floor } : undefined,
+            },
         };
     }
 }
@@ -142,5 +197,11 @@ export class TreemapConfigBuilder {
 function assertRange(value: number, min: number, max: number, name: string): void {
     if (typeof value !== "number" || Number.isNaN(value) || value < min || value > max) {
         throw new Error(`${name}(): value must be between ${min} and ${max}, got ${value}`);
+    }
+}
+
+function assertNonNegative(value: number, name: string): void {
+    if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+        throw new Error(`floorLabels(): ${name} must be a non-negative finite number, got ${value}`);
     }
 }

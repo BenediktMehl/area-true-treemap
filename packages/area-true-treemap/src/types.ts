@@ -24,6 +24,12 @@ export interface TreemapRect {
     depth: number;
     isLeaf: boolean;
     hasLabel: boolean;
+    /**
+     * Reserved label-strip thickness in layout units (0 when `hasLabel` is false).
+     * With fixed-size labels this is the same for every labeled node; with
+     * CodeCharta-style variable labels it differs per folder.
+     */
+    labelSize?: number;
     value: number;
     attributes?: Record<string, number>;
 }
