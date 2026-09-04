@@ -166,14 +166,24 @@
     const areaTrueRects = new TreemapLayout(config).compute(loadedData, { width: containerSize, height: containerSize });
     const areaTrueMs = performance.now() - t0;
 
-    // 2) Nested treemap (d3, with gaps and labels).
+    // 2) Nested treemap (d3, with gaps, labels, sorting and collapsing —
+    //    mirroring the area-true settings as far as d3 supports them).
     t0 = performance.now();
-    const nestedRects = computeNestedD3(loadedData, areaMetric, containerSize, gapPx, labelPx, topN);
+    const nestedRects = computeNestedD3(loadedData, {
+      metric: areaMetric,
+      size: containerSize,
+      gapPx,
+      labelPx,
+      topLevels: topN,
+      labelPosition,
+      sorting,
+      collapseFolders,
+    });
     const nestedMs = performance.now() - t0;
 
     results = [
       { key: 'area-true', title: t.areaTrue, subtitle: t.areaTrueSub, repoUrl: 'https://github.com/BenediktMehl/master-thesis', rects: areaTrueRects, labelPosition, stats: computeStats(areaTrueRects, areaTrueMs, totalLeaves, containerSize) },
-      { key: 'nested', title: t.nested, subtitle: t.nestedSub, repoUrl: 'https://github.com/d3/d3-hierarchy', rects: nestedRects, labelPosition: LabelPosition.TOP, stats: computeStats(nestedRects, nestedMs, totalLeaves, containerSize) },
+      { key: 'nested', title: t.nested, subtitle: t.nestedSub, repoUrl: 'https://github.com/d3/d3-hierarchy', rects: nestedRects, labelPosition, stats: computeStats(nestedRects, nestedMs, totalLeaves, containerSize) },
     ];
   }
 
@@ -213,25 +223,80 @@
     return tree.children.reduce((sum, c) => sum + countLeaves(c), 0);
   }
 
-  function computeNestedD3(
-    tree: TreeNode,
-    metric: string,
-    size: number,
-    gapPx: number,
-    labelPx: number,
-    topLevels: number,
-  ): TreemapRect[] {
-    const root = hierarchy(tree)
+  /** Settings passed to the d3 nested treemap, mirroring the area-true config. */
+  interface NestedD3Options {
+    metric: string;
+    size: number;
+    gapPx: number;
+    labelPx: number;
+    topLevels: number;
+    labelPosition: LabelPosition;
+    sorting: SortingOption;
+    collapseFolders: boolean;
+  }
+
+  function computeNestedD3(tree: TreeNode, opts: NestedD3Options): TreemapRect[] {
+    // Apply collapseFolders on a copy of the data before handing it to d3:
+    // single-child folder chains are merged into one node (name "a/b/c"),
+    // exactly like the area-true layout does.
+    const data = opts.collapseFolders ? collapseFolderChains(tree) : tree;
+
+    const root = hierarchy(data)
       // Only leaf nodes carry a value; internal nodes accumulate from children.
-      .sum((d) => (!d.children || d.children.length === 0 ? d.attributes?.[metric] ?? 0 : 0))
-      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
-    const laidOut = treemap<TreeNode>()
-      .size([size, size])
+      .sum((d) => (!d.children || d.children.length === 0 ? d.attributes?.[opts.metric] ?? 0 : 0));
+
+    if (opts.sorting !== SortingOption.NONE) {
+      const dir = opts.sorting === SortingOption.ASCENDING ? 1 : -1;
+      root.sort((a, b) => dir * ((a.value ?? 0) - (b.value ?? 0)));
+    }
+
+    const layout = treemap<TreeNode>()
+      .size([opts.size, opts.size])
       .round(false)
-      .paddingOuter(gapPx)
-      .paddingInner(gapPx)
-      .paddingTop((n) => (isLabeled(n, topLevels) ? labelPx : 0))(root);
-    return flattenD3(laidOut, (n) => isLabeled(n, topLevels));
+      .paddingOuter(opts.gapPx)
+      .paddingInner(opts.gapPx);
+
+    // Reserve the label strip on the side chosen by the user (only folders
+    // that actually get a label reserve space).
+    const labelPad = (n: HierarchyRectangularNode<TreeNode>): number => (isLabeled(n, opts.topLevels) ? opts.labelPx : 0);
+    switch (opts.labelPosition) {
+      case LabelPosition.BOTTOM:
+        layout.paddingBottom(labelPad);
+        break;
+      case LabelPosition.LEFT:
+        layout.paddingLeft(labelPad);
+        break;
+      case LabelPosition.RIGHT:
+        layout.paddingRight(labelPad);
+        break;
+      case LabelPosition.TOP:
+      default:
+        layout.paddingTop(labelPad);
+        break;
+    }
+
+    const laidOut = layout(root);
+    return flattenD3(laidOut, (n) => isLabeled(n, opts.topLevels));
+  }
+
+  /**
+   * Merge single-child folder chains into one node (like the area-true
+   * `collapseFolders` option): a folder whose only child is again a folder is
+   * folded into that child and the names joined with "/". The returned tree
+   * is a copy, the input stays untouched.
+   */
+  function collapseFolderChains(node: TreeNode): TreeNode {
+    const collapse = (n: TreeNode): TreeNode => {
+      const { children } = n;
+      if (children && children.length === 1) {
+        const only = children[0];
+        if (only.children && only.children.length > 0) {
+          return collapse({ ...only, name: `${n.name}/${only.name}` });
+        }
+      }
+      return { ...n, children: children ? children.map(collapse) : undefined };
+    };
+    return collapse(node);
   }
 
   function isLabeled(n: HierarchyRectangularNode<TreeNode>, topLevels: number): boolean {
