@@ -14,8 +14,10 @@ export interface LabelConfig {
 export interface TreemapConfig {
     /** Name of the attribute used for node area (default `"size"`). */
     areaMetric: string;
-    /** Relative gap (0..1) between sibling nodes, as a fraction of the canvas. */
+    /** Relative outer gap (0..1) between a node and its children, as a fraction of the canvas. */
     margin: number;
+    /** When enabled, also inset every node by `margin/2` so siblings are separated by `margin`. */
+    applySiblingMargin: boolean;
     /** Merge single-child folder chains into a combined name. */
     collapseFolders: boolean;
     /** Order in which siblings are placed. */
@@ -29,6 +31,7 @@ export interface TreemapConfig {
 export const DEFAULT_CONFIG: TreemapConfig = {
     areaMetric: "size",
     margin: 0.015,
+    applySiblingMargin: true,
     collapseFolders: true,
     sorting: SortingOption.DESCENDING,
     labels: { topLevels: 3, sizeRatio: 0.05, position: LabelPosition.TOP },
@@ -65,12 +68,23 @@ export class TreemapConfigBuilder {
     }
 
     /**
-     * Set the relative gap between nodes as a fraction (0..1) of the canvas.
-     * For example `0.02` ≈ 2% relative distance.
+     * Set the relative outer gap between a node and its children as a fraction
+     * (0..1) of the canvas. For example `0.02` ≈ 2% relative distance.
      */
     margin(fraction: number): this {
         assertRange(fraction, 0, 1, "margin");
         this.config.margin = fraction;
+        return this;
+    }
+
+    /**
+     * Enable or disable the gap between sibling nodes. When enabled, every node
+     * is additionally inset by `margin/2` on each side (after the layout pass),
+     * so two adjacent siblings end up separated by a full `margin`. The value is
+     * reused from `margin` — there is no separate distance.
+     */
+    applySiblingMargin(value: boolean): this {
+        this.config.applySiblingMargin = value;
         return this;
     }
 

@@ -93,7 +93,8 @@ the hierarchy in place (like `d3-treemap`) and returns the root; every node — 
 | --- | --- | --- | --- |
 | `size([w, h])` / `size(w, h)` | `number[]` | `[1000, 1000]` | Canvas size in layout units. |
 | `value(accessor)` | `(node) => number` | — | Area accessor (like d3's `.sum()`). Optional if you call `.sum()` on the hierarchy instead. |
-| `margin(fraction)` | `number` (0–1) | `0.015` | Relative gap between sibling nodes, as a fraction of the shorter canvas side. |
+| `margin(fraction)` | `number` (0–1) | `0.015` | Relative outer gap between a node and its children, as a fraction of the shorter canvas side. |
+| `applySiblingMargin(value)` | `boolean` | `true` | Also inset every node by `margin/2` so siblings are separated by a full `margin`. |
 | `labels(topLevels, sizeRatio?)` | `number, number` | `3, 0.05` | Reserve space for folder labels on the top N levels. |
 | `labelPosition(position)` | `LabelPosition` | `TOP` | Where labels are placed. |
 | `collapseFolders(value)` | `boolean` | `false` | Merge single-child folder chains (all folded nodes share the rectangle). |
@@ -174,7 +175,8 @@ const config = TreemapLayout.builder()
 | Method | Type | Default | Description |
 | --- | --- | --- | --- |
 | `areaMetric(name)` | `string` | `"size"` | Attribute name used for the area of each node. |
-| `margin(fraction)` | `number` (0–1) | `0.015` | Relative gap between sibling nodes, as a fraction of the shorter canvas side. |
+| `margin(fraction)` | `number` (0–1) | `0.015` | Relative outer gap between a node and its children, as a fraction of the shorter canvas side. |
+| `applySiblingMargin(value)` | `boolean` | `true` | Also inset every node by `margin/2` so siblings are separated by a full `margin`. |
 | `collapseFolders(value)` | `boolean` | `true` | Merge single-child folder chains into a combined name (`a/b/c`). |
 | `sorting(value)` | `SortingOption` | `DESCENDING` | Order in which siblings are placed. |
 | `labels(topLevels, sizeRatio)` | `number, number` | `3, 0.05` | Number of top levels that get a label and label height as fraction (0–1). |
@@ -186,7 +188,8 @@ const config = TreemapLayout.builder()
 
 ### Settings explained
 
-- **margin** — the core "gap" feature. `0.02` means a gap of roughly 2% of the canvas size between sibling nodes. The value is an approximation based on the first layout pass (matching the thesis finding of choosing between 0.5% and 3% relative distance).
+- **margin** — the outer gap between a node and its children. `0.02` means a gap of roughly 2% of the canvas size between a folder and the nodes inside it. The value is an approximation based on the first layout pass (matching the thesis finding of choosing between 0.5% and 3% relative distance).
+- **applySiblingMargin** — a switch (default `true`) that also separates sibling nodes. When enabled, every node is additionally inset by `margin/2` on each side after the layout pass, so two adjacent siblings end up separated by a full `margin` (the d3 `paddingInner` equivalent, mirroring the CodeCharta improved algorithm's `applySiblingMargin` step). There is no separate distance — it reuses `margin`.
 - **labels** — `topLevels` reserves space for folder labels on the top N levels (thesis recommends 2–5). `sizeRatio` is the label height as a fraction of the canvas (thesis recommends 3%–10%).
 - **collapseFolders** — whether to merge single-child folder chains (thesis default: `true`).
 - **sorting** — the thesis default is descending by size.

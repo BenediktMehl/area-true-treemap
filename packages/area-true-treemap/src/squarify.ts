@@ -57,7 +57,8 @@ export enum LabelPosition {
 /**
  * Recursively lay out `parent` and all of its descendants in place.
  *
- * @param margin        Absolute gap (in layout units) between sibling nodes.
+ * @param margin        Absolute outer gap (in layout units) between a node and its children.
+ * @param innerHalf     Half of the sibling gap (0 when sibling margins are off).
  * @param sortingOption Order in which siblings are placed.
  * @param labelsEnabled Whether folder labels reserve space.
  * @param labelLength   Absolute height (in layout units) reserved per label.
@@ -67,16 +68,17 @@ export enum LabelPosition {
 export function squarify(
     parent: SquarifyNode,
     margin: number,
+    innerHalf: number,
     sortingOption: SortingOption,
     labelsEnabled: boolean,
     labelLength: number,
     labelPosition: LabelPosition,
     aspectRatio: number,
 ): void {
-    squarifyNode(parent, margin, sortingOption, labelsEnabled, labelLength, labelPosition, aspectRatio);
+    squarifyNode(parent, margin, innerHalf, sortingOption, labelsEnabled, labelLength, labelPosition, aspectRatio);
     for (const child of parent.children) {
         if (child.children.length > 0) {
-            squarify(child, margin, sortingOption, labelsEnabled, labelLength, labelPosition, aspectRatio);
+            squarify(child, margin, innerHalf, sortingOption, labelsEnabled, labelLength, labelPosition, aspectRatio);
         }
     }
 }
@@ -84,6 +86,7 @@ export function squarify(
 function squarifyNode(
     parent: SquarifyNode,
     margin: number,
+    innerHalf: number,
     sortingOption: SortingOption,
     labelsEnabled: boolean,
     labelLength: number,
@@ -98,20 +101,32 @@ function squarifyNode(
         nodes.sort((a, b) => (sortingOption === SortingOption.ASCENDING ? a.value - b.value : b.value - a.value));
     }
 
-    let x0 = parent.x0 + margin;
-    let y0 = parent.y0 + margin;
-    let x1 = parent.x1 - margin;
-    let y1 = parent.y1 - margin;
+    // The sibling gap is realized by insetting every node by `innerHalf`
+    // (done in `shrink`). For non-root nodes that inset is already accounted
+    // for by their parent's layout, so the children area keeps the full
+    // `margin`. Only the root (depth 0) has no parent inset, so its children
+    // area is reduced by the extra `innerHalf` to keep the canvas edge at
+    // exactly `margin` instead of `margin + innerHalf`.
+    const rootAdj = parent.depth === 0 ? innerHalf : 0;
+    const outer = margin - rootAdj;
 
+    let x0 = parent.x0 + outer;
+    let y0 = parent.y0 + outer;
+    let x1 = parent.x1 - outer;
+    let y1 = parent.y1 - outer;
+
+    // On the side that carries the label, the label strip replaces the outer
+    // margin (like d3's treemap, where paddingTop/... overrides paddingOuter),
+    // so the free area there is the label length only — not margin + label.
     if (needsLabel) {
         if (labelPosition === LabelPosition.BOTTOM) {
-            y1 -= labelLength;
+            y1 = parent.y1 - labelLength;
         } else if (labelPosition === LabelPosition.LEFT) {
-            x0 += labelLength;
+            x0 = parent.x0 + labelLength;
         } else if (labelPosition === LabelPosition.RIGHT) {
-            x1 -= labelLength;
+            x1 = parent.x1 - labelLength;
         } else {
-            y0 += labelLength;
+            y0 = parent.y0 + labelLength;
         }
     }
 
@@ -217,5 +232,30 @@ function treemapSlice(parentValue: number, children: SquarifyNode[], x0: number,
         element.x1 = x1;
         element.y0 = y0;
         element.y1 = y0 += element.value * k;
+    }
+}
+
+/**
+ * Inset every node (including the root) by `margin/2` on each side, after the
+ * squarify pass has finished. Because a node and its siblings are all shrunk
+ * uniformly, two adjacent siblings end up separated by a full `margin`, while
+ * the outer gap between a node and its children stays `margin` as well. This
+ * mirrors the `applySiblingMargin` step of the CodeCharta improved algorithm.
+ */
+export function shrink(node: SquarifyNode, margin: number): void {
+    node.x0 += margin / 2;
+    node.y0 += margin / 2;
+    node.x1 -= margin / 2;
+    node.y1 -= margin / 2;
+
+    if (node.x1 - node.x0 <= 0 || node.y1 - node.y0 <= 0) {
+        node.x0 = 0;
+        node.y0 = 0;
+        node.x1 = 0;
+        node.y1 = 0;
+    }
+
+    for (const child of node.children) {
+        shrink(child, margin);
     }
 }

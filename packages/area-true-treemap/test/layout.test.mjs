@@ -63,6 +63,46 @@ test("builder validation rejects invalid margin", () => {
   assert.throws(() => new TreemapConfigBuilder().labels(2, 2), /labels/);
 });
 
+/** Distance between two non-overlapping rectangles along their separating axis. */
+function gapBetween(first, second) {
+  const gapX = Math.max(first.x, second.x) - Math.min(first.x + first.width, second.x + second.width);
+  const gapY = Math.max(first.y, second.y) - Math.min(first.y + first.height, second.y + second.height);
+  return Math.max(gapX, gapY);
+}
+
+test("applySiblingMargin separates sibling nodes by one margin", () => {
+  const flat = {
+    name: "root",
+    children: [
+      { name: "a", attributes: { size: 50 } },
+      { name: "b", attributes: { size: 50 } },
+    ],
+  };
+  const rects = new TreemapLayout(new TreemapConfigBuilder().margin(0.05).applySiblingMargin(true).build())
+    .compute(flat, { width: 1000, height: 1000 });
+  const sorted = [...rects].sort((p, q) => p.y - q.y || p.x - q.x);
+  const [first, second] = sorted;
+  // Each node is shrunk by margin/2 on each side -> siblings end up separated by a full margin (~50px).
+  const gap = gapBetween(first, second);
+  assert.ok(gap > 40 && gap < 60, `expected ~50px sibling gap (= margin), got ${gap}`);
+  assert.ok(first.width > 0 && first.height > 0 && second.width > 0 && second.height > 0);
+});
+
+test("applySiblingMargin false leaves siblings touching", () => {
+  const flat = {
+    name: "root",
+    children: [
+      { name: "a", attributes: { size: 50 } },
+      { name: "b", attributes: { size: 50 } },
+    ],
+  };
+  const rects = new TreemapLayout(new TreemapConfigBuilder().margin(0.05).applySiblingMargin(false).build())
+    .compute(flat, { width: 1000, height: 1000 });
+  const sorted = [...rects].sort((p, q) => p.y - q.y || p.x - q.x);
+  const [first, second] = sorted;
+  assert.ok(Math.abs(gapBetween(first, second)) < 1e-6, "siblings should share an edge when applySiblingMargin is false");
+});
+
 test("empty input returns an empty list", () => {
   const config = new TreemapConfigBuilder().build();
   const rects = new TreemapLayout(config).compute({ name: "root", attributes: { size: 0 } });

@@ -20,6 +20,7 @@
       subtitle: 'Area-True Treemap vs. Nested Treemap',
       thesis: 'zur Masterthesis',
       margin: 'Margin',
+      siblingMargin: 'Geschwisterabstand',
       labels: 'Labels',
       height: 'Höhe',
       position: 'Position',
@@ -70,6 +71,7 @@
       subtitle: 'Area-True Treemap vs. Nested Treemap',
       thesis: 'master thesis',
       margin: 'Margin',
+      siblingMargin: 'Sibling margin',
       labels: 'Labels',
       height: 'Height',
       position: 'Position',
@@ -142,6 +144,7 @@
 
   let areaMetric = 'size';
   let marginPercent = 1.5;
+  let applySiblingMargin = true;
   let topN = 3;
   let labelSizePercent = 5;
   let labelPosition: LabelPosition = LabelPosition.TOP;
@@ -182,6 +185,7 @@
     const config = TreemapLayout.builder()
       .areaMetric(areaMetric)
       .margin(marginPercent / 100)
+      .applySiblingMargin(applySiblingMargin)
       .labels(topN, labelSizePercent / 100)
       .labelPosition(labelPosition)
       .collapseFolders(collapseFolders)
@@ -199,6 +203,7 @@
       metric: areaMetric,
       size: containerSize,
       gapPx,
+      innerGapPx: applySiblingMargin ? gapPx : 0,
       labelPx,
       topLevels: topN,
       labelPosition,
@@ -254,6 +259,7 @@
     metric: string;
     size: number;
     gapPx: number;
+    innerGapPx: number;
     labelPx: number;
     topLevels: number;
     labelPosition: LabelPosition;
@@ -280,7 +286,7 @@
       .size([opts.size, opts.size])
       .round(false)
       .paddingOuter(opts.gapPx)
-      .paddingInner(opts.gapPx);
+      .paddingInner(opts.innerGapPx);
 
     // Reserve the label strip on the side chosen by the user (only folders
     // that actually get a label reserve space).
@@ -428,6 +434,13 @@
           <output>{marginPercent.toFixed(1)}%</output>
         </span>
       </label>
+
+      <div class="c">
+        <span class="lbl">&nbsp;</span>
+        <button class="toggle {applySiblingMargin ? 'on' : ''}" on:click={() => (applySiblingMargin = !applySiblingMargin)}>
+          {applySiblingMargin ? '✓' : '✗'} {t.siblingMargin}
+        </button>
+      </div>
 
       <label class="c">
         <span class="lbl">{t.labels}</span>

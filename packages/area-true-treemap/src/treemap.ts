@@ -1,5 +1,5 @@
 import { HierarchyNode } from "./hierarchy";
-import { squarify, SquarifyNode, SortingOption, LabelPosition, DEFAULT_ASPECT_RATIO } from "./squarify";
+import { squarify, shrink, SquarifyNode, SortingOption, LabelPosition, DEFAULT_ASPECT_RATIO } from "./squarify";
 
 /**
  * A fluent, `d3-hierarchy`-compatible treemap layout.
@@ -41,8 +41,11 @@ export interface Treemap<T> {
      */
     value(accessor: AreaValue<T>): this;
 
-    /** Relative gap (0..1) between sibling nodes, as a fraction of the canvas. */
+    /** Relative outer gap (0..1) between a node and its children, as a fraction of the canvas. */
     margin(fraction: number): this;
+
+    /** Enable/disable the gap between siblings (reuses the `margin` value). */
+    applySiblingMargin(value: boolean): this;
 
     /** Reserve space for folder labels on the top `topLevels` levels. */
     labels(topLevels: number, sizeRatio?: number): this;
@@ -69,6 +72,7 @@ interface TreemapState<T> {
     height: number;
     valueAccessor?: AreaValue<T>;
     marginFraction: number;
+    applySiblingMargin: boolean;
     labelTopLevels: number;
     labelSizeRatio: number;
     labelPosition: LabelPosition;
@@ -93,6 +97,7 @@ export function treemap<T>(): Treemap<T> {
         width: 1000,
         height: 1000,
         marginFraction: 0.015,
+        applySiblingMargin: true,
         labelTopLevels: 3,
         labelSizeRatio: 0.05,
         labelPosition: LabelPosition.TOP,
@@ -121,8 +126,13 @@ export function treemap<T>(): Treemap<T> {
         const margin = state.marginFraction * shortSide;
         const labelsEnabled = state.labelTopLevels > 0;
         const labelLength = state.labelSizeRatio * shortSide;
+        const innerHalf = state.applySiblingMargin ? margin / 2 : 0;
 
-        squarify(sq, margin, state.sortingOption, labelsEnabled, labelLength, state.labelPosition, state.aspectRatio);
+        squarify(sq, margin, innerHalf, state.sortingOption, labelsEnabled, labelLength, state.labelPosition, state.aspectRatio);
+
+        if (state.applySiblingMargin) {
+            shrink(sq, margin);
+        }
 
         writeBack(sq, state.round);
         return root;
@@ -147,6 +157,11 @@ export function treemap<T>(): Treemap<T> {
     layout.margin = (fraction: number) => {
         assertRange(fraction, 0, 1, "margin");
         state.marginFraction = fraction;
+        return layout;
+    };
+
+    layout.applySiblingMargin = (value: boolean) => {
+        state.applySiblingMargin = value;
         return layout;
     };
 

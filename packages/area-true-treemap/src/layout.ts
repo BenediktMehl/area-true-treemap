@@ -1,4 +1,4 @@
-import { squarify, SquarifyNode } from "./squarify";
+import { squarify, shrink, SquarifyNode } from "./squarify";
 import { TreemapConfig, TreemapConfigBuilder } from "./config";
 import { LayoutOptions, TreeNode, TreemapRect } from "./types";
 
@@ -45,8 +45,15 @@ export class TreemapLayout {
         const margin = config.margin * shortSide;
         const labelsEnabled = config.labels.topLevels > 0;
         const labelLength = config.labels.sizeRatio * shortSide;
+        const innerHalf = config.applySiblingMargin ? margin / 2 : 0;
 
-        squarify(root, margin, config.sorting, labelsEnabled, labelLength, config.labels.position, config.aspectRatio);
+        squarify(root, margin, innerHalf, config.sorting, labelsEnabled, labelLength, config.labels.position, config.aspectRatio);
+
+        // Optional sibling gap: shrink every node by margin/2 so siblings are
+        // separated by a full margin (mirrors the CodeCharta improved algorithm).
+        if (config.applySiblingMargin) {
+            shrink(root, margin);
+        }
 
         return this.flatten(root);
     }

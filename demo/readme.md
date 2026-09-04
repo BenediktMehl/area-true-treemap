@@ -33,7 +33,8 @@ npm run dev
 
 ## Bedienung
 
-- **Margin** — Abstand zwischen Knoten (0–3%).
+- **Margin** — äußerer Abstand zwischen einem Ordner und seinen Kindern (0–3%).
+- **Geschwisterabstand** — Schalter: trennt zusätzlich Geschwisterknoten um einen vollen Margin-Wert (nutzt denselben `margin`-Wert, wie im CodeCharta-Algorithmus `applySiblingMargin`).
 - **Labels (N)** — Anzahl der oberen Hierarchie-Ebenen mit Beschriftung.
 - **Höhe (%)** — Höhe des Beschriftungsbereichs relativ zur Leinwand.
 - **Position** — oben / unten / links / rechts.
@@ -41,7 +42,7 @@ npm run dev
 - **Metrik** — Name des Attributs, das die Fläche bestimmt (Standard `size`).
 - **Ordnerketten** — verschmilzt Ketten mit nur einem Kind.
 
-Alle Änderungen werden live angewendet (Margin/Labels betreffen dabei auch die Nested-Darstellung).
+Alle Änderungen werden live angewendet (Margin, Geschwisterabstand und Labels betreffen dabei auch die Nested-Darstellung).
 
 ## Datenformat
 
