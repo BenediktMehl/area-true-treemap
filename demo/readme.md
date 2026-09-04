@@ -7,7 +7,7 @@ Interaktive Demo für das npm-Paket [`improved-treemap`](../packages/improved-tr
 ```bash
 # vom Repo-Root
 npm install
-npm run dev:demo     # http://localhost:5173
+npm run dev:demo     # http://localhost:5174
 
 # oder direkt hier
 npm run dev

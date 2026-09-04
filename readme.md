@@ -137,7 +137,7 @@ An interactive demo (Svelte) that lets you tweak every setting live is included 
 
 ```bash
 npm install
-npm run dev:demo      # starts the demo on http://localhost:5173
+npm run dev:demo      # starts the demo on http://localhost:5174
 ```
 
 ## Development
