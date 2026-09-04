@@ -26,8 +26,11 @@
   interface Stats {
     nodes: number;
     leaves: number;
+    missing: number;
     meanAspect: number;
     maxAspect: number;
+    valuePropCV: number;
+    spaceUtil: number;
     ms: number;
   }
 
@@ -45,6 +48,7 @@
   $: {
     const gapPx = (marginPercent / 100) * containerSize;
     const labelPx = (labelSizePercent / 100) * containerSize;
+    const totalLeaves = countLeaves(loadedData);
 
     // 1) Area-True Treemap (the area-true algorithm).
     const config = TreemapLayout.builder()
@@ -66,22 +70,45 @@
     const nestedMs = performance.now() - t0;
 
     results = [
-      { key: 'area-true', title: 'Area-True Treemap', subtitle: 'verbessert, mit Abständen und Labels', rects: areaTrueRects, labelPosition, stats: computeStats(areaTrueRects, areaTrueMs) },
-      { key: 'nested', title: 'Nested Treemap', subtitle: 'd3.js nested treemap', rects: nestedRects, labelPosition: LabelPosition.TOP, stats: computeStats(nestedRects, nestedMs) },
+      { key: 'area-true', title: 'Area-True Treemap', subtitle: 'verbessert, mit Abständen und Labels', rects: areaTrueRects, labelPosition, stats: computeStats(areaTrueRects, areaTrueMs, totalLeaves, containerSize) },
+      { key: 'nested', title: 'Nested Treemap', subtitle: 'd3.js nested treemap', rects: nestedRects, labelPosition: LabelPosition.TOP, stats: computeStats(nestedRects, nestedMs, totalLeaves, containerSize) },
     ];
   }
 
-  function computeStats(rects: TreemapRect[], ms: number): Stats {
+  function computeStats(rects: TreemapRect[], ms: number, totalLeaves: number, size: number): Stats {
     const leaves = rects.filter((r) => r.isLeaf);
     const aspects = rects.map((r) => Math.max(r.width / r.height, r.height / r.width));
-    const sum = aspects.reduce((s, a) => s + a, 0);
+    const meanAspect = aspects.length ? aspects.reduce((s, a) => s + a, 0) / aspects.length : 0;
+    const maxAspect = aspects.length ? Math.max(...aspects) : 0;
+
+    // Wertproportionalität: Varianzkoeffizient des Fläche/Metrik-Verhältnisses.
+    const ratios = rects.filter((r) => r.value > 0).map((r) => (r.width * r.height) / r.value);
+    let valuePropCV = 0;
+    if (ratios.length > 1) {
+      const mean = ratios.reduce((s, x) => s + x, 0) / ratios.length;
+      const variance = ratios.reduce((s, x) => s + (x - mean) ** 2, 0) / ratios.length;
+      valuePropCV = Math.sqrt(variance) / mean;
+    }
+
+    // Platznutzung: Anteil der Wurzelfläche, der von Blattknoten eingenommen wird.
+    const leafArea = leaves.reduce((s, r) => s + r.width * r.height, 0);
+    const spaceUtil = size > 0 ? leafArea / (size * size) : 0;
+
     return {
       nodes: rects.length,
       leaves: leaves.length,
-      meanAspect: aspects.length ? sum / aspects.length : 0,
-      maxAspect: aspects.length ? Math.max(...aspects) : 0,
+      missing: totalLeaves - leaves.length,
+      meanAspect,
+      maxAspect,
+      valuePropCV,
+      spaceUtil,
       ms,
     };
+  }
+
+  function countLeaves(tree: TreeNode): number {
+    if (!tree.children || tree.children.length === 0) return 1;
+    return tree.children.reduce((sum, c) => sum + countLeaves(c), 0);
   }
 
   function computeNestedD3(
@@ -136,6 +163,50 @@
     return v.toFixed(digits);
   }
 
+  // Metric definitions with hover explanations (thesis, sec. "Bewertungsgrundlage").
+  const metricRows: { label: string; hint: string; format: (s: Stats) => string }[] = [
+    {
+      label: 'Knoten',
+      hint: 'Anzahl aller dargestellten Rechtecke (Ordner und Dateien).',
+      format: (s) => String(s.nodes),
+    },
+    {
+      label: 'Blätter',
+      hint: 'Anzahl der Blattknoten (Dateien) im Layout.',
+      format: (s) => String(s.leaves),
+    },
+    {
+      label: 'Fehlende Knoten',
+      hint: 'Knotensichtbarkeit (These): Anzahl Blattknoten, deren Breite oder Höhe ≤ 0 ist und die dadurch komplett verschwinden. Wichtigste Kennzahl der Arbeit — niedriger ist besser.',
+      format: (s) => String(s.missing),
+    },
+    {
+      label: 'Ø Seitenverhältnis',
+      hint: 'Seitenverhältnis (These): Durchschnittliches Verhältnis der längeren zur kürzeren Seite über alle Knoten. 1 = Quadrat — niedriger ist besser.',
+      format: (s) => fmt(s.meanAspect),
+    },
+    {
+      label: 'Max Seitenverhältnis',
+      hint: 'Schlechtestes (größtes) Seitenverhältnis über alle Knoten.',
+      format: (s) => fmt(s.maxAspect),
+    },
+    {
+      label: 'Wertproportionalität',
+      hint: 'Wertproportionalität (These): Varianzkoeffizient des Fläche/Metrik-Verhältnisses über alle Knoten. 0 = perfekt proportional zur Metrik — niedriger ist besser.',
+      format: (s) => fmt(s.valuePropCV),
+    },
+    {
+      label: 'Platznutzung',
+      hint: 'Platznutzung (These): Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. 100 % = volle Ausnutzung — höher ist besser.',
+      format: (s) => (s.spaceUtil * 100).toFixed(1) + ' %',
+    },
+    {
+      label: 'Berechnungszeit',
+      hint: 'Zeitaufwand (These): Reine Berechnungszeit des Layout-Algorithmus in ms (ohne Rendering).',
+      format: (s) => fmt(s.ms) + ' ms',
+    },
+  ];
+
   function handleFileUpload(e: Event) {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -161,7 +232,10 @@
   <header>
     <div class="heading">
       <h1>Treemap Vergleich</h1>
-      <p>Area-True Treemap vs. Nested Treemap</p>
+      <p>
+        Area-True Treemap vs. Nested Treemap ·
+        <a href="https://github.com/BenediktMehl/master-thesis" target="_blank" rel="noopener">zur Masterthesis ↗</a>
+      </p>
     </div>
 
     <div class="controls">
@@ -214,31 +288,17 @@
     <table>
       <thead>
         <tr>
-          <th>Metrik</th>
+          <th>Metrik <span class="hint">(Hover für Erklärung)</span></th>
           {#each results as r (r.key)}<th>{r.title}</th>{/each}
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>Knoten</td>
-          {#each results as r (r.key)}<td>{r.stats.nodes}</td>{/each}
-        </tr>
-        <tr>
-          <td>Blätter</td>
-          {#each results as r (r.key)}<td>{r.stats.leaves}</td>{/each}
-        </tr>
-        <tr>
-          <td>Ø Seitenverhältnis</td>
-          {#each results as r (r.key)}<td>{fmt(r.stats.meanAspect)}</td>{/each}
-        </tr>
-        <tr>
-          <td>Max Seitenverhältnis</td>
-          {#each results as r (r.key)}<td>{fmt(r.stats.maxAspect)}</td>{/each}
-        </tr>
-        <tr>
-          <td>Berechnungszeit</td>
-          {#each results as r (r.key)}<td>{fmt(r.stats.ms)} ms</td>{/each}
-        </tr>
+        {#each metricRows as m (m.label)}
+          <tr>
+            <td class="metric-label" title={m.hint}>{m.label} <span class="info">ⓘ</span></td>
+            {#each results as r (r.key)}<td>{m.format(r.stats)}</td>{/each}
+          </tr>
+        {/each}
       </tbody>
     </table>
   </section>
@@ -379,6 +439,35 @@
 
   td:first-child {
     color: var(--muted);
+  }
+
+  .metric-label {
+    cursor: help;
+    border-bottom: 1px dotted #c0c0c0;
+  }
+
+  .metric-label:hover {
+    color: var(--text);
+  }
+
+  .info {
+    font-size: 11px;
+    opacity: 0.6;
+  }
+
+  .hint {
+    font-weight: 400;
+    font-size: 11px;
+    color: #9a9a9a;
+  }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
   }
 
   tr:last-child td {

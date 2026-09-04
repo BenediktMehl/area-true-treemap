@@ -7,12 +7,16 @@ Interaktive Demo für das npm-Paket [`area-true-treemap`](../packages/area-true-
 1. **Area-True Treemap** — der Algorithmus aus dem Paket, mit Abständen und Labels.
 2. **Nested Treemap** — klassischer verschachtelter Treemap (d3.js, `paddingInner`/`paddingOuter` + Labels), mit sichtbaren Ordner-Rahmen.
 
-Dazu gibt es eine **Metriken-Tabelle**, die für beide Layouts direkt vergleicht:
+Dazu gibt es eine **Metriken-Tabelle**, die für beide Layouts direkt vergleicht (Kennzahlen aus der [Masterthesis](https://github.com/BenediktMehl/master-thesis), Abschnitt „Bewertungsgrundlage"):
 
-- Knoten- und Blattanzahl
-- Ø Seitenverhältnis (niedriger = quadratischer = besser)
-- Max Seitenverhältnis
-- Berechnungszeit in ms
+- **Knoten / Blätter** — Anzahl dargestellter Rechtecke bzw. Blattknoten.
+- **Fehlende Knoten** — *Knotensichtbarkeit*: Blattknoten mit Breite/Höhe ≤ 0, die komplett verschwinden (wichtigste Kennzahl).
+- **Ø / Max Seitenverhältnis** — Verhältnis der längeren zur kürzeren Seite (1 = Quadrat).
+- **Wertproportionalität** — Varianzkoeffizient des Fläche/Metrik-Verhältnisses (0 = perfekt proportional).
+- **Platznutzung** — Anteil der Wurzelfläche, der von Blattknoten eingenommen wird.
+- **Berechnungszeit** — reine Layout-Berechnung in ms.
+
+Über jede Metrik lässt sich hovern, um eine Erklärung zu sehen.
 
 Die Farbgebung nutzt die d3.js-„Lava"-Skala (`interpolateInferno` aus `d3-scale-chromatic`), nach Tiefe abgestuft.
 
