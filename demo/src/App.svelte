@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { hierarchy, treemap } from 'd3-hierarchy';
+  import { hierarchy, treemap, type HierarchyRectangularNode } from 'd3-hierarchy';
   import TreemapSvg from '$lib/components/TreemapSvg.svelte';
   import {
     TreemapLayout,
@@ -12,7 +12,7 @@
 
   let loadedData: TreeNode = sample as TreeNode;
 
-  // Reactive settings — each one maps directly onto the builder.
+  // Settings (compact, map onto the builder).
   let areaMetric = 'size';
   let marginPercent = 1.5;
   let topN = 3;
@@ -21,14 +21,32 @@
   let collapseFolders = true;
   let sorting: SortingOption = SortingOption.DESCENDING;
 
-  const containerSize = 1000;
+  const containerSize = 400;
 
-  let improvedRects: TreemapRect[] = [];
-  let standardRects: TreemapRect[] = [];
-  let improvedMs = 0;
-  let standardMs = 0;
+  interface Stats {
+    nodes: number;
+    leaves: number;
+    meanAspect: number;
+    maxAspect: number;
+    ms: number;
+  }
+
+  interface Result {
+    key: string;
+    title: string;
+    subtitle: string;
+    rects: TreemapRect[];
+    labelPosition: LabelPosition;
+    stats: Stats;
+  }
+
+  let results: Result[] = [];
 
   $: {
+    const gapPx = (marginPercent / 100) * containerSize;
+    const labelPx = (labelSizePercent / 100) * containerSize;
+
+    // 1) Area-True (improved algorithm).
     const config = TreemapLayout.builder()
       .areaMetric(areaMetric)
       .margin(marginPercent / 100)
@@ -39,25 +57,76 @@
       .build();
 
     let t0 = performance.now();
-    improvedRects = new TreemapLayout(config).compute(loadedData, { width: containerSize, height: containerSize });
-    improvedMs = performance.now() - t0;
+    const improvedRects = new TreemapLayout(config).compute(loadedData, { width: containerSize, height: containerSize });
+    const improvedMs = performance.now() - t0;
 
+    // 2) Nested treemap (d3, with gaps and labels).
     t0 = performance.now();
-    standardRects = computeStandardD3(loadedData, areaMetric, containerSize);
-    standardMs = performance.now() - t0;
+    const nestedRects = computeNestedD3(loadedData, areaMetric, containerSize, gapPx, labelPx, topN);
+    const nestedMs = performance.now() - t0;
+
+    // 3) Standard squarified treemap (d3, no gaps, no labels).
+    t0 = performance.now();
+    const standardRects = computeStandardD3(loadedData, areaMetric, containerSize);
+    const standardMs = performance.now() - t0;
+
+    results = [
+      { key: 'improved', title: 'Area-True', subtitle: 'verbessert, mit Abständen', rects: improvedRects, labelPosition, stats: computeStats(improvedRects, improvedMs) },
+      { key: 'nested', title: 'Nested', subtitle: 'd3.js, verschachtelt', rects: nestedRects, labelPosition: LabelPosition.TOP, stats: computeStats(nestedRects, nestedMs) },
+      { key: 'standard', title: 'Standard', subtitle: 'd3.js squarified', rects: standardRects, labelPosition: LabelPosition.TOP, stats: computeStats(standardRects, standardMs) },
+    ];
   }
 
-  // Baseline: the classic d3 squarified treemap (no gaps, no labels).
+  function computeStats(rects: TreemapRect[], ms: number): Stats {
+    const leaves = rects.filter((r) => r.isLeaf);
+    const aspects = rects.map((r) => Math.max(r.width / r.height, r.height / r.width));
+    const sum = aspects.reduce((s, a) => s + a, 0);
+    return {
+      nodes: rects.length,
+      leaves: leaves.length,
+      meanAspect: aspects.length ? sum / aspects.length : 0,
+      maxAspect: aspects.length ? Math.max(...aspects) : 0,
+      ms,
+    };
+  }
+
   function computeStandardD3(tree: TreeNode, metric: string, size: number): TreemapRect[] {
     const root = hierarchy(tree)
       .sum((d) => d.attributes?.[metric] ?? 0)
       .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+    const laidOut = treemap<TreeNode>().size([size, size]).round(false)(root);
+    return flattenD3(laidOut, () => false);
+  }
 
-    treemap<TreeNode>().size([size, size]).padding(0).round(false)(root);
+  function computeNestedD3(
+    tree: TreeNode,
+    metric: string,
+    size: number,
+    gapPx: number,
+    labelPx: number,
+    topLevels: number,
+  ): TreemapRect[] {
+    const root = hierarchy(tree)
+      .sum((d) => d.attributes?.[metric] ?? 0)
+      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+    const laidOut = treemap<TreeNode>()
+      .size([size, size])
+      .round(false)
+      .paddingOuter(gapPx)
+      .paddingInner(gapPx)
+      .paddingTop((n) => (isLabeled(n, topLevels) ? labelPx : 0))(root);
+    return flattenD3(laidOut, (n) => isLabeled(n, topLevels));
+  }
 
+  function isLabeled(n: HierarchyRectangularNode<TreeNode>, topLevels: number): boolean {
+    return n.depth > 0 && n.depth <= topLevels && !!n.children && n.children.length > 0;
+  }
+
+  function flattenD3(root: HierarchyRectangularNode<TreeNode>, hasLabel: (n: HierarchyRectangularNode<TreeNode>) => boolean): TreemapRect[] {
     const rects: TreemapRect[] = [];
-    const walk = (n: any): void => {
+    const walk = (n: HierarchyRectangularNode<TreeNode>): void => {
       if (n.depth > 0 && n.x1 - n.x0 > 0 && n.y1 - n.y0 > 0) {
+        const isLeaf = !n.children || n.children.length === 0;
         rects.push({
           x: n.x0,
           y: n.y0,
@@ -65,8 +134,8 @@
           height: n.y1 - n.y0,
           name: n.data.name,
           depth: n.depth,
-          isLeaf: !n.children || n.children.length === 0,
-          hasLabel: false,
+          isLeaf,
+          hasLabel: hasLabel(n),
           value: n.value ?? 0,
           attributes: n.data.attributes,
         });
@@ -75,6 +144,10 @@
     };
     walk(root);
     return rects;
+  }
+
+  function fmt(v: number, digits = 2): string {
+    return v.toFixed(digits);
   }
 
   function handleFileUpload(e: Event) {
@@ -100,228 +173,272 @@
 
 <main>
   <header>
-    <div class="title">
-      <h1>Area-True Treemap</h1>
-      <p>Vergleich des verbesserten Layouts mit dem klassischen D3.js-Squarified-Treemap</p>
+    <div class="heading">
+      <h1>Treemap Vergleich</h1>
+      <p>Area-True vs. Nested vs. Standard Squarified</p>
     </div>
 
     <div class="controls">
-      <label class="control">
-        <span>Margin (relativ)</span>
+      <label class="c">
+        <span>Margin</span>
         <input type="range" min="0" max="3" step="0.1" bind:value={marginPercent} />
-        <output>{marginPercent.toFixed(1)}%</output>
+        <em>{marginPercent.toFixed(1)}%</em>
       </label>
-
-      <label class="control">
-        <span>Top-Labels (N)</span>
+      <label class="c">
+        <span>Labels</span>
         <input type="number" min="0" max="10" bind:value={topN} />
       </label>
-
-      <label class="control">
-        <span>Label-Höhe (%)</span>
-        <input type="number" min="0" max="20" bind:value={labelSizePercent} />
+      <label class="c">
+        <span>Höhe</span>
+        <input type="number" min="0" max="20" bind:value={labelSizePercent} />%
       </label>
-
-      <label class="control">
-        <span>Label-Position</span>
+      <label class="c">
+        <span>Position</span>
         <select bind:value={labelPosition}>
-          <option value={LabelPosition.TOP}>Oben</option>
-          <option value={LabelPosition.BOTTOM}>Unten</option>
-          <option value={LabelPosition.LEFT}>Links</option>
-          <option value={LabelPosition.RIGHT}>Rechts</option>
+          <option value={LabelPosition.TOP}>oben</option>
+          <option value={LabelPosition.BOTTOM}>unten</option>
+          <option value={LabelPosition.LEFT}>links</option>
+          <option value={LabelPosition.RIGHT}>rechts</option>
         </select>
       </label>
-
-      <label class="control">
+      <label class="c">
         <span>Sortierung</span>
         <select bind:value={sorting}>
-          <option value={SortingOption.DESCENDING}>Absteigend</option>
-          <option value={SortingOption.ASCENDING}>Aufsteigend</option>
-          <option value={SortingOption.NONE}>Keine</option>
+          <option value={SortingOption.DESCENDING}>absteigend</option>
+          <option value={SortingOption.ASCENDING}>aufsteigend</option>
+          <option value={SortingOption.NONE}>keine</option>
         </select>
       </label>
-
-      <label class="control">
-        <span>Flächen-Metrik</span>
+      <label class="c">
+        <span>Metrik</span>
         <input type="text" bind:value={areaMetric} />
       </label>
-
       <button class="toggle {collapseFolders ? 'on' : ''}" on:click={() => (collapseFolders = !collapseFolders)}>
-        {collapseFolders ? '✓' : '✗'} Ordnerketten zusammenfalten
+        {collapseFolders ? '✓' : '✗'} Ordnerketten
       </button>
-    </div>
-
-    <div class="actions">
-      <label class="button">
-        📁 JSON laden
+      <label class="file">
+        📁 JSON
         <input type="file" accept=".json,application/json" on:change={handleFileUpload} hidden />
       </label>
-      <button class="button" on:click={loadSample}>↺ Beispiel laden</button>
+      <button class="file" on:click={loadSample}>↺ Beispiel</button>
     </div>
   </header>
 
-  <section class="panels">
-    <div class="panel">
-      <div class="panel-head">
-        <h2>Area-True (verbessert)</h2>
-        <span class="meta">{improvedRects.length} Knoten · {improvedMs.toFixed(2)} ms</span>
-      </div>
-      {#if improvedRects.length > 0}
-        <TreemapSvg rects={improvedRects} {containerSize} {labelPosition} showValues />
-      {:else}
-        <div class="empty">Keine Daten zum Anzeigen.</div>
-      {/if}
-    </div>
+  <section class="metrics">
+    <table>
+      <thead>
+        <tr>
+          <th>Metrik</th>
+          {#each results as r (r.key)}<th>{r.title}</th>{/each}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Knoten</td>
+          {#each results as r (r.key)}<td>{r.stats.nodes}</td>{/each}
+        </tr>
+        <tr>
+          <td>Blätter</td>
+          {#each results as r (r.key)}<td>{r.stats.leaves}</td>{/each}
+        </tr>
+        <tr>
+          <td>Ø Seitenverhältnis</td>
+          {#each results as r (r.key)}<td>{fmt(r.stats.meanAspect)}</td>{/each}
+        </tr>
+        <tr>
+          <td>Max Seitenverhältnis</td>
+          {#each results as r (r.key)}<td>{fmt(r.stats.maxAspect)}</td>{/each}
+        </tr>
+        <tr>
+          <td>Berechnungszeit</td>
+          {#each results as r (r.key)}<td>{fmt(r.stats.ms)} ms</td>{/each}
+        </tr>
+      </tbody>
+    </table>
+  </section>
 
-    <div class="panel">
-      <div class="panel-head">
-        <h2>Standard Squarified (D3.js)</h2>
-        <span class="meta">{standardRects.length} Knoten · {standardMs.toFixed(2)} ms</span>
+  <section class="panels">
+    {#each results as r (r.key)}
+      <div class="panel">
+        <div class="panel-head">
+          <h2>{r.title}</h2>
+          <span class="sub">{r.subtitle}</span>
+        </div>
+        {#if r.rects.length > 0}
+          <TreemapSvg rects={r.rects} {containerSize} labelPosition={r.labelPosition} showValues />
+        {:else}
+          <div class="empty">Keine Daten.</div>
+        {/if}
       </div>
-      {#if standardRects.length > 0}
-        <TreemapSvg rects={standardRects} {containerSize} showValues />
-      {:else}
-        <div class="empty">Keine Daten zum Anzeigen.</div>
-      {/if}
-    </div>
+    {/each}
   </section>
 </main>
 
 <style>
   main {
-    max-width: 1120px;
+    max-width: 1240px;
     margin: 0 auto;
-    padding: 24px;
+    padding: 28px 24px 60px;
   }
 
   header {
-    background: #1c1c21;
-    border: 1px solid #2e2e34;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 18px;
+    margin-bottom: 22px;
   }
 
-  .title h1 {
+  .heading h1 {
     margin: 0 0 4px;
     font-size: 26px;
-    color: #f4f4f5;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
 
-  .title p {
-    margin: 0 0 16px;
-    color: #a1a1aa;
+  .heading p {
+    margin: 0 0 14px;
+    color: var(--muted);
     font-size: 14px;
   }
 
   .controls {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 14px;
-    align-items: end;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: flex-end;
   }
 
-  .control {
+  .c {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 3px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+
+  .c input[type='number'],
+  .c input[type='text'],
+  .c select {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    padding: 4px 6px;
     font-size: 12px;
-    color: #a1a1aa;
+    width: 64px;
   }
 
-  .control input[type='range'] {
-    width: 100%;
+  .c input[type='text'] {
+    width: 72px;
   }
 
-  .control input[type='number'],
-  .control input[type='text'],
-  .control select {
-    background: #26262b;
-    border: 1px solid #3f3f46;
-    border-radius: 6px;
-    color: #e4e4e7;
-    padding: 7px 9px;
-    font-size: 14px;
+  .c input[type='range'] {
+    width: 90px;
   }
 
-  .control output {
-    font-size: 13px;
-    color: #e4e4e7;
+  .c em {
+    font-style: normal;
+    font-size: 11px;
+    color: var(--text);
+    text-transform: none;
   }
 
   .toggle,
-  .button {
-    background: #26262b;
-    border: 1px solid #3f3f46;
-    border-radius: 8px;
-    color: #e4e4e7;
-    padding: 10px 14px;
-    font-size: 14px;
+  .file {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    padding: 4px 8px;
+    font-size: 12px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    white-space: nowrap;
   }
 
   .toggle.on {
-    background: #134e3a;
-    border-color: #34d399;
-    color: #d1fae5;
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
   }
 
-  .button:hover,
-  .toggle:hover {
-    border-color: #71717a;
+  .file:hover {
+    border-color: #bbb;
   }
 
-  .actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 16px;
+  .metrics {
+    margin-bottom: 22px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+  }
+
+  th,
+  td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    background: #f4f4f4;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  td:first-child {
+    color: var(--muted);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
   }
 
   .panels {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
   }
 
-  @media (max-width: 820px) {
+  @media (max-width: 900px) {
     .panels {
       grid-template-columns: 1fr;
     }
   }
 
   .panel {
-    background: #1c1c21;
-    border: 1px solid #2e2e34;
-    border-radius: 12px;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
   }
 
   .panel-head {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    gap: 12px;
+    gap: 8px;
+    margin-bottom: 10px;
   }
 
   .panel h2 {
-    font-size: 16px;
+    font-size: 15px;
     margin: 0;
-    color: #e4e4e7;
   }
 
-  .meta {
-    color: #a1a1aa;
-    font-size: 12px;
-    white-space: nowrap;
+  .sub {
+    color: var(--muted);
+    font-size: 11px;
   }
 
   .empty {
-    color: #a1a1aa;
-    padding: 60px 0;
+    color: var(--muted);
+    padding: 50px 0;
     text-align: center;
   }
 </style>

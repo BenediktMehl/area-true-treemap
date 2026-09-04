@@ -1,6 +1,21 @@
 # improved-treemap — Demo
 
-Interaktive Demo für das npm-Paket [`improved-treemap`](../packages/improved-treemap). Die Demo nutzt das Paket als echten Workspace-Dependency (`import ... from "improved-treemap"`) und zeigt, wie man das Layout über das **Builder-Pattern** konfiguriert.
+Interaktive Demo für das npm-Paket [`improved-treemap`](../packages/improved-treemap). Die Demo vergleicht drei Layouts nebeneinander und nutzt das Paket als echten Workspace-Dependency (`import ... from "improved-treemap"`).
+
+## Die drei Layouts
+
+1. **Area-True** — der verbesserte Algorithmus aus dem Paket, mit Abständen und Labels.
+2. **Nested** — klassischer verschachtelter Treemap (d3.js, `paddingInner`/`paddingOuter` + Labels), mit sichtbaren Ordner-Rahmen.
+3. **Standard** — klassischer d3.js-Squarified-Treemap als Baseline (ohne Abstände/Labels).
+
+Dazu gibt es eine **Metriken-Tabelle**, die für alle drei Layouts direkt vergleicht:
+
+- Knoten- und Blattanzahl
+- Ø Seitenverhältnis (niedriger = quadratischer = besser)
+- Max Seitenverhältnis
+- Berechnungszeit in ms
+
+Die Farbgebung nutzt die d3.js-„Lava"-Skala (`interpolateInferno` aus `d3-scale-chromatic`), nach Tiefe abgestuft.
 
 ## Starten
 
@@ -15,14 +30,15 @@ npm run dev
 
 ## Bedienung
 
-- **Margin (relativ)** — Abstand zwischen Knoten (0–3%).
-- **Top-Labels (N)** — Anzahl der oberen Hierarchie-Ebenen mit Beschriftung.
-- **Label-Höhe (%)** — Höhe des Beschriftungsbereichs relativ zur Leinwand.
+- **Margin** — Abstand zwischen Knoten (0–3%).
+- **Labels (N)** — Anzahl der oberen Hierarchie-Ebenen mit Beschriftung.
+- **Höhe (%)** — Höhe des Beschriftungsbereichs relativ zur Leinwand.
+- **Position** — oben / unten / links / rechts.
 - **Sortierung** — absteigend / aufsteigend / keine.
-- **Flächen-Metrik** — Name des Attributs, das die Fläche bestimmt (Standard `size`).
-- **Ordnerketten zusammenfalten** — verschmilzt Ketten mit nur einem Kind.
+- **Metrik** — Name des Attributs, das die Fläche bestimmt (Standard `size`).
+- **Ordnerketten** — verschmilzt Ketten mit nur einem Kind.
 
-Alle Änderungen werden live über den Builder angewendet. Der resultierende Builder-Code wird im Seitenpanel angezeigt.
+Alle Änderungen werden live angewendet (Margin/Labels betreffen dabei auch die Nested-Darstellung).
 
 ## Datenformat
 

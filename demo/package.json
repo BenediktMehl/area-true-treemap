@@ -11,12 +11,14 @@
   },
   "dependencies": {
     "d3-hierarchy": "^3.1.2",
+    "d3-scale-chromatic": "^3.1.0",
     "improved-treemap": "*"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
     "@tsconfig/svelte": "^5.0.0",
     "@types/d3-hierarchy": "^3.1.7",
+    "@types/d3-scale-chromatic": "^3.0.3",
     "svelte": "^4.0.0",
     "svelte-check": "^3.0.0",
     "typescript": "^5.0.0",
