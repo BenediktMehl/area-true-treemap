@@ -30,6 +30,8 @@ export interface SquarifyNode {
     x1: number;
     y1: number;
     attributes?: Record<string, number>;
+    /** Back-reference to the source node(s) this layout node was built from. */
+    data?: unknown;
 }
 
 export interface SquarifyRow {

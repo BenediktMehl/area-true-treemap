@@ -12,6 +12,7 @@
 - Collapsing of single-child folder chains.
 - Configurable sorting (descending / ascending / none).
 - Fluent **builder pattern** for configuration.
+- A `d3-hierarchy`-compatible API (`hierarchy()` + `treemap()`) so it can be dropped into consumers that already integrate a treemap via `d3-hierarchy` (e.g. CodeCharta).
 - Zero runtime dependencies, tree-shakeable, ships ESM + CJS + TypeScript types.
 
 ## Installation
@@ -51,6 +52,93 @@ const layout = new TreemapLayout(config);
 const rects = layout.compute(data, { width: 1000, height: 1000 });
 // rects: [{ x, y, width, height, name, depth, isLeaf, hasLabel, value, ... }, ...]
 ```
+
+## Drop-in integration (d3-hierarchy compatible)
+
+For consumers that already lay out a treemap with `d3-hierarchy` — CodeCharta does
+exactly this in `renderer/threeViewer/algorithm/treeMapLayout/treeMapGenerator.ts` —
+the package exposes a `d3-hierarchy`-shaped API. You pass your **own** node type
+unchanged, set an area accessor, run the layout, and read `x0/x1/y0/y1` off the
+same tree you passed in:
+
+```ts
+import { hierarchy, treemap } from "area-true-treemap";
+
+// Any node type works — CodeCharta's CodeMapNode, your own, whatever has children.
+const root = hierarchy(map) // wraps the tree (original data stays on .data)
+  .sum((node) => calculateAreaValue(node)); // area accessor, exactly like d3's .sum()
+
+const layout = treemap<CodeMapNode>()
+  .size([width, height])
+  .margin(0.02); // area-true gap between siblings (replaces d3's padding*)
+
+layout(root); // lays out in place; returns root
+
+for (const node of root.descendants()) {
+  // node.x0, node.x1, node.y0, node.y1  → the rectangle
+  // node.data                          → the original node
+  // node.depth, node.children           → hierarchy info
+}
+```
+
+This mirrors the exact shape of `d3-hierarchy`'s `hierarchy().sum()` +
+`treemap().size()` integration, so swapping it in is a matter of changing the
+import and replacing the `.padding*()` calls with `.margin()`. The layout mutates
+the hierarchy in place (like `d3-treemap`) and returns the root; every node — leaf
+**and** folder — receives coordinates, and the original data stays untouched.
+
+### `treemap()` methods
+
+| Method | Type | Default | Description |
+| --- | --- | --- | --- |
+| `size([w, h])` / `size(w, h)` | `number[]` | `[1000, 1000]` | Canvas size in layout units. |
+| `value(accessor)` | `(node) => number` | — | Area accessor (like d3's `.sum()`). Optional if you call `.sum()` on the hierarchy instead. |
+| `margin(fraction)` | `number` (0–1) | `0.015` | Relative gap between sibling nodes, as a fraction of the shorter canvas side. |
+| `labels(topLevels, sizeRatio?)` | `number, number` | `3, 0.05` | Reserve space for folder labels on the top N levels. |
+| `labelPosition(position)` | `LabelPosition` | `TOP` | Where labels are placed. |
+| `collapseFolders(value)` | `boolean` | `false` | Merge single-child folder chains (all folded nodes share the rectangle). |
+| `sorting(option)` | `SortingOption` | `DESCENDING` | Order in which siblings are placed. |
+| `aspectRatio(ratio)` | `number` | `1.618` | Target aspect ratio for the squarify heuristic. |
+| `round(value)` | `boolean` | `false` | Round coordinates to integers. |
+
+### CodeCharta integration example
+
+CodeCharta's `getSquarifiedTreeMap` currently does:
+
+```ts
+import { hierarchy, treemap } from "d3-hierarchy"
+
+const treeMap = treemap<CodeMapNode>()
+    .size([width, height])
+    .paddingOuter(node => proportionalPadding(node) / 2)
+    .paddingInner(proportionalPadding)
+    .paddingRight(node => /* floor-label padding */)
+
+return { treeMap: treeMap(hierarchy(map).sum(node => calculateAreaValue(node, ...))) }
+```
+
+With this package it becomes:
+
+```ts
+import { hierarchy, treemap } from "area-true-treemap"
+
+const treeMap = treemap<CodeMapNode>()
+    .size([width, height])
+    .margin(marginFraction) // area-true gap instead of d3's padding* inset
+
+return { treeMap: treeMap(hierarchy(map).sum(node => calculateAreaValue(node, ...))) }
+```
+
+The returned nodes expose the same `x0`, `x1`, `y0`, `y1`, `data`, `depth` and
+`children` that CodeCharta's `TreeMapHelper.buildNodeFrom()` already consumes, so
+the downstream 3D-building code needs no changes.
+
+### `hierarchy()` node API
+
+The wrapped nodes expose the `d3-hierarchy` traversal surface: `each`, `eachBefore`,
+`eachAfter`, `sum`, `count`, `sort`, `descendants`, `leaves`, `ancestors`, `links`,
+`path`, `find`, plus `data`, `depth`, `height`, `parent`, `children`, `value` and
+the layout fields `x0`, `x1`, `y0`, `y1`.
 
 ## Input data format
 
@@ -122,6 +210,8 @@ The returned `TreemapRect[]` contains absolute coordinates starting at `(0, 0)`.
 ### Exported types
 
 `TreeNode`, `TreemapRect`, `TreemapConfig`, `LabelConfig`, `LayoutOptions`, `SortingOption`, `LabelPosition`, `DEFAULT_CONFIG`, `DEFAULT_ASPECT_RATIO`.
+
+From the d3-compatible API: `hierarchy`, `treemap`, `HierarchyNode`, `HierarchyLink`, `HierarchyChildrenAccessor`, `Treemap`, `AreaValue`.
 
 ## Development
 

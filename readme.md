@@ -62,6 +62,38 @@ const rects = layout.compute(data, { width: 1000, height: 1000 });
 // rects: [{ x, y, width, height, name, depth, isLeaf, hasLabel, value, ... }, ...]
 ```
 
+## d3-hierarchy-compatible API (drop-in for CodeCharta)
+
+For consumers that integrate a treemap through `d3-hierarchy` — [CodeCharta](https://github.com/maibornwolff/codecharta) does this in `visualization/app/codeCharta/renderer/threeViewer/algorithm/treeMapLayout/treeMapGenerator.ts` — the package also ships a `d3-hierarchy`-shaped API so it can be swapped in with minimal changes:
+
+```ts
+import { hierarchy, treemap } from "area-true-treemap";
+
+// CodeCharta today: treemap(map).sum(...) → treeMap with x0/x1/y0/y1 per node.
+const layout = treemap<CodeMapNode>()
+  .size([width, height])
+  .margin(marginFraction); // area-true gap instead of d3's .padding* inset
+
+const root = layout(
+  hierarchy(map).sum((node) => calculateAreaValue(node, /* ... */)),
+);
+
+for (const node of root.descendants()) {
+  // node.x0, node.x1, node.y0, node.y1, node.data, node.depth, node.children
+}
+```
+
+The wrapped nodes expose the same `x0`, `x1`, `y0`, `y1`, `data`, `depth`,
+`children` and traversal helpers (`each`, `descendants`, `leaves`, …) that
+`d3-hierarchy` provides, so downstream code (e.g. CodeCharta's
+`TreeMapHelper.buildNodeFrom`) keeps working unchanged. The difference is the gap
+handling: `d3-treemap` insets rectangles via per-edge `padding*`, while this
+package applies an **area-true margin** during layout so no node collapses to
+zero area.
+
+See `packages/area-true-treemap/README.md` for the full `treemap()` method table
+and a side-by-side CodeCharta migration.
+
 ## Input data format
 
 The input is a plain tree of nodes:
