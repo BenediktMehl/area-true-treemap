@@ -3,7 +3,7 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import path from 'path';
 
 // GitHub Pages serves the demo under /<repo>/, local dev under /.
-// Set BASE_PATH (e.g. "/ImprovedTreeMap/") when building for Pages.
+// Set BASE_PATH (e.g. "/area-true-treemap/") when building for Pages.
 export default defineConfig({
   base: process.env.BASE_PATH || '/',
   plugins: [svelte()],

@@ -3,12 +3,12 @@
 > Area-true squarified treemap layout with configurable gaps between nodes — without losing any node.
 
 <p align="center">
-  <a href="https://benediktmehl.github.io/ImprovedTreeMap/">
+  <a href="https://benediktmehl.github.io/area-true-treemap/">
     <img src="https://img.shields.io/badge/Live%20Demo-%E2%96%B6%20Open-brightgreen?style=for-the-badge&logo=github" alt="Live Demo" />
   </a>
 </p>
 
-👉 **Live-Demo: https://benediktmehl.github.io/ImprovedTreeMap/**
+👉 **Live-Demo: https://benediktmehl.github.io/area-true-treemap/**
 
 `area-true-treemap` is a dependency-free TypeScript library that computes a **squarified treemap** (Bruls et al.) extended with configurable gaps ("margin") between nodes and optional folder labels. Unlike a plain squarify that simply insets rectangles, the margin is applied during layout so that no node disappears and area proportions are preserved as closely as possible.
 
@@ -184,7 +184,7 @@ npm install
 npm run dev:demo      # starts the demo on http://localhost:5174
 ```
 
-👉 Live version: https://benediktmehl.github.io/ImprovedTreeMap/
+👉 Live version: https://benediktmehl.github.io/area-true-treemap/
 
 ## Development
 

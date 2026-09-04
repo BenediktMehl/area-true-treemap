@@ -30,7 +30,7 @@ jobs:
       - name: Build demo
         run: npm run build:demo
         env:
-          BASE_PATH: /ImprovedTreeMap/
+          BASE_PATH: /area-true-treemap/
 
       - uses: actions/configure-pages@v5
 
