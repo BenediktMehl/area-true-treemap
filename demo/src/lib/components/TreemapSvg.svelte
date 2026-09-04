@@ -62,8 +62,7 @@
           width={rect.width}
           height={rect.height}
           fill={getColor(rect.depth)}
-          stroke="#ffffff"
-          stroke-width="1.5"
+          stroke="none"
           opacity="0.95"
         />
         {#if rect.hasLabel}
