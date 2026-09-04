@@ -177,6 +177,8 @@ Fluent builder as documented above. All setter methods return `this` for chainin
 
 An interactive demo (Svelte) that lets you tweak every setting live is included in [`demo/`](./demo). It renders the **Area-True Treemap** and the **d3.js Nested Treemap** side by side and compares them using the evaluation metrics defined in the thesis (node visibility, value proportionality, aspect ratio, space utilization, and computation time — see the thesis section "Bewertungsgrundlage").
 
+By default the demo loads the real-world **flare** dataset (the d3 example used in the thesis to show how nodes disappear when the nested treemap reserves space for gaps). A small synthetic example can be selected via the *Sample data* dropdown, and any JSON file can be uploaded as well.
+
 ```bash
 npm install
 npm run dev:demo      # starts the demo on http://localhost:5174

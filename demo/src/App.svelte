@@ -9,6 +9,7 @@
     type TreemapRect,
   } from 'area-true-treemap';
   import sample from '$lib/data/sample.json';
+  import flare from '$lib/data/flare.json';
 
   type Lang = 'de' | 'en';
   let lang: Lang = 'de';
@@ -27,6 +28,9 @@
       collapse: 'Ordnerketten',
       load: 'JSON',
       sample: 'Beispiel',
+      dataPreset: 'Beispieldaten',
+      presetFlare: 'flare (d3, aus der Masterarbeit)',
+      presetSample: 'kleines Beispiel (synthetisch)',
       posTop: 'oben',
       posBottom: 'unten',
       posLeft: 'links',
@@ -74,6 +78,9 @@
       collapse: 'Folder chains',
       load: 'JSON',
       sample: 'Sample',
+      dataPreset: 'Sample data',
+      presetFlare: 'flare (d3, from master thesis)',
+      presetSample: 'small sample (synthetic)',
       posTop: 'top',
       posBottom: 'bottom',
       posLeft: 'left',
@@ -112,7 +119,26 @@
 
   $: t = translations[lang];
 
-  let loadedData: TreeNode = sample as TreeNode;
+  // Bundled example datasets, selectable in the header. "flare" is the
+  // real-world d3 example used in the master thesis (with gaps, 48 nodes
+  // disappear in the plain nested treemap) and is therefore the default.
+  interface ExampleDef {
+    data: TreeNode;
+    metric: string;
+    labelKey: string;
+  }
+  const examples: Record<string, ExampleDef> = {
+    flare: { data: flare as unknown as TreeNode, metric: 'size', labelKey: 'presetFlare' },
+    sample: { data: sample as TreeNode, metric: 'size', labelKey: 'presetSample' },
+  };
+  const exampleOrder: { id: string; labelKey: string }[] = [
+    { id: 'flare', labelKey: 'presetFlare' },
+    { id: 'sample', labelKey: 'presetSample' },
+  ];
+  const defaultExample = 'flare';
+
+  let exampleId: string = defaultExample;
+  let loadedData: TreeNode = examples[defaultExample].data;
 
   let areaMetric = 'size';
   let marginPercent = 1.5;
@@ -370,8 +396,13 @@
     input.value = '';
   }
 
-  function loadSample() {
-    loadedData = sample as TreeNode;
+  function loadExample(e: Event) {
+    const id = (e.currentTarget as HTMLSelectElement).value;
+    const example = examples[id];
+    if (!example) return;
+    exampleId = id;
+    loadedData = example.data;
+    areaMetric = example.metric;
   }
 </script>
 
@@ -451,8 +482,12 @@
       </div>
 
       <div class="c">
-        <span class="lbl">&nbsp;</span>
-        <button class="file" on:click={loadSample}>↺ {t.sample}</button>
+        <span class="lbl">{t.dataPreset}</span>
+        <select value={exampleId} on:change={loadExample}>
+          {#each exampleOrder as ex (ex.id)}
+            <option value={ex.id}>{t[ex.labelKey]}</option>
+          {/each}
+        </select>
       </div>
     </div>
   </header>
