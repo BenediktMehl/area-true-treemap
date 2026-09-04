@@ -43,18 +43,18 @@
       mValueProp: 'Wertproportionalität',
       mSpace: 'Platznutzung',
       mTime: 'Berechnungszeit',
-      hNodes: 'Anzahl aller dargestellten Rechtecke (Ordner und Dateien).',
-      hLeaves: 'Anzahl der Blattknoten (Dateien) im Layout.',
+      hNodes: 'Anzahl aller dargestellten Rechtecke (Ordner und Dateien). Rein informativ — kein „besserer" Wert.',
+      hLeaves: 'Anzahl der Blattknoten (Dateien) im Layout. Rein informativ — kein „besserer" Wert.',
       hMissing:
-        'Knotensichtbarkeit (These): Anzahl Blattknoten, deren Breite oder Höhe ≤ 0 ist und die dadurch komplett verschwinden. Wichtigste Kennzahl der Arbeit — niedriger ist besser.',
+        'Knotensichtbarkeit (These): Anzahl Blattknoten, deren Breite oder Höhe ≤ 0 ist und die dadurch komplett verschwinden. Bester Wert: 0 (keine fehlenden Knoten).',
       hMeanAspect:
-        'Seitenverhältnis (These): Durchschnittliches Verhältnis der längeren zur kürzeren Seite über alle Knoten. 1 = Quadrat — niedriger ist besser.',
-      hMaxAspect: 'Schlechtestes (größtes) Seitenverhältnis über alle Knoten.',
+        'Seitenverhältnis (These): Durchschnittliches Verhältnis der längeren zur kürzeren Seite über alle Knoten. Bester Wert: 1 (Quadrat).',
+      hMaxAspect: 'Schlechtestes (größtes) Seitenverhältnis über alle Knoten. Bester Wert: 1 (Quadrat).',
       hValueProp:
-        'Wertproportionalität (These): Varianzkoeffizient des Fläche/Metrik-Verhältnisses über alle Knoten. 0 = perfekt proportional zur Metrik — niedriger ist besser.',
+        'Wertproportionalität (These): Varianzkoeffizient des Fläche/Metrik-Verhältnisses über alle Knoten. Bester Wert: 0 (perfekt proportional).',
       hSpace:
-        'Platznutzung (These): Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. 100 % = volle Ausnutzung — höher ist besser.',
-      hTime: 'Zeitaufwand (These): Reine Berechnungszeit des Layout-Algorithmus in ms (ohne Rendering).',
+        'Platznutzung (These): Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Bester Wert: 100 % (volle Ausnutzung).',
+      hTime: 'Zeitaufwand (These): Reine Berechnungszeit des Layout-Algorithmus in ms (ohne Rendering). Bester Wert: möglichst niedrig.',
       areaTrue: 'Area-True Treemap',
       areaTrueSub: 'verbessert, mit Abständen und Labels',
       nested: 'Nested Treemap',
@@ -90,18 +90,18 @@
       mValueProp: 'Value proportionality',
       mSpace: 'Space utilization',
       mTime: 'Compute time',
-      hNodes: 'Number of all rendered rectangles (folders and files).',
-      hLeaves: 'Number of leaf nodes (files) in the layout.',
+      hNodes: 'Number of all rendered rectangles (folders and files). Informational only — no "better" value.',
+      hLeaves: 'Number of leaf nodes (files) in the layout. Informational only — no "better" value.',
       hMissing:
-        'Node visibility (thesis): number of leaf nodes whose width or height ≤ 0, so they disappear entirely. Most important metric — lower is better.',
+        'Node visibility (thesis): number of leaf nodes whose width or height ≤ 0, so they disappear entirely. Best value: 0 (no missing nodes).',
       hMeanAspect:
-        'Aspect ratio (thesis): average ratio of the longer to the shorter side across all nodes. 1 = square — lower is better.',
-      hMaxAspect: 'Worst (largest) aspect ratio across all nodes.',
+        'Aspect ratio (thesis): average ratio of the longer to the shorter side across all nodes. Best value: 1 (square).',
+      hMaxAspect: 'Worst (largest) aspect ratio across all nodes. Best value: 1 (square).',
       hValueProp:
-        'Value proportionality (thesis): coefficient of variation of the area/metric ratio across all nodes. 0 = perfectly proportional — lower is better.',
+        'Value proportionality (thesis): coefficient of variation of the area/metric ratio across all nodes. Best value: 0 (perfectly proportional).',
       hSpace:
-        'Space utilization (thesis): fraction of the root area occupied by leaf nodes. 100% = full usage — higher is better.',
-      hTime: 'Time (thesis): pure layout computation time in ms (without rendering).',
+        'Space utilization (thesis): fraction of the root area occupied by leaf nodes. Best value: 100% (full usage).',
+      hTime: 'Time (thesis): pure layout computation time in ms (without rendering). Best value: as low as possible.',
       areaTrue: 'Area-True Treemap',
       areaTrueSub: 'improved, with gaps and labels',
       nested: 'Nested Treemap',
@@ -266,16 +266,27 @@
   }
 
   // Metric definitions (labels/hints are translated; see `translations`).
-  const metricRows: { labelKey: string; hintKey: string; format: (s: Stats) => string }[] = [
-    { labelKey: 'mNodes', hintKey: 'hNodes', format: (s) => String(s.nodes) },
-    { labelKey: 'mLeaves', hintKey: 'hLeaves', format: (s) => String(s.leaves) },
-    { labelKey: 'mMissing', hintKey: 'hMissing', format: (s) => String(s.missing) },
-    { labelKey: 'mMeanAspect', hintKey: 'hMeanAspect', format: (s) => fmt(s.meanAspect) },
-    { labelKey: 'mMaxAspect', hintKey: 'hMaxAspect', format: (s) => fmt(s.maxAspect) },
-    { labelKey: 'mValueProp', hintKey: 'hValueProp', format: (s) => fmt(s.valuePropCV) },
-    { labelKey: 'mSpace', hintKey: 'hSpace', format: (s) => (s.spaceUtil * 100).toFixed(1) + ' %' },
-    { labelKey: 'mTime', hintKey: 'hTime', format: (s) => fmt(s.ms) + ' ms' },
+  type BetterDir = 'lower' | 'higher' | 'none';
+  const metricRows: { labelKey: string; hintKey: string; value: (s: Stats) => number; format: (s: Stats) => string; better: BetterDir }[] = [
+    { labelKey: 'mNodes', hintKey: 'hNodes', value: (s) => s.nodes, format: (s) => String(s.nodes), better: 'none' },
+    { labelKey: 'mLeaves', hintKey: 'hLeaves', value: (s) => s.leaves, format: (s) => String(s.leaves), better: 'none' },
+    { labelKey: 'mMissing', hintKey: 'hMissing', value: (s) => s.missing, format: (s) => String(s.missing), better: 'lower' },
+    { labelKey: 'mMeanAspect', hintKey: 'hMeanAspect', value: (s) => s.meanAspect, format: (s) => fmt(s.meanAspect), better: 'lower' },
+    { labelKey: 'mMaxAspect', hintKey: 'hMaxAspect', value: (s) => s.maxAspect, format: (s) => fmt(s.maxAspect), better: 'lower' },
+    { labelKey: 'mValueProp', hintKey: 'hValueProp', value: (s) => s.valuePropCV, format: (s) => fmt(s.valuePropCV), better: 'lower' },
+    { labelKey: 'mSpace', hintKey: 'hSpace', value: (s) => s.spaceUtil, format: (s) => (s.spaceUtil * 100).toFixed(1) + ' %', better: 'higher' },
+    { labelKey: 'mTime', hintKey: 'hTime', value: (s) => s.ms, format: (s) => fmt(s.ms) + ' ms', better: 'lower' },
   ];
+
+  // Returns the index of the better result for a metric row, or -1 for none/tie.
+  function betterIndex(m: (typeof metricRows)[number], stats: Stats[]): number {
+    if (m.better === 'none' || stats.length < 2) return -1;
+    const a = m.value(stats[0]);
+    const b = m.value(stats[1]);
+    if (a === b) return -1;
+    if (m.better === 'lower') return a < b ? 0 : 1;
+    return a > b ? 0 : 1;
+  }
 
   function handleFileUpload(e: Event) {
     const input = e.target as HTMLInputElement;
@@ -390,9 +401,12 @@
       </thead>
       <tbody>
         {#each metricRows as m (m.labelKey)}
+          {@const bi = betterIndex(m, results.map((r) => r.stats))}
           <tr>
             <td class="metric-label" title={t[m.hintKey]}>{t[m.labelKey]} <span class="info">ⓘ</span></td>
-            {#each results as r (r.key)}<td>{m.format(r.stats)}</td>{/each}
+            {#each results as r, i (r.key)}
+              <td class:better={bi === i}>{m.format(r.stats)}</td>
+            {/each}
           </tr>
         {/each}
       </tbody>
@@ -599,6 +613,11 @@
   .info {
     font-size: 11px;
     opacity: 0.6;
+  }
+
+  .better {
+    color: #15803d;
+    font-weight: 700;
   }
 
   a {
