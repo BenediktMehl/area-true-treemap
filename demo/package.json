@@ -12,7 +12,7 @@
   "dependencies": {
     "d3-hierarchy": "^3.1.2",
     "d3-scale-chromatic": "^3.1.0",
-    "improved-treemap": "*"
+    "area-true-treemap": "*"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.0.0",

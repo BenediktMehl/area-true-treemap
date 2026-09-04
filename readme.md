@@ -1,4 +1,4 @@
-# improved-treemap
+# area-true-treemap
 
 > Area-true squarified treemap layout with configurable gaps between nodes — without losing any node.
 
@@ -10,7 +10,7 @@
 
 👉 **Live-Demo: https://benediktmehl.github.io/ImprovedTreeMap/**
 
-`improved-treemap` is a dependency-free TypeScript library that computes a **squarified treemap** (Bruls et al.) extended with configurable gaps ("margin") between nodes and optional folder labels. Unlike a plain squarify that simply insets rectangles, the margin is applied during layout so that no node disappears and area proportions are preserved as closely as possible.
+`area-true-treemap` is a dependency-free TypeScript library that computes a **squarified treemap** (Bruls et al.) extended with configurable gaps ("margin") between nodes and optional folder labels. Unlike a plain squarify that simply insets rectangles, the margin is applied during layout so that no node disappears and area proportions are preserved as closely as possible.
 
 The algorithm is based on the concepts described in [Vergleich und Optimierung von 3D-Visualisierungen für die Darstellung von Software-Qualitätsmetriken](https://github.com/BenediktMehl/master-thesis/blob/main/thesis.pdf).
 
@@ -27,13 +27,13 @@ The algorithm is based on the concepts described in [Vergleich und Optimierung v
 ## Installation
 
 ```bash
-npm install improved-treemap
+npm install area-true-treemap
 ```
 
 ## Quick start
 
 ```ts
-import { TreemapLayout, SortingOption } from "improved-treemap";
+import { TreemapLayout, SortingOption } from "area-true-treemap";
 
 const data = {
   name: "root",

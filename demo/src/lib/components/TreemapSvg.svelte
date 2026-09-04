@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { TreemapRect } from 'improved-treemap';
-  import { LabelPosition } from 'improved-treemap';
+  import type { TreemapRect } from 'area-true-treemap';
+  import { LabelPosition } from 'area-true-treemap';
   import { interpolateInferno } from 'd3-scale-chromatic';
 
   export let rects: TreemapRect[] = [];

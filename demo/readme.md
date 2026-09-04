@@ -1,14 +1,13 @@
-# improved-treemap — Demo
+# area-true-treemap — Demo
 
-Interaktive Demo für das npm-Paket [`improved-treemap`](../packages/improved-treemap). Die Demo vergleicht drei Layouts nebeneinander und nutzt das Paket als echten Workspace-Dependency (`import ... from "improved-treemap"`).
+Interaktive Demo für das npm-Paket [`area-true-treemap`](../packages/area-true-treemap). Die Demo vergleicht zwei Layouts nebeneinander und nutzt das Paket als echten Workspace-Dependency (`import ... from "area-true-treemap"`).
 
-## Die drei Layouts
+## Die zwei Layouts
 
-1. **Area-True** — der verbesserte Algorithmus aus dem Paket, mit Abständen und Labels.
-2. **Nested** — klassischer verschachtelter Treemap (d3.js, `paddingInner`/`paddingOuter` + Labels), mit sichtbaren Ordner-Rahmen.
-3. **Standard** — klassischer d3.js-Squarified-Treemap als Baseline (ohne Abstände/Labels).
+1. **Area-True Treemap** — der Algorithmus aus dem Paket, mit Abständen und Labels.
+2. **Nested Treemap** — klassischer verschachtelter Treemap (d3.js, `paddingInner`/`paddingOuter` + Labels), mit sichtbaren Ordner-Rahmen.
 
-Dazu gibt es eine **Metriken-Tabelle**, die für alle drei Layouts direkt vergleicht:
+Dazu gibt es eine **Metriken-Tabelle**, die für beide Layouts direkt vergleicht:
 
 - Knoten- und Blattanzahl
 - Ø Seitenverhältnis (niedriger = quadratischer = besser)

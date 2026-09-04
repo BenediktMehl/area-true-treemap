@@ -7,7 +7,7 @@
     LabelPosition,
     type TreeNode,
     type TreemapRect,
-  } from 'improved-treemap';
+  } from 'area-true-treemap';
   import sample from '$lib/data/sample.json';
 
   let loadedData: TreeNode = sample as TreeNode;
@@ -46,7 +46,7 @@
     const gapPx = (marginPercent / 100) * containerSize;
     const labelPx = (labelSizePercent / 100) * containerSize;
 
-    // 1) Area-True (improved algorithm).
+    // 1) Area-True Treemap (the area-true algorithm).
     const config = TreemapLayout.builder()
       .areaMetric(areaMetric)
       .margin(marginPercent / 100)
@@ -57,23 +57,17 @@
       .build();
 
     let t0 = performance.now();
-    const improvedRects = new TreemapLayout(config).compute(loadedData, { width: containerSize, height: containerSize });
-    const improvedMs = performance.now() - t0;
+    const areaTrueRects = new TreemapLayout(config).compute(loadedData, { width: containerSize, height: containerSize });
+    const areaTrueMs = performance.now() - t0;
 
     // 2) Nested treemap (d3, with gaps and labels).
     t0 = performance.now();
     const nestedRects = computeNestedD3(loadedData, areaMetric, containerSize, gapPx, labelPx, topN);
     const nestedMs = performance.now() - t0;
 
-    // 3) Standard squarified treemap (d3, no gaps, no labels).
-    t0 = performance.now();
-    const standardRects = computeStandardD3(loadedData, areaMetric, containerSize);
-    const standardMs = performance.now() - t0;
-
     results = [
-      { key: 'improved', title: 'Area-True', subtitle: 'verbessert, mit Abständen', rects: improvedRects, labelPosition, stats: computeStats(improvedRects, improvedMs) },
-      { key: 'nested', title: 'Nested', subtitle: 'd3.js, verschachtelt', rects: nestedRects, labelPosition: LabelPosition.TOP, stats: computeStats(nestedRects, nestedMs) },
-      { key: 'standard', title: 'Standard', subtitle: 'd3.js squarified', rects: standardRects, labelPosition: LabelPosition.TOP, stats: computeStats(standardRects, standardMs) },
+      { key: 'area-true', title: 'Area-True Treemap', subtitle: 'verbessert, mit Abständen und Labels', rects: areaTrueRects, labelPosition, stats: computeStats(areaTrueRects, areaTrueMs) },
+      { key: 'nested', title: 'Nested Treemap', subtitle: 'd3.js nested treemap', rects: nestedRects, labelPosition: LabelPosition.TOP, stats: computeStats(nestedRects, nestedMs) },
     ];
   }
 
@@ -88,14 +82,6 @@
       maxAspect: aspects.length ? Math.max(...aspects) : 0,
       ms,
     };
-  }
-
-  function computeStandardD3(tree: TreeNode, metric: string, size: number): TreemapRect[] {
-    const root = hierarchy(tree)
-      .sum((d) => d.attributes?.[metric] ?? 0)
-      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
-    const laidOut = treemap<TreeNode>().size([size, size]).round(false)(root);
-    return flattenD3(laidOut, () => false);
   }
 
   function computeNestedD3(
@@ -175,7 +161,7 @@
   <header>
     <div class="heading">
       <h1>Treemap Vergleich</h1>
-      <p>Area-True vs. Nested vs. Standard Squarified</p>
+      <p>Area-True Treemap vs. Nested Treemap</p>
     </div>
 
     <div class="controls">
@@ -401,7 +387,7 @@
 
   .panels {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 18px;
   }
 
