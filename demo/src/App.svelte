@@ -176,6 +176,25 @@
 
   let results: Result[] = [];
 
+  // Measures the average runtime of `fn` in milliseconds over enough
+  // iterations to yield sub-millisecond precision (two decimals) even when
+  // `performance.now()` is coarse (e.g. returns integer ms in some browsers).
+  function measureMs(fn: () => void): number {
+    fn(); // warm-up so JIT/initialization does not skew the result
+    const budgetMs = 20;
+    const maxIterations = 500;
+    let iterations = 0;
+    let elapsed = 0;
+    const t0 = performance.now();
+    for (let i = 0; i < maxIterations; i++) {
+      fn();
+      iterations++;
+      elapsed = performance.now() - t0;
+      if (elapsed >= budgetMs) break;
+    }
+    return elapsed / iterations;
+  }
+
   $: {
     const gapPx = (marginPercent / 100) * containerSize;
     const labelPx = (labelSizePercent / 100) * containerSize;
@@ -192,25 +211,27 @@
       .sorting(sorting)
       .build();
 
-    let t0 = performance.now();
-    const areaTrueRects = new TreemapLayout(config).compute(loadedData, { width: containerSize, height: containerSize });
-    const areaTrueMs = performance.now() - t0;
+    let areaTrueRects: TreemapRect[] = [];
+    const areaTrueMs = measureMs(() => {
+      areaTrueRects = new TreemapLayout(config).compute(loadedData, { width: containerSize, height: containerSize });
+    });
 
     // 2) Nested treemap (d3, with gaps, labels, sorting and collapsing —
     //    mirroring the area-true settings as far as d3 supports them).
-    t0 = performance.now();
-    const nestedRects = computeNestedD3(loadedData, {
-      metric: areaMetric,
-      size: containerSize,
-      gapPx,
-      innerGapPx: applySiblingMargin ? gapPx : 0,
-      labelPx,
-      topLevels: topN,
-      labelPosition,
-      sorting,
-      collapseFolders,
+    let nestedRects: TreemapRect[] = [];
+    const nestedMs = measureMs(() => {
+      nestedRects = computeNestedD3(loadedData, {
+        metric: areaMetric,
+        size: containerSize,
+        gapPx,
+        innerGapPx: applySiblingMargin ? gapPx : 0,
+        labelPx,
+        topLevels: topN,
+        labelPosition,
+        sorting,
+        collapseFolders,
+      });
     });
-    const nestedMs = performance.now() - t0;
 
     results = [
       { key: 'area-true', title: t.areaTrue, subtitle: t.areaTrueSub, repoUrl: 'https://github.com/BenediktMehl/master-thesis', rects: areaTrueRects, labelPosition, stats: computeStats(areaTrueRects, areaTrueMs, totalLeaves, containerSize) },
