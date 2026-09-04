@@ -10,9 +10,110 @@
   } from 'area-true-treemap';
   import sample from '$lib/data/sample.json';
 
+  type Lang = 'de' | 'en';
+  let lang: Lang = 'de';
+
+  const translations: Record<Lang, Record<string, string>> = {
+    de: {
+      title: 'Treemap Vergleich',
+      subtitle: 'Area-True Treemap vs. Nested Treemap',
+      thesis: 'zur Masterthesis',
+      margin: 'Margin',
+      labels: 'Labels',
+      height: 'Höhe',
+      position: 'Position',
+      sort: 'Sortierung',
+      metric: 'Metrik',
+      collapse: 'Ordnerketten',
+      load: 'JSON',
+      sample: 'Beispiel',
+      posTop: 'oben',
+      posBottom: 'unten',
+      posLeft: 'links',
+      posRight: 'rechts',
+      sortDesc: 'absteigend',
+      sortAsc: 'aufsteigend',
+      sortNone: 'keine',
+      metricCol: 'Metrik',
+      mNodes: 'Knoten',
+      mLeaves: 'Blätter',
+      mMissing: 'Fehlende Knoten',
+      mMeanAspect: 'Ø Seitenverhältnis',
+      mMaxAspect: 'Max Seitenverhältnis',
+      mValueProp: 'Wertproportionalität',
+      mSpace: 'Platznutzung',
+      mTime: 'Berechnungszeit',
+      hNodes: 'Anzahl aller dargestellten Rechtecke (Ordner und Dateien).',
+      hLeaves: 'Anzahl der Blattknoten (Dateien) im Layout.',
+      hMissing:
+        'Knotensichtbarkeit (These): Anzahl Blattknoten, deren Breite oder Höhe ≤ 0 ist und die dadurch komplett verschwinden. Wichtigste Kennzahl der Arbeit — niedriger ist besser.',
+      hMeanAspect:
+        'Seitenverhältnis (These): Durchschnittliches Verhältnis der längeren zur kürzeren Seite über alle Knoten. 1 = Quadrat — niedriger ist besser.',
+      hMaxAspect: 'Schlechtestes (größtes) Seitenverhältnis über alle Knoten.',
+      hValueProp:
+        'Wertproportionalität (These): Varianzkoeffizient des Fläche/Metrik-Verhältnisses über alle Knoten. 0 = perfekt proportional zur Metrik — niedriger ist besser.',
+      hSpace:
+        'Platznutzung (These): Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. 100 % = volle Ausnutzung — höher ist besser.',
+      hTime: 'Zeitaufwand (These): Reine Berechnungszeit des Layout-Algorithmus in ms (ohne Rendering).',
+      areaTrue: 'Area-True Treemap',
+      areaTrueSub: 'verbessert, mit Abständen und Labels',
+      nested: 'Nested Treemap',
+      nestedSub: 'd3.js nested treemap',
+      empty: 'Keine Daten.',
+    },
+    en: {
+      title: 'Treemap Comparison',
+      subtitle: 'Area-True Treemap vs. Nested Treemap',
+      thesis: 'master thesis',
+      margin: 'Margin',
+      labels: 'Labels',
+      height: 'Height',
+      position: 'Position',
+      sort: 'Sort',
+      metric: 'Metric',
+      collapse: 'Folder chains',
+      load: 'JSON',
+      sample: 'Sample',
+      posTop: 'top',
+      posBottom: 'bottom',
+      posLeft: 'left',
+      posRight: 'right',
+      sortDesc: 'descending',
+      sortAsc: 'ascending',
+      sortNone: 'none',
+      metricCol: 'Metric',
+      mNodes: 'Nodes',
+      mLeaves: 'Leaves',
+      mMissing: 'Missing nodes',
+      mMeanAspect: 'Mean aspect ratio',
+      mMaxAspect: 'Max aspect ratio',
+      mValueProp: 'Value proportionality',
+      mSpace: 'Space utilization',
+      mTime: 'Compute time',
+      hNodes: 'Number of all rendered rectangles (folders and files).',
+      hLeaves: 'Number of leaf nodes (files) in the layout.',
+      hMissing:
+        'Node visibility (thesis): number of leaf nodes whose width or height ≤ 0, so they disappear entirely. Most important metric — lower is better.',
+      hMeanAspect:
+        'Aspect ratio (thesis): average ratio of the longer to the shorter side across all nodes. 1 = square — lower is better.',
+      hMaxAspect: 'Worst (largest) aspect ratio across all nodes.',
+      hValueProp:
+        'Value proportionality (thesis): coefficient of variation of the area/metric ratio across all nodes. 0 = perfectly proportional — lower is better.',
+      hSpace:
+        'Space utilization (thesis): fraction of the root area occupied by leaf nodes. 100% = full usage — higher is better.',
+      hTime: 'Time (thesis): pure layout computation time in ms (without rendering).',
+      areaTrue: 'Area-True Treemap',
+      areaTrueSub: 'improved, with gaps and labels',
+      nested: 'Nested Treemap',
+      nestedSub: 'd3.js nested treemap',
+      empty: 'No data.',
+    },
+  };
+
+  $: t = translations[lang];
+
   let loadedData: TreeNode = sample as TreeNode;
 
-  // Settings (compact, map onto the builder).
   let areaMetric = 'size';
   let marginPercent = 1.5;
   let topN = 3;
@@ -70,8 +171,8 @@
     const nestedMs = performance.now() - t0;
 
     results = [
-      { key: 'area-true', title: 'Area-True Treemap', subtitle: 'verbessert, mit Abständen und Labels', rects: areaTrueRects, labelPosition, stats: computeStats(areaTrueRects, areaTrueMs, totalLeaves, containerSize) },
-      { key: 'nested', title: 'Nested Treemap', subtitle: 'd3.js nested treemap', rects: nestedRects, labelPosition: LabelPosition.TOP, stats: computeStats(nestedRects, nestedMs, totalLeaves, containerSize) },
+      { key: 'area-true', title: t.areaTrue, subtitle: t.areaTrueSub, rects: areaTrueRects, labelPosition, stats: computeStats(areaTrueRects, areaTrueMs, totalLeaves, containerSize) },
+      { key: 'nested', title: t.nested, subtitle: t.nestedSub, rects: nestedRects, labelPosition: LabelPosition.TOP, stats: computeStats(nestedRects, nestedMs, totalLeaves, containerSize) },
     ];
   }
 
@@ -120,7 +221,8 @@
     topLevels: number,
   ): TreemapRect[] {
     const root = hierarchy(tree)
-      .sum((d) => d.attributes?.[metric] ?? 0)
+      // Only leaf nodes carry a value; internal nodes accumulate from children.
+      .sum((d) => (!d.children || d.children.length === 0 ? d.attributes?.[metric] ?? 0 : 0))
       .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
     const laidOut = treemap<TreeNode>()
       .size([size, size])
@@ -163,48 +265,16 @@
     return v.toFixed(digits);
   }
 
-  // Metric definitions with hover explanations (thesis, sec. "Bewertungsgrundlage").
-  const metricRows: { label: string; hint: string; format: (s: Stats) => string }[] = [
-    {
-      label: 'Knoten',
-      hint: 'Anzahl aller dargestellten Rechtecke (Ordner und Dateien).',
-      format: (s) => String(s.nodes),
-    },
-    {
-      label: 'Blätter',
-      hint: 'Anzahl der Blattknoten (Dateien) im Layout.',
-      format: (s) => String(s.leaves),
-    },
-    {
-      label: 'Fehlende Knoten',
-      hint: 'Knotensichtbarkeit (These): Anzahl Blattknoten, deren Breite oder Höhe ≤ 0 ist und die dadurch komplett verschwinden. Wichtigste Kennzahl der Arbeit — niedriger ist besser.',
-      format: (s) => String(s.missing),
-    },
-    {
-      label: 'Ø Seitenverhältnis',
-      hint: 'Seitenverhältnis (These): Durchschnittliches Verhältnis der längeren zur kürzeren Seite über alle Knoten. 1 = Quadrat — niedriger ist besser.',
-      format: (s) => fmt(s.meanAspect),
-    },
-    {
-      label: 'Max Seitenverhältnis',
-      hint: 'Schlechtestes (größtes) Seitenverhältnis über alle Knoten.',
-      format: (s) => fmt(s.maxAspect),
-    },
-    {
-      label: 'Wertproportionalität',
-      hint: 'Wertproportionalität (These): Varianzkoeffizient des Fläche/Metrik-Verhältnisses über alle Knoten. 0 = perfekt proportional zur Metrik — niedriger ist besser.',
-      format: (s) => fmt(s.valuePropCV),
-    },
-    {
-      label: 'Platznutzung',
-      hint: 'Platznutzung (These): Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. 100 % = volle Ausnutzung — höher ist besser.',
-      format: (s) => (s.spaceUtil * 100).toFixed(1) + ' %',
-    },
-    {
-      label: 'Berechnungszeit',
-      hint: 'Zeitaufwand (These): Reine Berechnungszeit des Layout-Algorithmus in ms (ohne Rendering).',
-      format: (s) => fmt(s.ms) + ' ms',
-    },
+  // Metric definitions (labels/hints are translated; see `translations`).
+  const metricRows: { labelKey: string; hintKey: string; format: (s: Stats) => string }[] = [
+    { labelKey: 'mNodes', hintKey: 'hNodes', format: (s) => String(s.nodes) },
+    { labelKey: 'mLeaves', hintKey: 'hLeaves', format: (s) => String(s.leaves) },
+    { labelKey: 'mMissing', hintKey: 'hMissing', format: (s) => String(s.missing) },
+    { labelKey: 'mMeanAspect', hintKey: 'hMeanAspect', format: (s) => fmt(s.meanAspect) },
+    { labelKey: 'mMaxAspect', hintKey: 'hMaxAspect', format: (s) => fmt(s.maxAspect) },
+    { labelKey: 'mValueProp', hintKey: 'hValueProp', format: (s) => fmt(s.valuePropCV) },
+    { labelKey: 'mSpace', hintKey: 'hSpace', format: (s) => (s.spaceUtil * 100).toFixed(1) + ' %' },
+    { labelKey: 'mTime', hintKey: 'hTime', format: (s) => fmt(s.ms) + ' ms' },
   ];
 
   function handleFileUpload(e: Event) {
@@ -216,7 +286,7 @@
       try {
         loadedData = JSON.parse(event.target?.result as string) as TreeNode;
       } catch {
-        alert('Ungültige JSON-Datei');
+        alert(lang === 'de' ? 'Ungültige JSON-Datei' : 'Invalid JSON file');
       }
     };
     reader.readAsText(file);
@@ -231,56 +301,82 @@
 <main>
   <header>
     <div class="heading">
-      <h1>Treemap Vergleich</h1>
+      <h1>{t.title}</h1>
       <p>
-        Area-True Treemap vs. Nested Treemap ·
-        <a href="https://github.com/BenediktMehl/master-thesis" target="_blank" rel="noopener">zur Masterthesis ↗</a>
+        {t.subtitle} ·
+        <a href="https://github.com/BenediktMehl/master-thesis" target="_blank" rel="noopener">{t.thesis} ↗</a>
       </p>
+      <div class="lang">
+        <button class:active={lang === 'de'} on:click={() => (lang = 'de')}>DE</button>
+        <button class:active={lang === 'en'} on:click={() => (lang = 'en')}>EN</button>
+      </div>
     </div>
 
     <div class="controls">
       <label class="c">
-        <span>Margin</span>
-        <input type="range" min="0" max="3" step="0.1" bind:value={marginPercent} />
-        <em>{marginPercent.toFixed(1)}%</em>
+        <span class="lbl">{t.margin}</span>
+        <span class="field">
+          <input type="range" min="0" max="3" step="0.1" bind:value={marginPercent} />
+          <output>{marginPercent.toFixed(1)}%</output>
+        </span>
       </label>
+
       <label class="c">
-        <span>Labels</span>
+        <span class="lbl">{t.labels}</span>
         <input type="number" min="0" max="10" bind:value={topN} />
       </label>
+
       <label class="c">
-        <span>Höhe</span>
-        <input type="number" min="0" max="20" bind:value={labelSizePercent} />%
+        <span class="lbl">{t.height}</span>
+        <span class="field">
+          <input type="number" min="0" max="20" bind:value={labelSizePercent} />
+          <span class="unit">%</span>
+        </span>
       </label>
+
       <label class="c">
-        <span>Position</span>
+        <span class="lbl">{t.position}</span>
         <select bind:value={labelPosition}>
-          <option value={LabelPosition.TOP}>oben</option>
-          <option value={LabelPosition.BOTTOM}>unten</option>
-          <option value={LabelPosition.LEFT}>links</option>
-          <option value={LabelPosition.RIGHT}>rechts</option>
+          <option value={LabelPosition.TOP}>{t.posTop}</option>
+          <option value={LabelPosition.BOTTOM}>{t.posBottom}</option>
+          <option value={LabelPosition.LEFT}>{t.posLeft}</option>
+          <option value={LabelPosition.RIGHT}>{t.posRight}</option>
         </select>
       </label>
+
       <label class="c">
-        <span>Sortierung</span>
+        <span class="lbl">{t.sort}</span>
         <select bind:value={sorting}>
-          <option value={SortingOption.DESCENDING}>absteigend</option>
-          <option value={SortingOption.ASCENDING}>aufsteigend</option>
-          <option value={SortingOption.NONE}>keine</option>
+          <option value={SortingOption.DESCENDING}>{t.sortDesc}</option>
+          <option value={SortingOption.ASCENDING}>{t.sortAsc}</option>
+          <option value={SortingOption.NONE}>{t.sortNone}</option>
         </select>
       </label>
+
       <label class="c">
-        <span>Metrik</span>
+        <span class="lbl">{t.metric}</span>
         <input type="text" bind:value={areaMetric} />
       </label>
-      <button class="toggle {collapseFolders ? 'on' : ''}" on:click={() => (collapseFolders = !collapseFolders)}>
-        {collapseFolders ? '✓' : '✗'} Ordnerketten
-      </button>
-      <label class="file">
-        📁 JSON
-        <input type="file" accept=".json,application/json" on:change={handleFileUpload} hidden />
-      </label>
-      <button class="file" on:click={loadSample}>↺ Beispiel</button>
+
+      <div class="c">
+        <span class="lbl">&nbsp;</span>
+        <button class="toggle {collapseFolders ? 'on' : ''}" on:click={() => (collapseFolders = !collapseFolders)}>
+          {collapseFolders ? '✓' : '✗'} {t.collapse}
+        </button>
+      </div>
+
+      <div class="c">
+        <span class="lbl">&nbsp;</span>
+        <label class="file">
+          📁 {t.load}
+          <input type="file" accept=".json,application/json" on:change={handleFileUpload} hidden />
+        </label>
+      </div>
+
+      <div class="c">
+        <span class="lbl">&nbsp;</span>
+        <button class="file" on:click={loadSample}>↺ {t.sample}</button>
+      </div>
     </div>
   </header>
 
@@ -288,14 +384,14 @@
     <table>
       <thead>
         <tr>
-          <th>Metrik <span class="hint">(Hover für Erklärung)</span></th>
+          <th>{t.metricCol}</th>
           {#each results as r (r.key)}<th>{r.title}</th>{/each}
         </tr>
       </thead>
       <tbody>
-        {#each metricRows as m (m.label)}
+        {#each metricRows as m (m.labelKey)}
           <tr>
-            <td class="metric-label" title={m.hint}>{m.label} <span class="info">ⓘ</span></td>
+            <td class="metric-label" title={t[m.hintKey]}>{t[m.labelKey]} <span class="info">ⓘ</span></td>
             {#each results as r (r.key)}<td>{m.format(r.stats)}</td>{/each}
           </tr>
         {/each}
@@ -313,7 +409,7 @@
         {#if r.rects.length > 0}
           <TreemapSvg rects={r.rects} {containerSize} labelPosition={r.labelPosition} showValues />
         {:else}
-          <div class="empty">Keine Daten.</div>
+          <div class="empty">{t.empty}</div>
         {/if}
       </div>
     {/each}
@@ -333,6 +429,10 @@
     margin-bottom: 22px;
   }
 
+  .heading {
+    position: relative;
+  }
+
   .heading h1 {
     margin: 0 0 4px;
     font-size: 26px;
@@ -346,48 +446,94 @@
     font-size: 14px;
   }
 
+  .lang {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    gap: 4px;
+  }
+
+  .lang button {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .lang button.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
   .controls {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px 14px;
+    gap: 10px 18px;
     align-items: flex-end;
   }
 
   .c {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 4px;
+  }
+
+  .lbl {
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--muted);
   }
 
+  .field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
   .c input[type='number'],
-  .c input[type='text'],
-  .c select {
+  .c input[type='text'] {
     background: #fff;
     border: 1px solid var(--border);
     border-radius: 4px;
     color: var(--text);
-    padding: 4px 6px;
+    padding: 5px 7px;
     font-size: 12px;
     width: 64px;
   }
 
   .c input[type='text'] {
-    width: 72px;
+    width: 80px;
+  }
+
+  .c select {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    padding: 5px 7px;
+    font-size: 12px;
+    min-width: 110px;
   }
 
   .c input[type='range'] {
-    width: 90px;
+    width: 120px;
   }
 
-  .c em {
-    font-style: normal;
-    font-size: 11px;
+  .c output {
+    font-size: 12px;
     color: var(--text);
-    text-transform: none;
+    min-width: 36px;
+  }
+
+  .unit {
+    font-size: 12px;
+    color: var(--muted);
   }
 
   .toggle,
@@ -396,7 +542,7 @@
     border: 1px solid var(--border);
     border-radius: 4px;
     color: var(--text);
-    padding: 4px 8px;
+    padding: 5px 9px;
     font-size: 12px;
     cursor: pointer;
     white-space: nowrap;
@@ -453,12 +599,6 @@
   .info {
     font-size: 11px;
     opacity: 0.6;
-  }
-
-  .hint {
-    font-weight: 400;
-    font-size: 11px;
-    color: #9a9a9a;
   }
 
   a {
