@@ -1,63 +1,53 @@
 <script lang="ts">
-  import { TreemapRect } from '$lib/types';
-  import { interpolateViridis } from 'd3-scale-chromatic';
+  import type { TreemapRect } from 'improved-treemap';
 
   export let rects: TreemapRect[] = [];
-  export let minSize: number = 20;
-  export let containerSize: number = 1000;
+  export let containerSize = 1000;
+  export let minSize = 8;
 
-  // Compute depth range for color gradient
   $: depthRange = {
     min: Math.min(...rects.map((r) => r.depth), 0),
     max: Math.max(...rects.map((r) => r.depth), 1),
   };
 
-  // Filter rects by minSize
   $: visibleRects = rects.filter((r) => r.width >= minSize || r.height >= minSize);
 
-  // Color based on depth using viridis gradient
+  // Simple, dependency-free depth-based color scale (blue → purple).
   function getColor(depth: number): string {
-    const normalized = depthRange.max > depthRange.min 
-      ? (depth - depthRange.min) / (depthRange.max - depthRange.min)
-      : 0;
-    return interpolateViridis(normalized);
+    const t = depthRange.max > depthRange.min ? (depth - depthRange.min) / (depthRange.max - depthRange.min) : 0;
+    const hue = 210 + t * 90;
+    const lightness = 58 - t * 22;
+    return `hsl(${hue}, 65%, ${lightness}%)`;
   }
 
-  // Truncate long names for label display
-  function truncateName(name: string, maxLen: number = 20): string {
-    if (name.length > maxLen) {
-      return name.substring(0, maxLen - 2) + '…';
-    }
-    return name;
+  function truncateName(name: string, maxLen = 22): string {
+    return name.length > maxLen ? name.substring(0, maxLen - 1) + '…' : name;
   }
 
-  // Determine if we should show text inside the rect
   function shouldShowLabel(rect: TreemapRect): boolean {
-    const minDim = Math.min(rect.width, rect.height);
-    return minDim > 40 && !rect.hasLabel;
+    return Math.min(rect.width, rect.height) > 40;
   }
 </script>
 
-<div class="relative bg-gray-100 border-2 border-gray-300 rounded" style="width: {containerSize}px; height: {containerSize}px;">
-  <svg width={containerSize} height={containerSize} viewBox="0 0 {containerSize} {containerSize}" class="w-full h-full">
-    <!-- Draw rectangles with borders and labels -->
+<div class="container">
+  <svg width={containerSize} height={containerSize} viewBox="0 0 {containerSize} {containerSize}">
     {#each visibleRects as rect (rect.name + rect.x + rect.y)}
       <g>
-        <!-- Rectangle -->
         <rect
           x={rect.x}
           y={rect.y}
           width={rect.width}
           height={rect.height}
           fill={getColor(rect.depth)}
-          stroke="#fff"
+          stroke="#ffffff"
           stroke-width="2"
-          opacity="0.9"
-          class="transition-opacity hover:opacity-100 cursor-pointer"
+          opacity="0.92"
         />
-        
-        <!-- Label (if space allows and not a labeled folder) -->
-        {#if shouldShowLabel(rect)}
+        {#if rect.hasLabel}
+          <text x={rect.x + 4} y={rect.y + 18} font-size="14" font-weight="700" fill="#fff" pointer-events="none">
+            {truncateName(rect.name)}
+          </text>
+        {:else if shouldShowLabel(rect)}
           <text
             x={rect.x + rect.width / 2}
             y={rect.y + rect.height / 2}
@@ -67,22 +57,6 @@
             font-weight="500"
             fill="#fff"
             pointer-events="none"
-            class="select-none text-shadow"
-          >
-            {truncateName(rect.name)}
-          </text>
-        {/if}
-
-        <!-- Folder label (top-left, if labeled) -->
-        {#if rect.hasLabel}
-          <text
-            x={rect.x + 4}
-            y={rect.y + 18}
-            font-size="14"
-            font-weight="700"
-            fill="#fff"
-            pointer-events="none"
-            class="select-none text-shadow"
           >
             {truncateName(rect.name)}
           </text>
@@ -91,3 +65,21 @@
     {/each}
   </svg>
 </div>
+
+<style>
+  .container {
+    max-width: 100%;
+    overflow: hidden;
+    border-radius: 8px;
+  }
+
+  svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  text {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  }
+</style>

@@ -4,8 +4,6 @@
 
 `improved-treemap` is a dependency-free TypeScript library that computes a **squarified treemap** (Bruls et al.) extended with configurable gaps ("margin") between nodes and optional folder labels. Unlike a plain squarify that simply insets rectangles, the margin is applied during layout so that no node disappears and area proportions are preserved as closely as possible.
 
-The algorithm is based on the concepts described in [Vergleich und Optimierung von 3D-Visualisierungen für die Darstellung von Software-Qualitätsmetriken](https://github.com/BenediktMehl/master-thesis/blob/main/thesis.pdf).
-
 ## Features
 
 - Area-true rectangles: proportional areas, no node vanishes.
@@ -56,8 +54,6 @@ const rects = layout.compute(data, { width: 1000, height: 1000 });
 
 ## Input data format
 
-The input is a plain tree of nodes:
-
 ```ts
 interface TreeNode {
   name: string;
@@ -68,12 +64,10 @@ interface TreeNode {
 
 - The area of a node is read from `attributes[areaMetric]` (default metric `"size"`).
 - **Leaf** nodes contribute their own attribute value.
-- The value of a **non-leaf** node is the sum of its children and is computed automatically — you do not need to store aggregate values on folders.
+- The value of a **non-leaf** node is the sum of its children and is computed automatically.
 - Nodes with a non-positive total value are omitted from the output.
 
 ## Configuration (builder pattern)
-
-Build a configuration with the fluent builder and pass it to `TreemapLayout`:
 
 ```ts
 const config = TreemapLayout.builder()
@@ -98,13 +92,13 @@ const config = TreemapLayout.builder()
 | `aspectRatio(value)` | `number` | `1.618` | Target aspect ratio for the squarify heuristic. |
 | `build()` | — | — | Returns a resolved, immutable `TreemapConfig`. |
 
-`SortingOption` is one of `"descending"`, `"ascending"`, or `"none"` (imported as the `SortingOption` enum).
+`SortingOption` is one of `"descending"`, `"ascending"`, or `"none"`.
 
 ### Settings explained
 
-- **margin** — the core "gap" feature. A value of `0.02` means a gap of roughly 2% of the canvas size between sibling nodes. Because the exact relative distance can only be determined after a layout pass, the value is an approximation based on the first pass (this matches the thesis finding of choosing between 0.5% and 3% relative distance).
-- **labels** — `topLevels` is the number of top hierarchy levels that reserve space for a folder label (thesis recommends N between 2 and 5). `sizeRatio` is the label height as a fraction of the canvas (thesis recommends L between 3% and 10%).
-- **collapseFolders** — whether to merge single-child folder chains. This is a design decision left to the user; the thesis default is `true`.
+- **margin** — the core "gap" feature. `0.02` means a gap of roughly 2% of the canvas size between sibling nodes. The value is an approximation based on the first layout pass (matching the thesis finding of choosing between 0.5% and 3% relative distance).
+- **labels** — `topLevels` reserves space for folder labels on the top N levels (thesis recommends 2–5). `sizeRatio` is the label height as a fraction of the canvas (thesis recommends 3%–10%).
+- **collapseFolders** — whether to merge single-child folder chains (thesis default: `true`).
 - **sorting** — the thesis default is descending by size.
 
 ## API
@@ -119,34 +113,21 @@ class TreemapLayout {
 }
 ```
 
-`LayoutOptions` is `{ width?: number; height?: number }`. When omitted, a square `1000x1000` canvas is used. The layout is scale-invariant: the same tree produces the same relative rectangles for any size.
+`LayoutOptions` is `{ width?: number; height?: number }`. When omitted, a square `1000x1000` canvas is used. The layout is scale-invariant.
 
-The returned `TreemapRect[]` contains absolute coordinates starting at the top-left `(0, 0)`. The root container itself is **not** included.
-
-### `TreemapConfigBuilder`
-
-Fluent builder as documented above. All setter methods return `this` for chaining and validate their input (invalid values throw).
+The returned `TreemapRect[]` contains absolute coordinates starting at `(0, 0)`. The root container itself is **not** included.
 
 ### Exported types
 
 `TreeNode`, `TreemapRect`, `TreemapConfig`, `LabelConfig`, `LayoutOptions`, `SortingOption`, `DEFAULT_CONFIG`, `DEFAULT_ASPECT_RATIO`.
 
-## Demo
-
-An interactive demo (Svelte) that lets you tweak every setting live is included in [`demo/`](./demo):
-
-```bash
-npm install
-npm run dev:demo      # starts the demo on http://localhost:5173
-```
-
 ## Development
 
 ```bash
-npm install           # install all workspaces
-npm run build         # build the library (ESM + CJS + types)
-npm test              # build + run the test suite
-npm run typecheck     # type-check the library
+npm install       # install dev dependencies
+npm run build     # build ESM + CJS + types (dist/)
+npm test          # build + run tests
+npm run typecheck # type-check
 ```
 
 ## License

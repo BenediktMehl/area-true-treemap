@@ -1,240 +1,321 @@
 <script lang="ts">
   import TreemapSvg from '$lib/components/TreemapSvg.svelte';
-  import { runAreaTrueLayout } from '$lib/algorithms/areaTrue/adapter';
-  import {
-    settings,
-    marginPreset,
-    labelPreset,
-    collapseFolders,
-    applySiblingMargin,
-    minSize,
-  } from '$lib/state/settings';
-  import type { TreeNode, TreemapRect } from '$lib/types';
+  import { TreemapLayout, SortingOption, type TreeNode, type TreemapRect } from 'improved-treemap';
+  import sample from '$lib/data/sample.json';
 
-  // Load sample data directly as object instead of importing JSON
-  const sampleData: TreeNode = {
-    name: "root",
-    attributes: {
-      size: 10000
-    },
-    children: [
-      {
-        name: "folder-a",
-        attributes: { size: 3500 },
-        children: [
-          { name: "module-a1", attributes: { size: 1200 } },
-          { name: "module-a2", attributes: { size: 1800 } },
-          { name: "module-a3", attributes: { size: 500 } }
-        ]
-      },
-      {
-        name: "folder-b",
-        attributes: { size: 3000 },
-        children: [
-          { name: "module-b1", attributes: { size: 1500 } },
-          { name: "module-b2", attributes: { size: 1000 } },
-          { name: "module-b3", attributes: { size: 500 } }
-        ]
-      },
-      {
-        name: "folder-c",
-        attributes: { size: 2000 },
-        children: [
-          { name: "module-c1", attributes: { size: 1000 } },
-          { name: "module-c2", attributes: { size: 700 } },
-          { name: "module-c3", attributes: { size: 300 } }
-        ]
-      },
-      {
-        name: "folder-d",
-        attributes: { size: 1500 },
-        children: [
-          { name: "module-d1", attributes: { size: 800 } },
-          { name: "module-d2", attributes: { size: 700 } }
-        ]
-      }
-    ]
-  };
+  let loadedData: TreeNode = sample as TreeNode;
 
-  let loadedData: TreeNode = sampleData;
+  // Reactive settings — each one maps directly onto the builder.
+  let areaMetric = 'size';
+  let marginPercent = 1.5;
+  let topN = 3;
+  let labelSizePercent = 5;
+  let collapseFolders = true;
+  let sorting: SortingOption = SortingOption.DESCENDING;
 
+  const containerSize = 1000;
+
+  // Recompute the layout whenever any setting or the data changes.
   let rects: TreemapRect[] = [];
-  let containerSize = 1000;
+  $: {
+    const config = TreemapLayout.builder()
+      .areaMetric(areaMetric)
+      .margin(marginPercent / 100)
+      .labels(topN, labelSizePercent / 100)
+      .collapseFolders(collapseFolders)
+      .sorting(sorting)
+      .build();
 
-  // Recompute layout when settings change
-  $: if (loadedData && $settings) {
-    rects = runAreaTrueLayout(loadedData, $settings, containerSize);
+    rects = new TreemapLayout(config).compute(loadedData, {
+      width: containerSize,
+      height: containerSize,
+    });
   }
 
-  // File upload handler
   function handleFileUpload(e: Event) {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const json = JSON.parse(event.target?.result as string);
-        loadedData = json;
-      } catch (err) {
+        loadedData = JSON.parse(event.target?.result as string) as TreeNode;
+      } catch {
         alert('Invalid JSON file');
       }
     };
     reader.readAsText(file);
+    input.value = '';
   }
 
-  // Reset to sample
   function loadSample() {
-    loadedData = sampleData;
+    loadedData = sample as TreeNode;
   }
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white">
-  <!-- Header -->
-  <header class="bg-black bg-opacity-40 backdrop-blur border-b border-blue-500 shadow-lg">
-    <div class="max-w-7xl mx-auto px-6 py-4">
-      <div class="flex justify-between items-center mb-4">
-        <h1 class="text-3xl font-bold">Area-True Treemap 2D Visualization</h1>
-        <div class="text-sm text-blue-200">Interactive Thesis Algorithm Demo</div>
-      </div>
+<main>
+  <header>
+    <div class="title">
+      <h1>Area-True Treemap</h1>
+      <p>Interaktive Demo für das Paket <code>improved-treemap</code></p>
+    </div>
 
-      <!-- Control Bar -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <!-- Margin Preset -->
-        <div>
-          <label for="margin-select" class="block text-xs font-semibold text-blue-300 mb-1">Margin (relative)</label>
-          <select id="margin-select" bind:value={$marginPreset} class="w-full px-3 py-2 bg-gray-800 border border-blue-500 rounded text-sm hover:border-blue-400 transition">
-            <option value="auto">Auto (~1.5%)</option>
-            <option value="0.5%">0.5%</option>
-            <option value="1%">1%</option>
-            <option value="2%">2%</option>
-            <option value="3%">3%</option>
-          </select>
-        </div>
+    <div class="controls">
+      <label class="control">
+        <span>Margin (relativ)</span>
+        <input type="range" min="0" max="3" step="0.1" bind:value={marginPercent} />
+        <output>{marginPercent.toFixed(1)}%</output>
+      </label>
 
-        <!-- Label Preset: Top N -->
-        <div>
-          <label for="label-topn" class="block text-xs font-semibold text-blue-300 mb-1">Top Labels (N)</label>
-          <input
-            id="label-topn"
-            type="number"
-            min="0"
-            max="10"
-            bind:value={$labelPreset.topN}
-            class="w-full px-3 py-2 bg-gray-800 border border-blue-500 rounded text-sm hover:border-blue-400 transition"
-          />
-        </div>
+      <label class="control">
+        <span>Top-Labels (N)</span>
+        <input type="number" min="0" max="10" bind:value={topN} />
+      </label>
 
-        <!-- Label Preset: Size % -->
-        <div>
-          <label for="label-size" class="block text-xs font-semibold text-blue-300 mb-1">Label Size (%)</label>
-          <input
-            id="label-size"
-            type="number"
-            min="1"
-            max="20"
-            bind:value={$labelPreset.sizePercent}
-            class="w-full px-3 py-2 bg-gray-800 border border-blue-500 rounded text-sm hover:border-blue-400 transition"
-          />
-        </div>
+      <label class="control">
+        <span>Label-Höhe (%)</span>
+        <input type="number" min="0" max="20" bind:value={labelSizePercent} />
+      </label>
 
-        <!-- Min Render Size -->
-        <div>
-          <label for="min-size" class="block text-xs font-semibold text-blue-300 mb-1">Min Size (px)</label>
-          <input
-            id="min-size"
-            type="number"
-            min="5"
-            max="100"
-            bind:value={$minSize}
-            class="w-full px-3 py-2 bg-gray-800 border border-blue-500 rounded text-sm hover:border-blue-400 transition"
-          />
-        </div>
-      </div>
+      <label class="control">
+        <span>Sortierung</span>
+        <select bind:value={sorting}>
+          <option value={SortingOption.DESCENDING}>Absteigend</option>
+          <option value={SortingOption.ASCENDING}>Aufsteigend</option>
+          <option value={SortingOption.NONE}>Keine</option>
+        </select>
+      </label>
 
-      <!-- Toggle Buttons -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-        <button
-          on:click={() => ($collapseFolders = !$collapseFolders)}
-          class={`px-4 py-2 rounded font-semibold text-sm transition transform hover:scale-105 ${
-            $collapseFolders
-              ? 'bg-blue-600 border border-blue-400'
-              : 'bg-gray-700 border border-gray-600'
-          }`}
-        >
-          {$collapseFolders ? '✓' : '◯'} Collapse Folders
-        </button>
+      <label class="control">
+        <span>Flächen-Metrik</span>
+        <input type="text" bind:value={areaMetric} />
+      </label>
 
-        <button
-          on:click={() => ($applySiblingMargin = !$applySiblingMargin)}
-          class={`px-4 py-2 rounded font-semibold text-sm transition transform hover:scale-105 ${
-            $applySiblingMargin
-              ? 'bg-blue-600 border border-blue-400'
-              : 'bg-gray-700 border border-gray-600'
-          }`}
-        >
-          {$applySiblingMargin ? '✓' : '◯'} Sibling Gaps
-        </button>
+      <button class="toggle {collapseFolders ? 'on' : ''}" on:click={() => (collapseFolders = !collapseFolders)}>
+        {collapseFolders ? '✓' : '✗'} Ordnerketten zusammenfalten
+      </button>
+    </div>
 
-        <label class="px-4 py-2 rounded font-semibold text-sm bg-green-700 border border-green-500 cursor-pointer transition transform hover:scale-105 flex items-center justify-center">
-          📁 Load JSON
-          <input type="file" accept=".json" on:change={handleFileUpload} class="hidden" />
-        </label>
-
-        <button
-          on:click={loadSample}
-          class="px-4 py-2 rounded font-semibold text-sm bg-purple-700 border border-purple-500 transition transform hover:scale-105"
-        >
-          🔄 Load Sample
-        </button>
-      </div>
+    <div class="actions">
+      <label class="button">
+        📁 JSON laden
+        <input type="file" accept=".json,application/json" on:change={handleFileUpload} hidden />
+      </label>
+      <button class="button" on:click={loadSample}>↺ Beispiel laden</button>
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-6 py-8">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Treemap Visualization -->
-      <div class="lg:col-span-2">
-        <div class="bg-white bg-opacity-5 backdrop-blur border border-blue-500 rounded-lg p-6 shadow-2xl">
-          <h2 class="text-xl font-bold mb-4 text-blue-300">Layout Visualization</h2>
-          {#if rects.length > 0}
-            <div class="flex justify-center">
-              <TreemapSvg {rects} minSize={$minSize} {containerSize} />
-            </div>
-            <p class="text-xs text-gray-400 mt-2">
-              Rendered {rects.length} nodes · Margin: {$marginPreset} · Labels: top {$labelPreset.topN}
-            </p>
-          {:else}
-            <div class="text-center text-gray-400 py-16">No data to display. Load a JSON file.</div>
-          {/if}
-        </div>
-      </div>
-
-      <!-- Info Panel -->
-      <aside class="bg-white bg-opacity-5 backdrop-blur border border-blue-500 rounded-lg p-6 shadow-2xl h-fit">
-        <h3 class="text-lg font-bold mb-4 text-blue-300">Settings Info</h3>
-        <div class="space-y-2 text-sm text-gray-300">
-          <p><strong>Margin:</strong> {$marginPreset} (relative distance from thesis)</p>
-          <p><strong>Top Labels:</strong> {$labelPreset.topN} levels, {$labelPreset.sizePercent}% height</p>
-          <p><strong>Collapse Folders:</strong> {$collapseFolders ? 'Yes' : 'No'}</p>
-          <p><strong>Sibling Gaps:</strong> {$applySiblingMargin ? 'Yes' : 'No'}</p>
-          <p><strong>Min Render Size:</strong> {$minSize}px</p>
-          <hr class="border-blue-600 my-3" />
-          <p class="text-xs text-blue-200">
-            <strong>Thesis Defaults (fixed):</strong>
-            <br />
-            • Aspect ratio: 1
-            <br />
-            • Sort order: Descending
-            <br />
-            • Size mode: Relative
-            <br />
-            • Algorithm: Single pass
-          </p>
-        </div>
-      </aside>
+  <section class="layout">
+    <div class="canvas">
+      {#if rects.length > 0}
+        <TreemapSvg {rects} {containerSize} />
+        <p class="meta">{rects.length} Rechtecke gerendert</p>
+      {:else}
+        <div class="empty">Keine Daten zum Anzeigen. Bitte eine JSON-Datei laden.</div>
+      {/if}
     </div>
-  </main>
-</div>
+
+    <aside>
+      <h2>Aktuelle Konfiguration</h2>
+      <dl>
+        <dt>Margin</dt>
+        <dd>{(marginPercent / 100).toFixed(3)} ({marginPercent.toFixed(1)}%)</dd>
+        <dt>Top-Labels</dt>
+        <dd>{topN} Ebenen, {labelSizePercent}% Höhe</dd>
+        <dt>Sortierung</dt>
+        <dd>{sorting === SortingOption.NONE ? 'keine' : sorting}</dd>
+        <dt>Flächen-Metrik</dt>
+        <dd>{areaMetric}</dd>
+        <dt>Ordnerketten</dt>
+        <dd>{collapseFolders ? 'zusammengefaltet' : 'nicht zusammengefaltet'}</dd>
+      </dl>
+
+      <h2>Builder-Code</h2>
+      <pre><code>TreemapLayout.builder()
+  .areaMetric('{areaMetric}')
+  .margin({(marginPercent / 100).toFixed(3)})
+  .labels({topN}, {(labelSizePercent / 100).toFixed(2)})
+  .collapseFolders({collapseFolders})
+  .sorting(SortingOption.{sorting.toUpperCase()})
+  .build()</code></pre>
+    </aside>
+  </section>
+</main>
+
+<style>
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  header {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(96, 165, 250, 0.4);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(8px);
+  }
+
+  .title h1 {
+    margin: 0 0 4px;
+    font-size: 28px;
+  }
+
+  .title p {
+    margin: 0 0 16px;
+    color: #93c5fd;
+    font-size: 14px;
+  }
+
+  code {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    align-items: end;
+  }
+
+  .control {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    color: #bfdbfe;
+  }
+
+  .control input[type='range'] {
+    width: 100%;
+  }
+
+  .control input[type='number'],
+  .control input[type='text'],
+  .control select {
+    background: #1e293b;
+    border: 1px solid #3b82f6;
+    border-radius: 6px;
+    color: #e2e8f0;
+    padding: 7px 9px;
+    font-size: 14px;
+  }
+
+  .control output {
+    font-size: 13px;
+    color: #e2e8f0;
+  }
+
+  .toggle,
+  .button {
+    background: #334155;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    color: #e2e8f0;
+    padding: 10px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .toggle.on {
+    background: #2563eb;
+    border-color: #60a5fa;
+  }
+
+  .button:hover,
+  .toggle:hover {
+    transform: translateY(-1px);
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media (max-width: 800px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .canvas {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(96, 165, 250, 0.4);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .meta {
+    color: #94a3b8;
+    font-size: 12px;
+    margin: 10px 0 0;
+  }
+
+  .empty {
+    color: #94a3b8;
+    padding: 80px 0;
+    text-align: center;
+  }
+
+  aside {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(96, 165, 250, 0.4);
+    border-radius: 12px;
+    padding: 18px;
+  }
+
+  aside h2 {
+    font-size: 16px;
+    margin: 0 0 10px;
+    color: #93c5fd;
+  }
+
+  dl {
+    margin: 0 0 16px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 12px;
+    font-size: 13px;
+  }
+
+  dt {
+    color: #94a3b8;
+  }
+
+  dd {
+    margin: 0;
+    color: #e2e8f0;
+    word-break: break-word;
+  }
+
+  pre {
+    background: #0b1220;
+    border-radius: 8px;
+    padding: 12px;
+    overflow-x: auto;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  pre code {
+    background: none;
+    padding: 0;
+  }
+</style>

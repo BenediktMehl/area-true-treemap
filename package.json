@@ -1,0 +1,17 @@
+{
+  "name": "improved-treemap-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Monorepo: improved-treemap npm package + interactive demo",
+  "workspaces": [
+    "packages/*",
+    "demo"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace improved-treemap",
+    "build:demo": "npm run build && npm run build --workspace treemap-demo",
+    "dev:demo": "npm run build && npm run dev --workspace treemap-demo",
+    "test": "npm run test --workspace improved-treemap",
+    "typecheck": "npm run typecheck --workspace improved-treemap"
+  }
+}
