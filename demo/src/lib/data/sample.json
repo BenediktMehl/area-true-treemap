@@ -1,0 +1,106 @@
+{
+  "name": "root",
+  "attributes": {
+    "size": 10000
+  },
+  "children": [
+    {
+      "name": "folder-a",
+      "attributes": {
+        "size": 3500
+      },
+      "children": [
+        {
+          "name": "module-a1",
+          "attributes": {
+            "size": 1200
+          }
+        },
+        {
+          "name": "module-a2",
+          "attributes": {
+            "size": 1800
+          }
+        },
+        {
+          "name": "module-a3",
+          "attributes": {
+            "size": 500
+          }
+        }
+      ]
+    },
+    {
+      "name": "folder-b",
+      "attributes": {
+        "size": 3000
+      },
+      "children": [
+        {
+          "name": "module-b1",
+          "attributes": {
+            "size": 1500
+          }
+        },
+        {
+          "name": "module-b2",
+          "attributes": {
+            "size": 1000
+          }
+        },
+        {
+          "name": "module-b3",
+          "attributes": {
+            "size": 500
+          }
+        }
+      ]
+    },
+    {
+      "name": "folder-c",
+      "attributes": {
+        "size": 2000
+      },
+      "children": [
+        {
+          "name": "module-c1",
+          "attributes": {
+            "size": 1000
+          }
+        },
+        {
+          "name": "module-c2",
+          "attributes": {
+            "size": 700
+          }
+        },
+        {
+          "name": "module-c3",
+          "attributes": {
+            "size": 300
+          }
+        }
+      ]
+    },
+    {
+      "name": "folder-d",
+      "attributes": {
+        "size": 1500
+      },
+      "children": [
+        {
+          "name": "module-d1",
+          "attributes": {
+            "size": 800
+          }
+        },
+        {
+          "name": "module-d2",
+          "attributes": {
+            "size": 700
+          }
+        }
+      ]
+    }
+  ]
+}
