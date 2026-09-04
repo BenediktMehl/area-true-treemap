@@ -139,6 +139,7 @@
     key: string;
     title: string;
     subtitle: string;
+    repoUrl: string;
     rects: TreemapRect[];
     labelPosition: LabelPosition;
     stats: Stats;
@@ -171,8 +172,8 @@
     const nestedMs = performance.now() - t0;
 
     results = [
-      { key: 'area-true', title: t.areaTrue, subtitle: t.areaTrueSub, rects: areaTrueRects, labelPosition, stats: computeStats(areaTrueRects, areaTrueMs, totalLeaves, containerSize) },
-      { key: 'nested', title: t.nested, subtitle: t.nestedSub, rects: nestedRects, labelPosition: LabelPosition.TOP, stats: computeStats(nestedRects, nestedMs, totalLeaves, containerSize) },
+      { key: 'area-true', title: t.areaTrue, subtitle: t.areaTrueSub, repoUrl: 'https://github.com/BenediktMehl/master-thesis', rects: areaTrueRects, labelPosition, stats: computeStats(areaTrueRects, areaTrueMs, totalLeaves, containerSize) },
+      { key: 'nested', title: t.nested, subtitle: t.nestedSub, repoUrl: 'https://github.com/d3/d3-hierarchy', rects: nestedRects, labelPosition: LabelPosition.TOP, stats: computeStats(nestedRects, nestedMs, totalLeaves, containerSize) },
     ];
   }
 
@@ -418,7 +419,7 @@
       <div class="panel">
         <div class="panel-head">
           <h2>{r.title}</h2>
-          <span class="sub">{r.subtitle}</span>
+          <span class="sub"><a href={r.repoUrl} target="_blank" rel="noopener">{r.subtitle} ↗</a></span>
         </div>
         {#if r.rects.length > 0}
           <TreemapSvg rects={r.rects} {containerSize} labelPosition={r.labelPosition} showValues />
