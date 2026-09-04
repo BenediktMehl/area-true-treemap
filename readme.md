@@ -2,6 +2,14 @@
 
 > Area-true squarified treemap layout with configurable gaps between nodes — without losing any node.
 
+<p align="center">
+  <a href="https://benediktmehl.github.io/ImprovedTreeMap/">
+    <img src="https://img.shields.io/badge/Live%20Demo-%E2%96%B6%20Open-brightgreen?style=for-the-badge&logo=github" alt="Live Demo" />
+  </a>
+</p>
+
+👉 **Live-Demo: https://benediktmehl.github.io/ImprovedTreeMap/**
+
 `improved-treemap` is a dependency-free TypeScript library that computes a **squarified treemap** (Bruls et al.) extended with configurable gaps ("margin") between nodes and optional folder labels. Unlike a plain squarify that simply insets rectangles, the margin is applied during layout so that no node disappears and area proportions are preserved as closely as possible.
 
 The algorithm is based on the concepts described in [Vergleich und Optimierung von 3D-Visualisierungen für die Darstellung von Software-Qualitätsmetriken](https://github.com/BenediktMehl/master-thesis/blob/main/thesis.pdf).
@@ -80,6 +88,7 @@ const config = TreemapLayout.builder()
   .areaMetric("size")
   .margin(0.015)
   .labels(3, 0.05)
+  .labelPosition(LabelPosition.TOP)
   .collapseFolders(true)
   .sorting(SortingOption.DESCENDING)
   .aspectRatio(1.618)
@@ -95,10 +104,11 @@ const config = TreemapLayout.builder()
 | `collapseFolders(value)` | `boolean` | `true` | Merge single-child folder chains into a combined name (`a/b/c`). |
 | `sorting(value)` | `SortingOption` | `DESCENDING` | Order in which siblings are placed. |
 | `labels(topLevels, sizeRatio)` | `number, number` | `3, 0.05` | Number of top levels that get a label and label height as fraction (0–1). |
+| `labelPosition(position)` | `LabelPosition` | `TOP` | Where labels are placed: `top`, `bottom`, `left`, or `right`. |
 | `aspectRatio(value)` | `number` | `1.618` | Target aspect ratio for the squarify heuristic. |
 | `build()` | — | — | Returns a resolved, immutable `TreemapConfig`. |
 
-`SortingOption` is one of `"descending"`, `"ascending"`, or `"none"` (imported as the `SortingOption` enum).
+`SortingOption` is one of `"descending"`, `"ascending"`, or `"none"`. `LabelPosition` is one of `"top"`, `"bottom"`, `"left"`, or `"right"`.
 
 ### Settings explained
 
@@ -129,7 +139,7 @@ Fluent builder as documented above. All setter methods return `this` for chainin
 
 ### Exported types
 
-`TreeNode`, `TreemapRect`, `TreemapConfig`, `LabelConfig`, `LayoutOptions`, `SortingOption`, `DEFAULT_CONFIG`, `DEFAULT_ASPECT_RATIO`.
+`TreeNode`, `TreemapRect`, `TreemapConfig`, `LabelConfig`, `LayoutOptions`, `SortingOption`, `LabelPosition`, `DEFAULT_CONFIG`, `DEFAULT_ASPECT_RATIO`.
 
 ## Demo
 

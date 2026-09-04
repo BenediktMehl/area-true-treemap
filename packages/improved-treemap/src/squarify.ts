@@ -44,6 +44,14 @@ export enum SortingOption {
     DESCENDING = "descending",
 }
 
+/** Where a folder label is placed relative to its node. */
+export enum LabelPosition {
+    TOP = "top",
+    BOTTOM = "bottom",
+    LEFT = "left",
+    RIGHT = "right",
+}
+
 /**
  * Recursively lay out `parent` and all of its descendants in place.
  *
@@ -51,6 +59,7 @@ export enum SortingOption {
  * @param sortingOption Order in which siblings are placed.
  * @param labelsEnabled Whether folder labels reserve space.
  * @param labelLength   Absolute height (in layout units) reserved per label.
+ * @param labelPosition Where labels are placed.
  * @param aspectRatio   Target aspect ratio for the squarify heuristic.
  */
 export function squarify(
@@ -59,12 +68,13 @@ export function squarify(
     sortingOption: SortingOption,
     labelsEnabled: boolean,
     labelLength: number,
+    labelPosition: LabelPosition,
     aspectRatio: number,
 ): void {
-    squarifyNode(parent, margin, sortingOption, labelsEnabled, labelLength, aspectRatio);
+    squarifyNode(parent, margin, sortingOption, labelsEnabled, labelLength, labelPosition, aspectRatio);
     for (const child of parent.children) {
         if (child.children.length > 0) {
-            squarify(child, margin, sortingOption, labelsEnabled, labelLength, aspectRatio);
+            squarify(child, margin, sortingOption, labelsEnabled, labelLength, labelPosition, aspectRatio);
         }
     }
 }
@@ -75,6 +85,7 @@ function squarifyNode(
     sortingOption: SortingOption,
     labelsEnabled: boolean,
     labelLength: number,
+    labelPosition: LabelPosition,
     aspectRatio: number,
 ): void {
     const nodes = parent.children;
@@ -87,11 +98,19 @@ function squarifyNode(
 
     let x0 = parent.x0 + margin;
     let y0 = parent.y0 + margin;
-    const x1 = parent.x1 - margin;
-    const y1 = parent.y1 - margin;
+    let x1 = parent.x1 - margin;
+    let y1 = parent.y1 - margin;
 
     if (needsLabel) {
-        y0 += labelLength;
+        if (labelPosition === LabelPosition.BOTTOM) {
+            y1 -= labelLength;
+        } else if (labelPosition === LabelPosition.LEFT) {
+            x0 += labelLength;
+        } else if (labelPosition === LabelPosition.RIGHT) {
+            x1 -= labelLength;
+        } else {
+            y0 += labelLength;
+        }
     }
 
     const numberOfChildren = nodes.length;

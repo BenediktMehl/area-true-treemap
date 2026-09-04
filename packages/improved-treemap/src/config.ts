@@ -1,11 +1,13 @@
-import { SortingOption, DEFAULT_ASPECT_RATIO } from "./squarify";
+import { SortingOption, LabelPosition, DEFAULT_ASPECT_RATIO } from "./squarify";
 
-/** Label configuration: which hierarchy levels get labels and how tall they are. */
+/** Label configuration: which hierarchy levels get labels, how tall they are, and where they sit. */
 export interface LabelConfig {
     /** Number of top hierarchy levels that reserve space for a folder label. */
     topLevels: number;
     /** Label height as a fraction (0..1) of the shorter canvas side. */
     sizeRatio: number;
+    /** Where the label is placed relative to its node. */
+    position: LabelPosition;
 }
 
 /** Fully resolved, immutable layout configuration. */
@@ -29,7 +31,7 @@ export const DEFAULT_CONFIG: TreemapConfig = {
     margin: 0.015,
     collapseFolders: true,
     sorting: SortingOption.DESCENDING,
-    labels: { topLevels: 3, sizeRatio: 0.05 },
+    labels: { topLevels: 3, sizeRatio: 0.05, position: LabelPosition.TOP },
     aspectRatio: DEFAULT_ASPECT_RATIO,
 };
 
@@ -95,7 +97,13 @@ export class TreemapConfigBuilder {
             throw new Error(`labels(): topLevels must be a non-negative integer, got ${topLevels}`);
         }
         assertRange(sizeRatio, 0, 1, "labels sizeRatio");
-        this.config.labels = { topLevels, sizeRatio };
+        this.config.labels = { ...this.config.labels, topLevels, sizeRatio };
+        return this;
+    }
+
+    /** Set where folder labels are placed (top, bottom, left, or right). */
+    labelPosition(position: LabelPosition): this {
+        this.config.labels.position = position;
         return this;
     }
 

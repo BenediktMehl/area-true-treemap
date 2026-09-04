@@ -1,6 +1,13 @@
 <script lang="ts">
+  import { hierarchy, treemap } from 'd3-hierarchy';
   import TreemapSvg from '$lib/components/TreemapSvg.svelte';
-  import { TreemapLayout, SortingOption, type TreeNode, type TreemapRect } from 'improved-treemap';
+  import {
+    TreemapLayout,
+    SortingOption,
+    LabelPosition,
+    type TreeNode,
+    type TreemapRect,
+  } from 'improved-treemap';
   import sample from '$lib/data/sample.json';
 
   let loadedData: TreeNode = sample as TreeNode;
@@ -10,26 +17,64 @@
   let marginPercent = 1.5;
   let topN = 3;
   let labelSizePercent = 5;
+  let labelPosition: LabelPosition = LabelPosition.TOP;
   let collapseFolders = true;
   let sorting: SortingOption = SortingOption.DESCENDING;
 
   const containerSize = 1000;
 
-  // Recompute the layout whenever any setting or the data changes.
-  let rects: TreemapRect[] = [];
+  let improvedRects: TreemapRect[] = [];
+  let standardRects: TreemapRect[] = [];
+  let improvedMs = 0;
+  let standardMs = 0;
+
   $: {
     const config = TreemapLayout.builder()
       .areaMetric(areaMetric)
       .margin(marginPercent / 100)
       .labels(topN, labelSizePercent / 100)
+      .labelPosition(labelPosition)
       .collapseFolders(collapseFolders)
       .sorting(sorting)
       .build();
 
-    rects = new TreemapLayout(config).compute(loadedData, {
-      width: containerSize,
-      height: containerSize,
-    });
+    let t0 = performance.now();
+    improvedRects = new TreemapLayout(config).compute(loadedData, { width: containerSize, height: containerSize });
+    improvedMs = performance.now() - t0;
+
+    t0 = performance.now();
+    standardRects = computeStandardD3(loadedData, areaMetric, containerSize);
+    standardMs = performance.now() - t0;
+  }
+
+  // Baseline: the classic d3 squarified treemap (no gaps, no labels).
+  function computeStandardD3(tree: TreeNode, metric: string, size: number): TreemapRect[] {
+    const root = hierarchy(tree)
+      .sum((d) => d.attributes?.[metric] ?? 0)
+      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+
+    treemap<TreeNode>().size([size, size]).padding(0).round(false)(root);
+
+    const rects: TreemapRect[] = [];
+    const walk = (n: any): void => {
+      if (n.depth > 0 && n.x1 - n.x0 > 0 && n.y1 - n.y0 > 0) {
+        rects.push({
+          x: n.x0,
+          y: n.y0,
+          width: n.x1 - n.x0,
+          height: n.y1 - n.y0,
+          name: n.data.name,
+          depth: n.depth,
+          isLeaf: !n.children || n.children.length === 0,
+          hasLabel: false,
+          value: n.value ?? 0,
+          attributes: n.data.attributes,
+        });
+      }
+      if (n.children) for (const c of n.children) walk(c);
+    };
+    walk(root);
+    return rects;
   }
 
   function handleFileUpload(e: Event) {
@@ -41,7 +86,7 @@
       try {
         loadedData = JSON.parse(event.target?.result as string) as TreeNode;
       } catch {
-        alert('Invalid JSON file');
+        alert('Ungültige JSON-Datei');
       }
     };
     reader.readAsText(file);
@@ -57,7 +102,7 @@
   <header>
     <div class="title">
       <h1>Area-True Treemap</h1>
-      <p>Interaktive Demo für das Paket <code>improved-treemap</code></p>
+      <p>Vergleich des verbesserten Layouts mit dem klassischen D3.js-Squarified-Treemap</p>
     </div>
 
     <div class="controls">
@@ -75,6 +120,16 @@
       <label class="control">
         <span>Label-Höhe (%)</span>
         <input type="number" min="0" max="20" bind:value={labelSizePercent} />
+      </label>
+
+      <label class="control">
+        <span>Label-Position</span>
+        <select bind:value={labelPosition}>
+          <option value={LabelPosition.TOP}>Oben</option>
+          <option value={LabelPosition.BOTTOM}>Unten</option>
+          <option value={LabelPosition.LEFT}>Links</option>
+          <option value={LabelPosition.RIGHT}>Rechts</option>
+        </select>
       </label>
 
       <label class="control">
@@ -105,75 +160,58 @@
     </div>
   </header>
 
-  <section class="layout">
-    <div class="canvas">
-      {#if rects.length > 0}
-        <TreemapSvg {rects} {containerSize} />
-        <p class="meta">{rects.length} Rechtecke gerendert</p>
+  <section class="panels">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Area-True (verbessert)</h2>
+        <span class="meta">{improvedRects.length} Knoten · {improvedMs.toFixed(2)} ms</span>
+      </div>
+      {#if improvedRects.length > 0}
+        <TreemapSvg rects={improvedRects} {containerSize} {labelPosition} showValues />
       {:else}
-        <div class="empty">Keine Daten zum Anzeigen. Bitte eine JSON-Datei laden.</div>
+        <div class="empty">Keine Daten zum Anzeigen.</div>
       {/if}
     </div>
 
-    <aside>
-      <h2>Aktuelle Konfiguration</h2>
-      <dl>
-        <dt>Margin</dt>
-        <dd>{(marginPercent / 100).toFixed(3)} ({marginPercent.toFixed(1)}%)</dd>
-        <dt>Top-Labels</dt>
-        <dd>{topN} Ebenen, {labelSizePercent}% Höhe</dd>
-        <dt>Sortierung</dt>
-        <dd>{sorting === SortingOption.NONE ? 'keine' : sorting}</dd>
-        <dt>Flächen-Metrik</dt>
-        <dd>{areaMetric}</dd>
-        <dt>Ordnerketten</dt>
-        <dd>{collapseFolders ? 'zusammengefaltet' : 'nicht zusammengefaltet'}</dd>
-      </dl>
-
-      <h2>Builder-Code</h2>
-      <pre><code>TreemapLayout.builder()
-  .areaMetric('{areaMetric}')
-  .margin({(marginPercent / 100).toFixed(3)})
-  .labels({topN}, {(labelSizePercent / 100).toFixed(2)})
-  .collapseFolders({collapseFolders})
-  .sorting(SortingOption.{sorting.toUpperCase()})
-  .build()</code></pre>
-    </aside>
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Standard Squarified (D3.js)</h2>
+        <span class="meta">{standardRects.length} Knoten · {standardMs.toFixed(2)} ms</span>
+      </div>
+      {#if standardRects.length > 0}
+        <TreemapSvg rects={standardRects} {containerSize} showValues />
+      {:else}
+        <div class="empty">Keine Daten zum Anzeigen.</div>
+      {/if}
+    </div>
   </section>
 </main>
 
 <style>
   main {
-    max-width: 1100px;
+    max-width: 1120px;
     margin: 0 auto;
     padding: 24px;
   }
 
   header {
-    background: rgba(0, 0, 0, 0.35);
-    border: 1px solid rgba(96, 165, 250, 0.4);
+    background: #1c1c21;
+    border: 1px solid #2e2e34;
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 24px;
-    backdrop-filter: blur(8px);
   }
 
   .title h1 {
     margin: 0 0 4px;
-    font-size: 28px;
+    font-size: 26px;
+    color: #f4f4f5;
   }
 
   .title p {
     margin: 0 0 16px;
-    color: #93c5fd;
+    color: #a1a1aa;
     font-size: 14px;
-  }
-
-  code {
-    background: rgba(0, 0, 0, 0.4);
-    padding: 1px 5px;
-    border-radius: 4px;
-    font-size: 13px;
   }
 
   .controls {
@@ -188,7 +226,7 @@
     flex-direction: column;
     gap: 6px;
     font-size: 12px;
-    color: #bfdbfe;
+    color: #a1a1aa;
   }
 
   .control input[type='range'] {
@@ -198,25 +236,25 @@
   .control input[type='number'],
   .control input[type='text'],
   .control select {
-    background: #1e293b;
-    border: 1px solid #3b82f6;
+    background: #26262b;
+    border: 1px solid #3f3f46;
     border-radius: 6px;
-    color: #e2e8f0;
+    color: #e4e4e7;
     padding: 7px 9px;
     font-size: 14px;
   }
 
   .control output {
     font-size: 13px;
-    color: #e2e8f0;
+    color: #e4e4e7;
   }
 
   .toggle,
   .button {
-    background: #334155;
-    border: 1px solid #475569;
+    background: #26262b;
+    border: 1px solid #3f3f46;
     border-radius: 8px;
-    color: #e2e8f0;
+    color: #e4e4e7;
     padding: 10px 14px;
     font-size: 14px;
     cursor: pointer;
@@ -224,13 +262,14 @@
   }
 
   .toggle.on {
-    background: #2563eb;
-    border-color: #60a5fa;
+    background: #134e3a;
+    border-color: #34d399;
+    color: #d1fae5;
   }
 
   .button:hover,
   .toggle:hover {
-    transform: translateY(-1px);
+    border-color: #71717a;
   }
 
   .actions {
@@ -239,83 +278,50 @@
     margin-top: 16px;
   }
 
-  .layout {
+  .panels {
     display: grid;
-    grid-template-columns: 1fr 300px;
-    gap: 24px;
-    align-items: start;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
   }
 
-  @media (max-width: 800px) {
-    .layout {
+  @media (max-width: 820px) {
+    .panels {
       grid-template-columns: 1fr;
     }
   }
 
-  .canvas {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(96, 165, 250, 0.4);
+  .panel {
+    background: #1c1c21;
+    border: 1px solid #2e2e34;
     border-radius: 12px;
-    padding: 20px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    gap: 12px;
+  }
+
+  .panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .panel h2 {
+    font-size: 16px;
+    margin: 0;
+    color: #e4e4e7;
   }
 
   .meta {
-    color: #94a3b8;
+    color: #a1a1aa;
     font-size: 12px;
-    margin: 10px 0 0;
+    white-space: nowrap;
   }
 
   .empty {
-    color: #94a3b8;
-    padding: 80px 0;
+    color: #a1a1aa;
+    padding: 60px 0;
     text-align: center;
-  }
-
-  aside {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(96, 165, 250, 0.4);
-    border-radius: 12px;
-    padding: 18px;
-  }
-
-  aside h2 {
-    font-size: 16px;
-    margin: 0 0 10px;
-    color: #93c5fd;
-  }
-
-  dl {
-    margin: 0 0 16px;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 6px 12px;
-    font-size: 13px;
-  }
-
-  dt {
-    color: #94a3b8;
-  }
-
-  dd {
-    margin: 0;
-    color: #e2e8f0;
-    word-break: break-word;
-  }
-
-  pre {
-    background: #0b1220;
-    border-radius: 8px;
-    padding: 12px;
-    overflow-x: auto;
-    font-size: 12px;
-    line-height: 1.5;
-  }
-
-  pre code {
-    background: none;
-    padding: 0;
   }
 </style>

@@ -74,6 +74,7 @@ const config = TreemapLayout.builder()
   .areaMetric("size")
   .margin(0.015)
   .labels(3, 0.05)
+  .labelPosition(LabelPosition.TOP)
   .collapseFolders(true)
   .sorting(SortingOption.DESCENDING)
   .aspectRatio(1.618)
@@ -89,10 +90,11 @@ const config = TreemapLayout.builder()
 | `collapseFolders(value)` | `boolean` | `true` | Merge single-child folder chains into a combined name (`a/b/c`). |
 | `sorting(value)` | `SortingOption` | `DESCENDING` | Order in which siblings are placed. |
 | `labels(topLevels, sizeRatio)` | `number, number` | `3, 0.05` | Number of top levels that get a label and label height as fraction (0–1). |
+| `labelPosition(position)` | `LabelPosition` | `TOP` | Where labels are placed: `top`, `bottom`, `left`, or `right`. |
 | `aspectRatio(value)` | `number` | `1.618` | Target aspect ratio for the squarify heuristic. |
 | `build()` | — | — | Returns a resolved, immutable `TreemapConfig`. |
 
-`SortingOption` is one of `"descending"`, `"ascending"`, or `"none"`.
+`SortingOption` is one of `"descending"`, `"ascending"`, or `"none"`. `LabelPosition` is one of `"top"`, `"bottom"`, `"left"`, or `"right"`.
 
 ### Settings explained
 
@@ -119,7 +121,7 @@ The returned `TreemapRect[]` contains absolute coordinates starting at `(0, 0)`.
 
 ### Exported types
 
-`TreeNode`, `TreemapRect`, `TreemapConfig`, `LabelConfig`, `LayoutOptions`, `SortingOption`, `DEFAULT_CONFIG`, `DEFAULT_ASPECT_RATIO`.
+`TreeNode`, `TreemapRect`, `TreemapConfig`, `LabelConfig`, `LayoutOptions`, `SortingOption`, `LabelPosition`, `DEFAULT_CONFIG`, `DEFAULT_ASPECT_RATIO`.
 
 ## Development
 

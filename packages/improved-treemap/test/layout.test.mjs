@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { TreemapLayout, TreemapConfigBuilder, SortingOption } from "../dist/index.js";
+import { TreemapLayout, TreemapConfigBuilder, SortingOption, LabelPosition } from "../dist/index.js";
 
 const tree = {
   name: "root",
@@ -73,4 +73,18 @@ test("unknown area metric yields empty result", () => {
   const config = new TreemapConfigBuilder().areaMetric("nope").build();
   const rects = new TreemapLayout(config).compute(tree);
   assert.deepEqual(rects, []);
+});
+
+test("all label positions produce a valid layout", () => {
+  for (const position of [LabelPosition.TOP, LabelPosition.BOTTOM, LabelPosition.LEFT, LabelPosition.RIGHT]) {
+    const config = new TreemapConfigBuilder().labels(3, 0.05).labelPosition(position).build();
+    const rects = new TreemapLayout(config).compute(tree, { width: 1000, height: 1000 });
+    assert.ok(rects.length > 0, `${position}: should produce rectangles`);
+    for (const r of rects) {
+      assert.ok(Number.isFinite(r.x) && Number.isFinite(r.y) && Number.isFinite(r.width) && Number.isFinite(r.height), `${position}: ${r.name} has finite coords`);
+      assert.ok(r.width > 0 && r.height > 0, `${position}: ${r.name} has positive size`);
+      assert.ok(r.x >= -1e-6 && r.y >= -1e-6, `${position}: ${r.name} inside canvas`);
+      assert.ok(r.x + r.width <= 1000 + 1e-6 && r.y + r.height <= 1000 + 1e-6, `${position}: ${r.name} inside canvas`);
+    }
+  }
 });

@@ -46,7 +46,7 @@ export class TreemapLayout {
         const labelsEnabled = config.labels.topLevels > 0;
         const labelLength = config.labels.sizeRatio * shortSide;
 
-        squarify(root, margin, config.sorting, labelsEnabled, labelLength, config.aspectRatio);
+        squarify(root, margin, config.sorting, labelsEnabled, labelLength, config.labels.position, config.aspectRatio);
 
         return this.flatten(root);
     }
