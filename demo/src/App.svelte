@@ -343,9 +343,12 @@
     let realizedMarginPx = 0;
     let realizedLabelPx = 0;
     {
-      const t0 = performance.now();
-      const rawRects = new ImprovedTreemapLayout({ ...baseCfg, margin: rawMargin, labelLength: rawLabel }).compute(loadedData);
-      improvedMs = performance.now() - t0;
+      // Measure the average over many iterations (same as the nested panel),
+      // so a single fast run cannot show a misleading 0.00 ms.
+      let rawRects: TreemapRect[] = [];
+      improvedMs = measureMs(() => {
+        rawRects = new ImprovedTreemapLayout({ ...baseCfg, margin: rawMargin, labelLength: rawLabel }).compute(loadedData);
+      });
       const root = rawRects[0];
       const scale = root && root.width > 0 ? containerSize / root.width : 1;
       improvedRects = rawRects.map((r) => ({
