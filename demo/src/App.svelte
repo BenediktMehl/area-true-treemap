@@ -286,6 +286,7 @@
         gapPx: realizedMarginPx,
         innerGapPx: applySiblingMargin ? realizedMarginPx : 0,
         labelPx: enableFloorLabels ? realizedLabelPx : 0,
+        labelEnabled: enableFloorLabels,
         topLevels: amountOfTopLabels,
         sorting,
         collapseFolders,
@@ -343,6 +344,7 @@
     gapPx: number;
     innerGapPx: number;
     labelPx: number;
+    labelEnabled: boolean;
     topLevels: number;
     sorting: ImprovedSortingOption;
     collapseFolders: boolean;
@@ -365,11 +367,15 @@
       .paddingOuter(opts.gapPx)
       .paddingInner(opts.innerGapPx);
 
-    // Mirror the improved algorithm's `hasLabel = depth < amountOfTopLabels`
-    // (the root at depth 0 is included).
+    // Mirror the improved algorithm's `hasLabel = labelsEnabled && depth <
+    // amountOfTopLabels` (the root at depth 0 is included): the floor-label
+    // strip *replaces* the top margin for labeled folders. For every other
+    // folder the normal top margin must stay — d3's paddingOuter sets
+    // top/right/bottom/left to gapPx, so a blanket paddingTop(0) would erase
+    // the top margin exactly where no label is drawn.
     const isLabeled = (n: HierarchyRectangularNode<TreeNode>): boolean =>
-      n.depth < opts.topLevels && !!n.children && n.children.length > 0;
-    layout.paddingTop((n) => (isLabeled(n) ? opts.labelPx : 0));
+      opts.labelEnabled && n.depth < opts.topLevels && !!n.children && n.children.length > 0;
+    layout.paddingTop((n) => (isLabeled(n) ? opts.labelPx : opts.gapPx));
 
     const laidOut = layout(root);
     return flattenD3(laidOut, isLabeled);
