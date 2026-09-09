@@ -268,6 +268,11 @@
         width: r.width * scale,
         height: r.height * scale,
       }));
+      // The layout stores each node's *own* metric, so folders without an own
+      // value (e.g. flare) show 0. Aggregate bottom-up like the algorithm does
+      // internally (own value ?? sum of children) so hover/center values match
+      // the nested panel's hierarchy sums.
+      improvedRects = aggregateImprovedValues(improvedRects, areaMetric);
       // Realized gap the improved algorithm produces (≈ marginPercent % of the canvas).
       realizedMarginPx = (rawMargin / MARGIN_DIVISOR) * scale;
       // Root label strip thickness (its children start below it).
@@ -420,6 +425,34 @@
     };
     walk(root);
     return rects;
+  }
+
+  /**
+   * The improved layout reports each node's *own* metric value only, so
+   * folders without an own attribute show 0. Fill them bottom-up with the
+   * effective value the algorithm itself uses (own value ?? sum of children):
+   * `rects` are in pre-order (parent before its whole subtree), which lets us
+   * derive parents and aggregate in one pass.
+   */
+  function aggregateImprovedValues(rects: TreemapRect[], metric: string): TreemapRect[] {
+    const n = rects.length;
+    if (n === 0) return rects;
+    const parent = new Array<number>(n).fill(-1);
+    const stack: number[] = [];
+    for (let i = 0; i < n; i++) {
+      while (stack.length && rects[stack[stack.length - 1]].depth >= rects[i].depth) stack.pop();
+      if (stack.length) parent[i] = stack[stack.length - 1];
+      stack.push(i);
+    }
+    const childSums = new Array<number>(n).fill(0);
+    const result = rects.map((r) => ({ ...r }));
+    for (let i = n - 1; i >= 0; i--) {
+      const own = result[i].attributes?.[metric];
+      const effective = own !== undefined ? own : childSums[i];
+      result[i].value = effective;
+      if (parent[i] >= 0) childSums[parent[i]] += effective;
+    }
+    return result;
   }
 
   function fmt(v: number, digits = 2): string {
