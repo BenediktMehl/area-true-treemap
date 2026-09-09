@@ -24,6 +24,12 @@ export interface ImprovedTreemapConfig {
     incrementMargin: boolean;
     /** Separate sibling nodes by a margin. */
     applySiblingMargin: boolean;
+    /**
+     * When {@link applySiblingMargin} is enabled, shrink only leaf nodes
+     * instead of all nodes, so sibling gaps appear only between leaves and
+     * not between folders (additive extension, not part of CodeCharta).
+     */
+    siblingMarginLeavesOnly?: boolean;
     /** Merge single-child folder chains. */
     collapseFolders: boolean;
     /** Reserve floor-label space. */
@@ -44,6 +50,7 @@ export const DEFAULT_IMPROVED_CONFIG: ImprovedTreemapConfig = {
     orderOption: OrderOption.NEW_ORDER,
     incrementMargin: false,
     applySiblingMargin: true,
+    siblingMarginLeavesOnly: false,
     collapseFolders: false,
     enableFloorLabels: true,
     amountOfTopLabels: 2,
@@ -104,6 +111,12 @@ export class ImprovedTreemapConfigBuilder {
 
     applySiblingMargin(value: boolean): this {
         this.config.applySiblingMargin = value;
+        return this;
+    }
+
+    /** When sibling margins are on, shrink only leaf nodes (gaps between leaves, not folders). */
+    siblingMarginLeavesOnly(value: boolean): this {
+        this.config.siblingMarginLeavesOnly = value;
         return this;
     }
 

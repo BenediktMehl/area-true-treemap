@@ -254,7 +254,7 @@ function increaseValues(
     return valueIncrease;
 }
 
-function shrink(node: SquarifyNode, margin: number): void {
+function shrinkRect(node: SquarifyNode, margin: number): void {
     node.x0 += margin / 2;
     node.y0 += margin / 2;
     node.x1 -= margin / 2;
@@ -266,9 +266,26 @@ function shrink(node: SquarifyNode, margin: number): void {
         node.x1 = 0;
         node.y1 = 0;
     }
+}
 
+function shrink(node: SquarifyNode, margin: number): void {
+    shrinkRect(node, margin);
     for (const child of node.children) {
         shrink(child, margin);
+    }
+}
+
+/**
+ * Sibling gaps only between leaf nodes: shrink only the leaves, leave folder
+ * rectangles untouched (additive extension via `siblingMarginLeavesOnly`).
+ */
+function shrinkLeavesOnly(node: SquarifyNode, margin: number): void {
+    if (node.children.length === 0) {
+        shrinkRect(node, margin);
+        return;
+    }
+    for (const child of node.children) {
+        shrinkLeavesOnly(child, margin);
     }
 }
 
@@ -349,7 +366,11 @@ export function generateImprovedSquarifyLayoutNodes(tree: TreeNode, config: Impr
         }
 
         if (config.applySiblingMargin) {
-            shrink(squarifyNode, currentMargin);
+            if (config.siblingMarginLeavesOnly === true) {
+                shrinkLeavesOnly(squarifyNode, currentMargin);
+            } else {
+                shrink(squarifyNode, currentMargin);
+            }
         }
     }
 

@@ -34,6 +34,9 @@
       order: 'Reihenfolge',
       incrementMargin: 'Margin erhöhen',
       siblingMargin: 'Geschwisterabstand',
+      siblingNone: 'Keine',
+      siblingAll: 'Alle',
+      siblingLeaves: 'Nur Blätter',
       collapse: 'Ordnerketten',
       sort: 'Sortierung',
       metric: 'Metrik',
@@ -91,6 +94,9 @@
       order: 'Order',
       incrementMargin: 'Increment margin',
       siblingMargin: 'Sibling margin',
+      siblingNone: 'None',
+      siblingAll: 'All',
+      siblingLeaves: 'Leaves only',
       collapse: 'Collapse folders',
       sort: 'Sort',
       metric: 'Metric',
@@ -187,8 +193,8 @@
       en: 'Increases the gap gradually across multiple passes (only relevant for >2 passes, which the thesis does not recommend). Affects: only the improved algorithm.',
     },
     siblingMargin: {
-      de: 'Zusätzlicher Abstand zwischen Geschwisterknoten: jeder Knoten wird um den halben Abstand verkleinert, sehr schmale Knoten verschwinden dabei. Thesis: keine Geschwisterabstände empfohlen, stattdessen Umrandungen. Wirkt auf: beide Algorithmen (Nested: innerer Abstand).',
-      en: 'Extra gap between sibling nodes: each node shrinks by half the gap, very thin nodes disappear in the process. Thesis: no sibling gaps recommended, use outlines instead. Affects: both algorithms (nested: inner padding).',
+      de: 'Zusätzlicher Abstand zwischen Geschwisterknoten: „Keine" = keine Geschwisterabstände; „Alle" = jeder Knoten wird um den halben Abstand verkleinert (sehr schmale Knoten verschwinden dabei); „Nur Blätter" = nur Blattknoten werden verkleinert, Abstände entstehen ausschließlich zwischen Blättern, Ordner bleiben ohne Abstand. Thesis: keine Geschwisterabstände empfohlen, stattdessen Umrandungen. Wirkt auf: beide Algorithmen („Nur Blätter" ist im Nested-Treemap nur näherungsweise abbildbar).',
+      en: 'Extra gap between sibling nodes: "None" = no sibling gaps; "All" = every node shrinks by half the gap (very thin nodes disappear in the process); "Leaves only" = only leaf nodes shrink, gaps appear exclusively between leaves, folders stay without gaps. Thesis: no sibling gaps recommended, use outlines instead. Affects: both algorithms ("leaves only" can only be approximated in the nested treemap).',
     },
     collapse: {
       de: 'Faltet Ordnerketten (Ordner mit genau einem Ordner als Kind) zu einem Knoten zusammen. Thesis: verwenden – rund zehnmal weniger fehlende Knoten und bessere Platznutzung. Wirkt auf: beide Algorithmen.',
@@ -247,7 +253,7 @@
   let simpleIncreaseValues = false;
   let orderOption: OrderOption = OrderOption.NEW_ORDER;
   let incrementMargin = false;
-  let applySiblingMargin = false;
+  let siblingMode: 'none' | 'all' | 'leaves' = 'none';
   let collapseFolders = true;
   let sorting: ImprovedSortingOption = ImprovedSortingOption.DESCENDING;
 
@@ -318,7 +324,8 @@
       .sorting(sorting)
       .order(orderOption)
       .incrementMargin(incrementMargin)
-      .applySiblingMargin(applySiblingMargin)
+      .applySiblingMargin(siblingMode !== 'none')
+      .siblingMarginLeavesOnly(siblingMode === 'leaves')
       .collapseFolders(collapseFolders)
       .floorLabels(enableFloorLabels)
       .amountOfTopLabels(amountOfTopLabels)
@@ -369,7 +376,8 @@
         metric: areaMetric,
         size: containerSize,
         gapPx: realizedMarginPx,
-        innerGapPx: applySiblingMargin ? realizedMarginPx : 0,
+        innerGapPx: siblingMode !== 'none' ? realizedMarginPx : 0,
+        innerLeavesOnly: siblingMode === 'leaves',
         labelPx: enableFloorLabels ? realizedLabelPx : 0,
         labelEnabled: enableFloorLabels,
         topLevels: amountOfTopLabels,
@@ -428,6 +436,7 @@
     size: number;
     gapPx: number;
     innerGapPx: number;
+    innerLeavesOnly: boolean;
     labelPx: number;
     labelEnabled: boolean;
     topLevels: number;
@@ -449,8 +458,19 @@
     const layout = treemap<TreeNode>()
       .size([opts.size, opts.size])
       .round(false)
-      .paddingOuter(opts.gapPx)
-      .paddingInner(opts.innerGapPx);
+      .paddingOuter(opts.gapPx);
+    if (opts.innerGapPx > 0) {
+      // d3 only knows a uniform inner gap per parent. "Leaves only" is
+      // approximated by gapping the children of parents whose children are all
+      // leaves (mixed folder/file parents stay without inner gap).
+      layout.paddingInner((n) => {
+        if (opts.innerLeavesOnly) {
+          const allLeaves = !!n.children && n.children.length > 0 && n.children.every((c) => !c.children || c.children.length === 0);
+          return allLeaves ? opts.innerGapPx : 0;
+        }
+        return opts.innerGapPx;
+      });
+    }
 
     // Mirror the improved algorithm's `hasLabel = labelsEnabled && depth <
     // amountOfTopLabels` (the root at depth 0 is included): the floor-label
@@ -671,12 +691,14 @@
         </button>
       </div>
 
-      <div class="c" title={help('siblingMargin')}>
-        <span class="lbl">&nbsp;</span>
-        <button class="toggle {applySiblingMargin ? 'on' : ''}" on:click={() => (applySiblingMargin = !applySiblingMargin)}>
-          {applySiblingMargin ? '✓' : '✗'} {t.siblingMargin}
-        </button>
-      </div>
+      <label class="c" title={help('siblingMargin')}>
+        <span class="lbl">{t.siblingMargin}</span>
+        <select bind:value={siblingMode}>
+          <option value="none">{t.siblingNone}</option>
+          <option value="all">{t.siblingAll}</option>
+          <option value="leaves">{t.siblingLeaves}</option>
+        </select>
+      </label>
 
       <div class="c" title={help('collapse')}>
         <span class="lbl">&nbsp;</span>

@@ -4,6 +4,7 @@ import {
     ImprovedTreemapLayout,
     ImprovedTreemapConfigBuilder,
     ImprovedSortingOption,
+    MARGIN_DIVISOR,
 } from "../dist/index.js";
 
 const tree = {
@@ -136,4 +137,85 @@ test("builder validation rejects invalid values", () => {
   assert.throws(() => new ImprovedTreemapConfigBuilder().margin(-1), /margin/);
   assert.throws(() => new ImprovedTreemapConfigBuilder().numberOfPasses(0), /numberOfPasses/);
   assert.throws(() => new ImprovedTreemapConfigBuilder().labelLength("x"), /labelLength/);
+});
+
+test("sibling margins: all nodes vs leaves-only", () => {
+  const siblingTree = {
+    name: "root",
+    attributes: { size: 10000 },
+    children: [
+      {
+        name: "a",
+        children: [
+          { name: "a1", attributes: { size: 2500 } },
+          { name: "a2", attributes: { size: 1500 } },
+        ],
+      },
+      {
+        name: "b",
+        children: [
+          { name: "b1", attributes: { size: 2000 } },
+          { name: "b2", attributes: { size: 1500 } },
+        ],
+      },
+      {
+        name: "c",
+        children: [
+          { name: "c1", attributes: { size: 1500 } },
+          { name: "c2", attributes: { size: 1000 } },
+        ],
+      },
+    ],
+  };
+
+  const rawMargin = 20;
+  const algoMargin = rawMargin / MARGIN_DIVISOR;
+  const run = (leavesOnly) => {
+    const rects = new ImprovedTreemapLayout(
+      new ImprovedTreemapConfigBuilder()
+        .areaMetric("size")
+        .floorLabels(false)
+        .sorting(ImprovedSortingOption.DESCENDING)
+        .numberOfPasses(2)
+        .scale(true)
+        .margin(rawMargin)
+        .applySiblingMargin(true)
+        .siblingMarginLeavesOnly(leavesOnly)
+        .build(),
+    ).compute(siblingTree);
+    return new Map(rects.map((r) => [r.name, r]));
+  };
+
+  // Face distance between two axis-aligned rects (0 = touching).
+  const distance = (A, B) =>
+    Math.max(0, A.x - (B.x + B.width), B.x - (A.x + A.width), A.y - (B.y + B.height), B.y - (A.y + A.height));
+
+  // Top-level children a/b/c are folders whose children are all leaves.
+  const all = run(false);
+  const minTopAll = Math.min(
+    distance(all.get("a"), all.get("b")),
+    distance(all.get("a"), all.get("c")),
+    distance(all.get("b"), all.get("c")),
+  );
+  assert.ok(Math.abs(minTopAll - algoMargin) < 1e-6, `"all": adjacent top siblings should be spaced by margin, got ${minTopAll}`);
+
+  const leaves = run(true);
+  const minTopLeaves = Math.min(
+    distance(leaves.get("a"), leaves.get("b")),
+    distance(leaves.get("a"), leaves.get("c")),
+    distance(leaves.get("b"), leaves.get("c")),
+  );
+  assert.ok(minTopLeaves < 1e-6, `"leaves only": adjacent folder siblings should touch (no gap), got ${minTopLeaves}`);
+
+  // Inside every folder both children are leaves -> spaced by margin in both modes.
+  for (const [mode, rects] of [
+    ["all", all],
+    ["leaves only", leaves],
+  ]) {
+    for (const folder of ["a", "b", "c"]) {
+      const [x1, x2] = [`${folder}1`, `${folder}2`];
+      const gap = distance(rects.get(x1), rects.get(x2));
+      assert.ok(Math.abs(gap - algoMargin) < 1e-6, `${mode}: sibling leaves ${x1}/${x2} should be spaced by margin, got ${gap}`);
+    }
+  }
 });
