@@ -13,7 +13,7 @@
 
 import { TreeNode, TreemapRect } from "../types";
 import { SquarifyNode, squarify, OrderOption, LabelLength } from "./squarify";
-import { ImprovedTreemapConfig } from "./config";
+import { AreaTrueTreemapConfig } from "./config";
 
 /** Raw-margin → algorithm-margin scaling, taken 1:1 from CodeCharta. */
 export const MARGIN_DIVISOR = 4.331109347824219 * 3.9340057382606775;
@@ -317,7 +317,7 @@ function flattenLayoutNode(node: LayoutNode, areaMetric: string, xOffset: number
  * algorithm's own unit — the layout square is `sqrt(totalValue)` ×
  * `sqrt(totalValue)`.
  */
-export function generateImprovedSquarifyLayoutNodes(tree: TreeNode, config: ImprovedTreemapConfig): TreemapRect[] {
+export function generateAreaTrueSquarifyLayoutNodes(tree: TreeNode, config: AreaTrueTreemapConfig): TreemapRect[] {
     const margin = config.margin / MARGIN_DIVISOR;
     const labelsEnabled = config.enableFloorLabels;
     const squarifyNode = convertToSquarifyNode(

@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-    ImprovedTreemapLayout,
-    ImprovedTreemapConfigBuilder,
-    ImprovedSortingOption,
+    AreaTrueTreemapLayout,
+    AreaTrueTreemapConfigBuilder,
+    AreaTrueSortingOption,
     MARGIN_DIVISOR,
 } from "../dist/index.js";
 
@@ -21,8 +21,8 @@ const tree = {
 };
 
 test("single pass lays out every node; root is sqrt(total value)", () => {
-  const rects = new ImprovedTreemapLayout(
-    new ImprovedTreemapConfigBuilder().areaMetric("size").floorLabels(false).sorting(ImprovedSortingOption.DESCENDING).build(),
+  const rects = new AreaTrueTreemapLayout(
+    new AreaTrueTreemapConfigBuilder().areaMetric("size").floorLabels(false).sorting(AreaTrueSortingOption.DESCENDING).build(),
   ).compute(tree);
   assert.deepEqual(rects.map((r) => r.name), ["root", "a", "a1", "a2", "b", "c"]);
   const root = rects[0];
@@ -31,16 +31,16 @@ test("single pass lays out every node; root is sqrt(total value)", () => {
 });
 
 test("leaves are all present", () => {
-  const rects = new ImprovedTreemapLayout(
-    new ImprovedTreemapConfigBuilder().areaMetric("size").floorLabels(false).build(),
+  const rects = new AreaTrueTreemapLayout(
+    new AreaTrueTreemapConfigBuilder().areaMetric("size").floorLabels(false).build(),
   ).compute(tree);
   const leaves = rects.filter((r) => r.isLeaf);
   assert.equal(leaves.length, 4);
 });
 
 test("two passes grow the root and give root + depth-1 folders labels", () => {
-  const rects = new ImprovedTreemapLayout(
-    new ImprovedTreemapConfigBuilder()
+  const rects = new AreaTrueTreemapLayout(
+    new AreaTrueTreemapConfigBuilder()
       .areaMetric("size")
       .floorLabels(true)
       .amountOfTopLabels(2)
@@ -57,8 +57,8 @@ test("two passes grow the root and give root + depth-1 folders labels", () => {
 });
 
 test("labelLength accepts a per-node function", () => {
-  const rects = new ImprovedTreemapLayout(
-    new ImprovedTreemapConfigBuilder()
+  const rects = new AreaTrueTreemapLayout(
+    new AreaTrueTreemapConfigBuilder()
       .areaMetric("size")
       .floorLabels(true)
       .amountOfTopLabels(2)
@@ -82,8 +82,8 @@ test("label size replaces the margin (independent of margin)", () => {
     ],
   };
   const run = (margin) =>
-    new ImprovedTreemapLayout(
-      new ImprovedTreemapConfigBuilder()
+    new AreaTrueTreemapLayout(
+      new AreaTrueTreemapConfigBuilder()
         .areaMetric("size")
         .margin(margin)
         .floorLabels(true)
@@ -123,8 +123,8 @@ test("folders without an own metric aggregate bottom-up (flare-style trees)", ()
       ]},
     ],
   };
-  const rects = new ImprovedTreemapLayout(
-    new ImprovedTreemapConfigBuilder().areaMetric("size").floorLabels(false).numberOfPasses(1).build(),
+  const rects = new AreaTrueTreemapLayout(
+    new AreaTrueTreemapConfigBuilder().areaMetric("size").floorLabels(false).numberOfPasses(1).build(),
   ).compute(flareLike);
   const root = rects[0];
   // sqrt(3938+3812+3534+17010+5842) = sqrt(34136) ≈ 184.76
@@ -134,9 +134,9 @@ test("folders without an own metric aggregate bottom-up (flare-style trees)", ()
 });
 
 test("builder validation rejects invalid values", () => {
-  assert.throws(() => new ImprovedTreemapConfigBuilder().margin(-1), /margin/);
-  assert.throws(() => new ImprovedTreemapConfigBuilder().numberOfPasses(0), /numberOfPasses/);
-  assert.throws(() => new ImprovedTreemapConfigBuilder().labelLength("x"), /labelLength/);
+  assert.throws(() => new AreaTrueTreemapConfigBuilder().margin(-1), /margin/);
+  assert.throws(() => new AreaTrueTreemapConfigBuilder().numberOfPasses(0), /numberOfPasses/);
+  assert.throws(() => new AreaTrueTreemapConfigBuilder().labelLength("x"), /labelLength/);
 });
 
 test("sibling margins: all nodes vs leaves-only", () => {
@@ -171,11 +171,11 @@ test("sibling margins: all nodes vs leaves-only", () => {
   const rawMargin = 20;
   const algoMargin = rawMargin / MARGIN_DIVISOR;
   const run = (leavesOnly) => {
-    const rects = new ImprovedTreemapLayout(
-      new ImprovedTreemapConfigBuilder()
+    const rects = new AreaTrueTreemapLayout(
+      new AreaTrueTreemapConfigBuilder()
         .areaMetric("size")
         .floorLabels(false)
-        .sorting(ImprovedSortingOption.DESCENDING)
+        .sorting(AreaTrueSortingOption.DESCENDING)
         .numberOfPasses(2)
         .scale(true)
         .margin(rawMargin)

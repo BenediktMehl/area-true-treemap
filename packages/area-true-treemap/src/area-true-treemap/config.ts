@@ -5,7 +5,7 @@ import { SortingOption, OrderOption, LabelLength, LabelSizeResolver } from "./sq
  * All fields mirror the settings of the CodeCharta `Improved Squarifying`
  * layout.
  */
-export interface ImprovedTreemapConfig {
+export interface AreaTrueTreemapConfig {
     /** Name of the attribute used for node area. */
     areaMetric: string;
     /** Raw margin value (the algorithm applies CodeCharta's internal scaling). */
@@ -40,7 +40,7 @@ export interface ImprovedTreemapConfig {
     labelLength: LabelLength;
 }
 
-export const DEFAULT_IMPROVED_CONFIG: ImprovedTreemapConfig = {
+export const DEFAULT_AREA_TRUE_CONFIG: AreaTrueTreemapConfig = {
     areaMetric: "size",
     margin: 10,
     numberOfPasses: 1,
@@ -57,12 +57,12 @@ export const DEFAULT_IMPROVED_CONFIG: ImprovedTreemapConfig = {
     labelLength: 1,
 };
 
-/** Fluent builder for {@link ImprovedTreemapConfig}. */
-export class ImprovedTreemapConfigBuilder {
-    private readonly config: ImprovedTreemapConfig;
+/** Fluent builder for {@link AreaTrueTreemapConfig}. */
+export class AreaTrueTreemapConfigBuilder {
+    private readonly config: AreaTrueTreemapConfig;
 
     constructor() {
-        this.config = { ...DEFAULT_IMPROVED_CONFIG };
+        this.config = { ...DEFAULT_AREA_TRUE_CONFIG };
     }
 
     areaMetric(value: string): this {
@@ -152,7 +152,7 @@ export class ImprovedTreemapConfigBuilder {
         return this;
     }
 
-    build(): ImprovedTreemapConfig {
+    build(): AreaTrueTreemapConfig {
         return { ...this.config };
     }
 }

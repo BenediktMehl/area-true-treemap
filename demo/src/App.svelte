@@ -2,13 +2,13 @@
   import { hierarchy, treemap, type HierarchyRectangularNode } from 'd3-hierarchy';
   import TreemapSvg from '$lib/components/TreemapSvg.svelte';
   import {
-    ImprovedTreemapLayout,
-    ImprovedSortingOption,
+    AreaTrueTreemapLayout,
+    AreaTrueSortingOption,
     OrderOption,
     getFloorLabelPadding,
     DEFAULT_FLOOR_LABEL_CONFIG,
     MARGIN_DIVISOR,
-    type ImprovedLabelSizeResolver,
+    type AreaTrueLabelSizeResolver,
     type TreeNode,
     type TreemapRect,
   } from 'area-true-treemap';
@@ -21,7 +21,7 @@
   const translations: Record<Lang, Record<string, string>> = {
     de: {
       title: 'Treemap Vergleich',
-      subtitle: 'Improved Squarify vs. Nested Treemap',
+      subtitle: 'Area-True Treemap vs. Nested Treemap',
       thesis: 'zur Masterthesis',
       margin: 'Margin',
       floorLabels: 'Etagen-Labels',
@@ -73,7 +73,7 @@
       hSpace:
         'Platznutzung (Vergleichbarkeit): Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Es gibt kein Besser/Schlechter – wichtig ist nur, dass beide Werte ähnlich sind, damit die beiden Outputs überhaupt verglichen werden können.',
       hTime: 'Zeitaufwand (These): Reine Berechnungszeit des Layout-Algorithmus in ms (ohne Rendering). Bester Wert: möglichst niedrig.',
-      areaTrue: 'Improved Squarify',
+      areaTrue: 'Area-True Treemap',
       areaTrueSub: 'CodeCharta improved algorithm',
       nested: 'Nested Treemap',
       nestedSub: 'd3.js nested treemap',
@@ -81,7 +81,7 @@
     },
     en: {
       title: 'Treemap Comparison',
-      subtitle: 'Improved Squarify vs. Nested Treemap',
+      subtitle: 'Area-True Treemap vs. Nested Treemap',
       thesis: 'master thesis',
       margin: 'Margin',
       floorLabels: 'Floor labels',
@@ -133,7 +133,7 @@
       hSpace:
         'Space utilization (comparability): fraction of the root area occupied by leaf nodes. There is no better or worse — what matters is only that both values are similar, so the two outputs can be compared at all.',
       hTime: 'Time (thesis): pure layout computation time in ms (without rendering). Best value: as low as possible.',
-      areaTrue: 'Improved Squarify',
+      areaTrue: 'Area-True Treemap',
       areaTrueSub: 'CodeCharta improved algorithm',
       nested: 'Nested Treemap',
       nestedSub: 'd3.js nested treemap',
@@ -144,7 +144,7 @@
   $: t = translations[lang];
 
   // Hover explanation per setting: what it does and whether it affects both
-  // algorithms or only the improved one. Recommended values marked "Thesis"
+  // algorithms or only the area-true one. Recommended values marked "Thesis"
   // come from the recommendation table in the improve-squarify chapter of the
   // master thesis (Fazit of the algorithm chapter).
   interface HelpText {
@@ -169,28 +169,28 @@
       en: 'L = relative length of the reserved label strip (% of the root side length). Larger L → larger text, but less leaf area and more potentially missing nodes. Thesis: L = 3–10 %, final comparison ≈ 4 %. Affects: both algorithms.',
     },
     variableLabel: {
-      de: 'Berechnet die Beschriftungshöhe je Ordner aus dessen eigener Breite (an CodeCharta angelehnt) statt mit fester Länge L. Wirkt auf: nur den Improved-Algorithmus (die Nested-Karte übernimmt nur den an der Wurzel gemessenen Wert als Näherung).',
-      en: 'Computes the label height per folder from its own width (CodeCharta-style) instead of a fixed length L. Affects: only the improved algorithm (the nested map only mirrors the root-measured value as an approximation).',
+      de: 'Berechnet die Beschriftungshöhe je Ordner aus dessen eigener Breite (an CodeCharta angelehnt) statt mit fester Länge L. Wirkt auf: nur den Area-True-Treemap-Algorithmus (die Nested-Karte übernimmt nur den an der Wurzel gemessenen Wert als Näherung).',
+      en: 'Computes the label height per folder from its own width (CodeCharta-style) instead of a fixed length L. Affects: only the Area-True Treemap algorithm (the nested map only mirrors the root-measured value as an approximation).',
     },
     passes: {
-      de: 'Anzahl der Layout-Durchläufe. 1 = nur Standard-Squarify, Margin/Beschriftungen bleiben wirkungslos. 2 = Größenanpassung + zweiter Layoutschritt (empfohlen). Mehrfache Berechnung (>2) wird in der Thesis nicht empfohlen. Wirkt auf: nur den Improved-Algorithmus.',
-      en: 'Number of layout passes. 1 = plain squarify, margin/labels have no effect. 2 = size adjustment + second layout step (recommended). Multiple computation (>2) is not recommended in the thesis. Affects: only the improved algorithm.',
+      de: 'Anzahl der Layout-Durchläufe. 1 = nur Standard-Squarify, Margin/Beschriftungen bleiben wirkungslos. 2 = Größenanpassung + zweiter Layoutschritt (empfohlen). Mehrfache Berechnung (>2) wird in der Thesis nicht empfohlen. Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
+      en: 'Number of layout passes. 1 = plain squarify, margin/labels have no effect. 2 = size adjustment + second layout step (recommended). Multiple computation (>2) is not recommended in the thesis. Affects: only the Area-True Treemap algorithm.',
     },
     scale: {
-      de: 'Skaliert im zweiten Layoutschritt die Kindknoten auf die tatsächlich verfügbare Elternfläche (CodeCharta „Apply Scaling"). Verhindert, dass Knoten die Elternfläche überragen (valide Layouts). Empfohlen: an. Wirkt auf: nur den Improved-Algorithmus.',
-      en: 'In the second layout step, scales the children onto the actually available parent area (CodeCharta "Apply Scaling"). Prevents nodes from overflowing their parent (valid layouts). Recommended: on. Affects: only the improved algorithm.',
+      de: 'Skaliert im zweiten Layoutschritt die Kindknoten auf die tatsächlich verfügbare Elternfläche (CodeCharta „Apply Scaling"). Verhindert, dass Knoten die Elternfläche überragen (valide Layouts). Empfohlen: an. Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
+      en: 'In the second layout step, scales the children onto the actually available parent area (CodeCharta "Apply Scaling"). Prevents nodes from overflowing their parent (valid layouts). Recommended: on. Affects: only the Area-True Treemap algorithm.',
     },
     simpleIncrease: {
-      de: 'Wahl der Größenanpassung zwischen den beiden Layoutschritten: an = absolute, aus = relative Größenanpassung. Die Thesis bevorzugt die relative (aus): weniger fehlende Knoten; die absolute ist bei der Wertproportionalität minimal besser. Empfohlen: aus. Wirkt auf: nur den Improved-Algorithmus.',
-      en: 'Size adjustment between the two layout steps: on = absolute, off = relative. The thesis prefers relative (off): fewer missing nodes; absolute is marginally better in value proportionality. Recommended: off. Affects: only the improved algorithm.',
+      de: 'Wahl der Größenanpassung zwischen den beiden Layoutschritten: an = absolute, aus = relative Größenanpassung. Die Thesis bevorzugt die relative (aus): weniger fehlende Knoten; die absolute ist bei der Wertproportionalität minimal besser. Empfohlen: aus. Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
+      en: 'Size adjustment between the two layout steps: on = absolute, off = relative. The thesis prefers relative (off): fewer missing nodes; absolute is marginally better in value proportionality. Recommended: off. Affects: only the Area-True Treemap algorithm.',
     },
     order: {
-      de: 'Strategie des zweiten Layoutschritts (relevant bei 2+ Durchläufen): „Neu" = nach der Größenanpassung neu absteigend sortieren (Thesis: empfohlen); „Behalten" = Reihenfolge aus dem ersten Durchlauf; „Platz" = Platzierung/Reihen aus dem ersten Durchlauf beibehalten. Wirkt auf: nur den Improved-Algorithmus.',
-      en: 'Second layout step strategy (relevant with 2+ passes): "New" = re-sort descending after the size adjustment (thesis: recommended); "Keep" = keep the first-pass order; "Place" = keep the first-pass placement/rows. Affects: only the improved algorithm.',
+      de: 'Strategie des zweiten Layoutschritts (relevant bei 2+ Durchläufen): „Neu" = nach der Größenanpassung neu absteigend sortieren (Thesis: empfohlen); „Behalten" = Reihenfolge aus dem ersten Durchlauf; „Platz" = Platzierung/Reihen aus dem ersten Durchlauf beibehalten. Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
+      en: 'Second layout step strategy (relevant with 2+ passes): "New" = re-sort descending after the size adjustment (thesis: recommended); "Keep" = keep the first-pass order; "Place" = keep the first-pass placement/rows. Affects: only the Area-True Treemap algorithm.',
     },
     incrementMargin: {
-      de: 'Steigert den Abstand schrittweise über mehrere Durchläufe (nur bei Durchläufen > 2 relevant, die die Thesis nicht empfiehlt). Wirkt auf: nur den Improved-Algorithmus.',
-      en: 'Increases the gap gradually across multiple passes (only relevant for >2 passes, which the thesis does not recommend). Affects: only the improved algorithm.',
+      de: 'Steigert den Abstand schrittweise über mehrere Durchläufe (nur bei Durchläufen > 2 relevant, die die Thesis nicht empfiehlt). Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
+      en: 'Increases the gap gradually across multiple passes (only relevant for >2 passes, which the thesis does not recommend). Affects: only the Area-True Treemap algorithm.',
     },
     siblingMargin: {
       de: 'Zusätzlicher Abstand zwischen Geschwisterknoten: „Keine" = keine Geschwisterabstände; „Alle" = jeder Knoten wird um den halben Abstand verkleinert (sehr schmale Knoten verschwinden dabei); „Nur Blätter" = nur Blattknoten werden verkleinert, Abstände entstehen ausschließlich zwischen Blättern, Ordner bleiben ohne Abstand. Thesis: keine Geschwisterabstände empfohlen, stattdessen Umrandungen. Wirkt auf: beide Algorithmen („Nur Blätter" ist im Nested-Treemap nur näherungsweise abbildbar).',
@@ -255,15 +255,15 @@
   let incrementMargin = false;
   let siblingMode: 'none' | 'all' | 'leaves' = 'none';
   let collapseFolders = true;
-  let sorting: ImprovedSortingOption = ImprovedSortingOption.DESCENDING;
+  let sorting: AreaTrueSortingOption = AreaTrueSortingOption.DESCENDING;
 
   const containerSize = 400;
 
-  const sortingOptions: ImprovedSortingOption[] = [
-    ImprovedSortingOption.NONE,
-    ImprovedSortingOption.ASCENDING,
-    ImprovedSortingOption.DESCENDING,
-    ImprovedSortingOption.MIDDLE,
+  const sortingOptions: AreaTrueSortingOption[] = [
+    AreaTrueSortingOption.NONE,
+    AreaTrueSortingOption.ASCENDING,
+    AreaTrueSortingOption.DESCENDING,
+    AreaTrueSortingOption.MIDDLE,
   ];
   const orderOptions: OrderOption[] = [OrderOption.NEW_ORDER, OrderOption.KEEP_ORDER, OrderOption.KEEP_PLACE];
 
@@ -310,12 +310,12 @@
   $: {
     const totalLeaves = countLeaves(loadedData);
 
-    // --- 1) Improved Squarify (CodeCharta) ---
+    // --- 1) Area-True Treemap (CodeCharta) ---
     // The CodeCharta margin/label inputs live in the algorithm's sqrt-space, so
     // we first probe the root size (no margin/label) and then derive raw inputs
     // that realize the chosen percentage of the canvas — independent of the
     // data set. The nested panel is fed the same *realized* gap/label later.
-    const baseCfg = ImprovedTreemapLayout.builder()
+    const baseCfg = AreaTrueTreemapLayout.builder()
       .areaMetric(areaMetric)
       .margin(0)
       .numberOfPasses(numberOfPasses)
@@ -330,28 +330,28 @@
       .floorLabels(enableFloorLabels)
       .amountOfTopLabels(amountOfTopLabels)
       .build();
-    const probeRects = new ImprovedTreemapLayout({ ...baseCfg, margin: 0, labelLength: 0 }).compute(loadedData);
+    const probeRects = new AreaTrueTreemapLayout({ ...baseCfg, margin: 0, labelLength: 0 }).compute(loadedData);
     const baseRootW = probeRects[0]?.width || 1;
 
     const rawMargin = (marginPercent / 100) * MARGIN_DIVISOR * baseRootW;
-    const rawLabel: number | ImprovedLabelSizeResolver = variableLabelSize
+    const rawLabel: number | AreaTrueLabelSizeResolver = variableLabelSize
       ? (node) => getFloorLabelPadding(node.x1 - node.x0, node.depth, DEFAULT_FLOOR_LABEL_CONFIG)
       : (labelPercent / 100) * baseRootW;
 
-    let improvedRects: TreemapRect[] = [];
-    let improvedMs = 0;
+    let areaTrueRects: TreemapRect[] = [];
+    let areaTrueMs = 0;
     let realizedMarginPx = 0;
     let realizedLabelPx = 0;
     {
       // Measure the average over many iterations (same as the nested panel),
       // so a single fast run cannot show a misleading 0.00 ms.
       let rawRects: TreemapRect[] = [];
-      improvedMs = measureMs(() => {
-        rawRects = new ImprovedTreemapLayout({ ...baseCfg, margin: rawMargin, labelLength: rawLabel }).compute(loadedData);
+      areaTrueMs = measureMs(() => {
+        rawRects = new AreaTrueTreemapLayout({ ...baseCfg, margin: rawMargin, labelLength: rawLabel }).compute(loadedData);
       });
       const root = rawRects[0];
       const scale = root && root.width > 0 ? containerSize / root.width : 1;
-      improvedRects = rawRects.map((r) => ({
+      areaTrueRects = rawRects.map((r) => ({
         ...r,
         x: (r.x - (root?.x ?? 0)) * scale,
         y: (r.y - (root?.y ?? 0)) * scale,
@@ -362,8 +362,8 @@
       // value (e.g. flare) show 0. Aggregate bottom-up like the algorithm does
       // internally (own value ?? sum of children) so hover/center values match
       // the nested panel's hierarchy sums.
-      improvedRects = aggregateImprovedValues(improvedRects, areaMetric);
-      // Realized gap the improved algorithm produces (≈ marginPercent % of the canvas).
+      areaTrueRects = aggregateAreaTrueValues(areaTrueRects, areaMetric);
+      // Realized gap the area-true layout produces (≈ marginPercent % of the canvas).
       realizedMarginPx = (rawMargin / MARGIN_DIVISOR) * scale;
       // Root label strip thickness (its children start below it).
       const d1 = rawRects.filter((r) => r.depth === 1 && r.width > 0 && r.height > 0);
@@ -390,13 +390,13 @@
     });
 
     results = [
-      { key: 'area-true', title: t.areaTrue, subtitle: t.areaTrueSub, repoUrl: 'https://github.com/MaibornWolff/codecharta', rects: improvedRects, stats: computeStats(improvedRects, improvedMs, totalLeaves, containerSize) },
+      { key: 'area-true', title: t.areaTrue, subtitle: t.areaTrueSub, repoUrl: 'https://github.com/MaibornWolff/codecharta', rects: areaTrueRects, stats: computeStats(areaTrueRects, areaTrueMs, totalLeaves, containerSize) },
       { key: 'nested', title: t.nested, subtitle: t.nestedSub, repoUrl: 'https://github.com/d3/d3-hierarchy', rects: nestedRects, stats: computeStats(nestedRects, nestedMs, totalLeaves, containerSize) },
     ];
   }
 
   function computeStats(rects: TreemapRect[], ms: number, totalLeaves: number, size: number): Stats {
-    // Only positive-area leaves count: the improved algorithm keeps zero-area
+    // Only positive-area leaves count: the area-true layout keeps zero-area
     // ("missing") nodes in its rect list, while flattenD3 drops them — counting
     // visible leaves in both panels yields the same "missing" metric.
     const leaves = rects.filter((r) => r.isLeaf && r.width > 0 && r.height > 0);
@@ -443,7 +443,7 @@
     labelPx: number;
     labelEnabled: boolean;
     topLevels: number;
-    sorting: ImprovedSortingOption;
+    sorting: AreaTrueSortingOption;
     collapseFolders: boolean;
   }
 
@@ -452,9 +452,9 @@
 
     const root = hierarchy(data).sum((d) => (!d.children || d.children.length === 0 ? (d.attributes?.[opts.metric] ?? 0) : 0));
 
-    if (opts.sorting !== ImprovedSortingOption.NONE) {
+    if (opts.sorting !== AreaTrueSortingOption.NONE) {
       // MIDDLE behaves like DESCENDING (same as the improved squarify comparator).
-      const dir = opts.sorting === ImprovedSortingOption.ASCENDING ? 1 : -1;
+      const dir = opts.sorting === AreaTrueSortingOption.ASCENDING ? 1 : -1;
       root.sort((a, b) => dir * ((a.value ?? 0) - (b.value ?? 0)));
     }
 
@@ -475,7 +475,7 @@
       });
     }
 
-    // Mirror the improved algorithm's `hasLabel = labelsEnabled && depth <
+    // Mirror the area-true layout's `hasLabel = labelsEnabled && depth <
     // amountOfTopLabels` (the root at depth 0 is included): the floor-label
     // strip *replaces* the top margin for labeled folders. For every other
     // folder the normal top margin must stay — d3's paddingOuter sets
@@ -531,13 +531,13 @@
   }
 
   /**
-   * The improved layout reports each node's *own* metric value only, so
+   * The area-true layout reports each node's *own* metric value only, so
    * folders without an own attribute show 0. Fill them bottom-up with the
    * effective value the algorithm itself uses (own value ?? sum of children):
    * `rects` are in pre-order (parent before its whole subtree), which lets us
    * derive parents and aggregate in one pass.
    */
-  function aggregateImprovedValues(rects: TreemapRect[], metric: string): TreemapRect[] {
+  function aggregateAreaTrueValues(rects: TreemapRect[], metric: string): TreemapRect[] {
     const n = rects.length;
     if (n === 0) return rects;
     const parent = new Array<number>(n).fill(-1);
@@ -715,7 +715,7 @@
         <select bind:value={sorting}>
           {#each sortingOptions as s (s)}
             <option value={s}>
-              {s === ImprovedSortingOption.NONE ? t.sortNone : s === ImprovedSortingOption.ASCENDING ? t.sortAsc : s === ImprovedSortingOption.DESCENDING ? t.sortDesc : t.sortMiddle}
+              {s === AreaTrueSortingOption.NONE ? t.sortNone : s === AreaTrueSortingOption.ASCENDING ? t.sortAsc : s === AreaTrueSortingOption.DESCENDING ? t.sortDesc : t.sortMiddle}
             </option>
           {/each}
         </select>

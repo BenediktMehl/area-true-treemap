@@ -19,9 +19,9 @@ export { treemap } from "./treemap";
 export type { Treemap, AreaValue } from "./treemap";
 
 // CodeCharta improved squarify layout (1:1 port, additive)
-export { ImprovedTreemapLayout } from "./improved/layout";
-export { ImprovedTreemapConfigBuilder, DEFAULT_IMPROVED_CONFIG } from "./improved/config";
-export type { ImprovedTreemapConfig } from "./improved/config";
-export { generateImprovedSquarifyLayoutNodes, MARGIN_DIVISOR } from "./improved/startAlgo";
-export { OrderOption, SortingOption as ImprovedSortingOption } from "./improved/squarify";
-export type { LabelLength as ImprovedLabelLength, LabelSizeResolver as ImprovedLabelSizeResolver } from "./improved/squarify";
+export { AreaTrueTreemapLayout } from "./area-true-treemap/layout";
+export { AreaTrueTreemapConfigBuilder, DEFAULT_AREA_TRUE_CONFIG } from "./area-true-treemap/config";
+export type { AreaTrueTreemapConfig } from "./area-true-treemap/config";
+export { generateAreaTrueSquarifyLayoutNodes, MARGIN_DIVISOR } from "./area-true-treemap/startAlgo";
+export { OrderOption, SortingOption as AreaTrueSortingOption } from "./area-true-treemap/squarify";
+export type { LabelLength as AreaTrueLabelLength, LabelSizeResolver as AreaTrueLabelSizeResolver } from "./area-true-treemap/squarify";
