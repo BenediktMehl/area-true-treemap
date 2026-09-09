@@ -22,6 +22,6 @@ export type { Treemap, AreaValue } from "./treemap";
 export { ImprovedTreemapLayout } from "./improved/layout";
 export { ImprovedTreemapConfigBuilder, DEFAULT_IMPROVED_CONFIG } from "./improved/config";
 export type { ImprovedTreemapConfig } from "./improved/config";
-export { generateImprovedSquarifyLayoutNodes } from "./improved/startAlgo";
+export { generateImprovedSquarifyLayoutNodes, MARGIN_DIVISOR } from "./improved/startAlgo";
 export { OrderOption, SortingOption as ImprovedSortingOption } from "./improved/squarify";
 export type { LabelLength as ImprovedLabelLength, LabelSizeResolver as ImprovedLabelSizeResolver } from "./improved/squarify";

@@ -7,6 +7,8 @@
     OrderOption,
     getFloorLabelPadding,
     DEFAULT_FLOOR_LABEL_CONFIG,
+    MARGIN_DIVISOR,
+    type ImprovedLabelSizeResolver,
     type TreeNode,
     type TreemapRect,
   } from 'area-true-treemap';
@@ -155,18 +157,18 @@
 
   // Algorithm settings (CodeCharta improved squarify / "Improved Squarifying").
   let areaMetric = 'size';
-  let margin = 10;
+  let marginPercent = 1.5;
   let enableFloorLabels = true;
   let amountOfTopLabels = 2;
-  let labelLength = 1;
+  let labelPercent = 5;
   let variableLabelSize = false;
   let numberOfPasses = 2;
-  let useScale = false;
-  let simpleIncreaseValues = false;
+  let useScale = true;
+  let simpleIncreaseValues = true;
   let orderOption: OrderOption = OrderOption.NEW_ORDER;
   let incrementMargin = false;
-  let applySiblingMargin = true;
-  let collapseFolders = false;
+  let applySiblingMargin = false;
+  let collapseFolders = true;
   let sorting: ImprovedSortingOption = ImprovedSortingOption.DESCENDING;
 
   const containerSize = 400;
@@ -222,10 +224,14 @@
   $: {
     const totalLeaves = countLeaves(loadedData);
 
-    // 1) Improved Squarify (CodeCharta improved algorithm).
-    const builder = ImprovedTreemapLayout.builder()
+    // --- 1) Improved Squarify (CodeCharta) ---
+    // The CodeCharta margin/label inputs live in the algorithm's sqrt-space, so
+    // we first probe the root size (no margin/label) and then derive raw inputs
+    // that realize the chosen percentage of the canvas — independent of the
+    // data set. The nested panel is fed the same *realized* gap/label later.
+    const baseCfg = ImprovedTreemapLayout.builder()
       .areaMetric(areaMetric)
-      .margin(margin)
+      .margin(0)
       .numberOfPasses(numberOfPasses)
       .scale(useScale)
       .simpleIncreaseValues(simpleIncreaseValues)
@@ -235,41 +241,51 @@
       .applySiblingMargin(applySiblingMargin)
       .collapseFolders(collapseFolders)
       .floorLabels(enableFloorLabels)
-      .amountOfTopLabels(amountOfTopLabels);
+      .amountOfTopLabels(amountOfTopLabels)
+      .build();
+    const probeRects = new ImprovedTreemapLayout({ ...baseCfg, margin: 0, labelLength: 0 }).compute(loadedData);
+    const baseRootW = probeRects[0]?.width || 1;
 
-    if (variableLabelSize) {
-      builder.labelLength((node) => getFloorLabelPadding(node.x1 - node.x0, node.depth, DEFAULT_FLOOR_LABEL_CONFIG));
-    } else {
-      builder.labelLength(labelLength);
-    }
-    const improvedConfig = builder.build();
+    const rawMargin = (marginPercent / 100) * MARGIN_DIVISOR * baseRootW;
+    const rawLabel: number | ImprovedLabelSizeResolver = variableLabelSize
+      ? (node) => getFloorLabelPadding(node.x1 - node.x0, node.depth, DEFAULT_FLOOR_LABEL_CONFIG)
+      : (labelPercent / 100) * baseRootW;
 
     let improvedRects: TreemapRect[] = [];
-    const improvedMs = measureMs(() => {
-      const raw = new ImprovedTreemapLayout(improvedConfig).compute(loadedData);
-      const root = raw[0];
+    let improvedMs = 0;
+    let realizedMarginPx = 0;
+    let realizedLabelPx = 0;
+    {
+      const t0 = performance.now();
+      const rawRects = new ImprovedTreemapLayout({ ...baseCfg, margin: rawMargin, labelLength: rawLabel }).compute(loadedData);
+      improvedMs = performance.now() - t0;
+      const root = rawRects[0];
       const scale = root && root.width > 0 ? containerSize / root.width : 1;
-      // Translate to the root's origin so the root fills [0, containerSize].
-      improvedRects = raw.map((r) => ({
+      improvedRects = rawRects.map((r) => ({
         ...r,
         x: (r.x - (root?.x ?? 0)) * scale,
         y: (r.y - (root?.y ?? 0)) * scale,
         width: r.width * scale,
         height: r.height * scale,
       }));
-    });
+      // Realized gap the improved algorithm produces (≈ marginPercent % of the canvas).
+      realizedMarginPx = (rawMargin / MARGIN_DIVISOR) * scale;
+      // Root label strip thickness (its children start below it).
+      const d1 = rawRects.filter((r) => r.depth === 1 && r.width > 0 && r.height > 0);
+      if (root?.hasLabel && d1.length > 0) {
+        realizedLabelPx = (Math.min(...d1.map((r) => r.y)) - root.y) * scale;
+      }
+    }
 
-    // 2) Nested treemap (d3, as a baseline that mirrors the settings as far as
-    //    d3 supports them). Simple documented mapping of margin/labelLength.
-    const nestedGap = Math.max(1, margin * 0.5);
+    // --- 2) Nested treemap (d3) with the same realized margin/label ---
     let nestedRects: TreemapRect[] = [];
     const nestedMs = measureMs(() => {
       nestedRects = computeNestedD3(loadedData, {
         metric: areaMetric,
         size: containerSize,
-        gapPx: nestedGap,
-        innerGapPx: applySiblingMargin ? nestedGap : 0,
-        labelPx: enableFloorLabels ? Math.max(6, labelLength * 12) : 0,
+        gapPx: realizedMarginPx,
+        innerGapPx: applySiblingMargin ? realizedMarginPx : 0,
+        labelPx: enableFloorLabels ? realizedLabelPx : 0,
         topLevels: amountOfTopLabels,
         sorting,
         collapseFolders,
@@ -283,7 +299,10 @@
   }
 
   function computeStats(rects: TreemapRect[], ms: number, totalLeaves: number, size: number): Stats {
-    const leaves = rects.filter((r) => r.isLeaf);
+    // Only positive-area leaves count: the improved algorithm keeps zero-area
+    // ("missing") nodes in its rect list, while flattenD3 drops them — counting
+    // visible leaves in both panels yields the same "missing" metric.
+    const leaves = rects.filter((r) => r.isLeaf && r.width > 0 && r.height > 0);
     const aspects = rects
       .filter((r) => r.width > 0 && r.height > 0)
       .map((r) => Math.max(r.width / r.height, r.height / r.width));
@@ -346,8 +365,10 @@
       .paddingOuter(opts.gapPx)
       .paddingInner(opts.innerGapPx);
 
+    // Mirror the improved algorithm's `hasLabel = depth < amountOfTopLabels`
+    // (the root at depth 0 is included).
     const isLabeled = (n: HierarchyRectangularNode<TreeNode>): boolean =>
-      n.depth > 0 && n.depth <= opts.topLevels && !!n.children && n.children.length > 0;
+      n.depth < opts.topLevels && !!n.children && n.children.length > 0;
     layout.paddingTop((n) => (isLabeled(n) ? opts.labelPx : 0));
 
     const laidOut = layout(root);
@@ -463,7 +484,10 @@
     <div class="controls">
       <label class="c">
         <span class="lbl">{t.margin}</span>
-        <input type="number" min="0" step="0.1" bind:value={margin} />
+        <span class="field">
+          <input type="range" min="0" max="3" step="0.1" bind:value={marginPercent} />
+          <output>{marginPercent.toFixed(1)}%</output>
+        </span>
       </label>
 
       <div class="c">
@@ -480,7 +504,10 @@
 
       <label class="c">
         <span class="lbl">{t.labelLength}</span>
-        <input type="number" min="0.1" step="0.1" bind:value={labelLength} />
+        <span class="field">
+          <input type="range" min="0" max="20" step="0.5" bind:value={labelPercent} />
+          <output>{labelPercent.toFixed(1)}%</output>
+        </span>
       </label>
 
       <div class="c">
@@ -696,6 +723,22 @@
     padding: 5px 7px;
     font-size: 12px;
     width: 72px;
+  }
+
+  .field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .c input[type='range'] {
+    width: 120px;
+  }
+
+  .c output {
+    font-size: 12px;
+    color: var(--text);
+    min-width: 38px;
   }
 
   .c input[type='text'] {

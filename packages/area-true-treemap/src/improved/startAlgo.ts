@@ -16,7 +16,7 @@ import { SquarifyNode, squarify, OrderOption, LabelLength } from "./squarify";
 import { ImprovedTreemapConfig } from "./config";
 
 /** Raw-margin → algorithm-margin scaling, taken 1:1 from CodeCharta. */
-const MARGIN_DIVISOR = 4.331109347824219 * 3.9340057382606775;
+export const MARGIN_DIVISOR = 4.331109347824219 * 3.9340057382606775;
 
 function resolveLabelLength(labelLength: LabelLength, node: SquarifyNode): number {
     return typeof labelLength === "function" ? labelLength(node) : labelLength;
