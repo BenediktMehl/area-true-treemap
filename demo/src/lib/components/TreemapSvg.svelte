@@ -50,34 +50,36 @@
           stroke="none"
           opacity="0.95"
         />
-        {#if rect.hasLabel}
-          <text
-            x={rect.x + rect.width / 2}
-            y={rect.y + 12}
-            text-anchor="middle"
-            font-size="12"
-            font-weight="700"
-            fill="#fff"
-            pointer-events="none"
-          >
-            {truncate(rect.name)}
-          </text>
-        {:else if canShowCenter(rect)}
-          <text
-            x={rect.x + rect.width / 2}
-            y={rect.y + rect.height / 2}
-            text-anchor="middle"
-            font-size="11"
-            fill="#fff"
-            pointer-events="none"
-          >
-            <tspan x={rect.x + rect.width / 2} dy="-0.3em" font-weight="600">{truncate(rect.name)}</tspan>
-            {#if showValues}
-              <tspan x={rect.x + rect.width / 2} dy="1.3em" font-size="9" opacity="0.9">{formatValue(rect.value)}</tspan>
-            {/if}
-          </text>
-        {/if}
       </g>
+    {/each}
+    {#each visibleRects as rect (rect.name + rect.x + rect.y + rect.depth + '-label')}
+      {#if rect.hasLabel}
+        <text
+          x={rect.x + rect.width / 2}
+          y={rect.y + 12}
+          text-anchor="middle"
+          font-size="12"
+          font-weight="700"
+          fill="#fff"
+          pointer-events="none"
+        >
+          {truncate(rect.name)}
+        </text>
+      {:else if canShowCenter(rect)}
+        <text
+          x={rect.x + rect.width / 2}
+          y={rect.y + rect.height / 2}
+          text-anchor="middle"
+          font-size="11"
+          fill="#fff"
+          pointer-events="none"
+        >
+          <tspan x={rect.x + rect.width / 2} dy="-0.3em" font-weight="600">{truncate(rect.name)}</tspan>
+          {#if showValues}
+            <tspan x={rect.x + rect.width / 2} dy="1.3em" font-size="9" opacity="0.9">{formatValue(rect.value)}</tspan>
+          {/if}
+        </text>
+      {/if}
     {/each}
   </svg>
 </div>
