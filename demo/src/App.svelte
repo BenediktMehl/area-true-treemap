@@ -137,6 +137,81 @@
 
   $: t = translations[lang];
 
+  // Hover explanation per setting: what it does and whether it affects both
+  // algorithms or only the improved one. Recommended values marked "Thesis"
+  // come from the recommendation table in the improve-squarify chapter of the
+  // master thesis (Fazit of the algorithm chapter).
+  interface HelpText {
+    de: string;
+    en: string;
+  }
+  const helpTexts: Record<string, HelpText> = {
+    margin: {
+      de: 'Relativer Abstand zwischen benachbarten Knoten (in % der Seitenlänge der Wurzel; je Karte wird er so umgerechnet, dass beide denselben realisierten Abstand zeigen). Struktur ist ab ca. 0,5 % erkennbar, über ca. 3 % dominiert das Treemap-Problem. Thesis: manuelle Wahl 0,5–3 %. Wirkt auf: beide Algorithmen.',
+      en: 'Relative gap between neighbouring nodes (as % of the root side length; converted per map so both realize the same gap). Structure is visible from ~0.5 %, above ~3 % the treemap problem dominates. Thesis: manual choice 0.5–3 %. Affects: both algorithms.',
+    },
+    floorLabels: {
+      de: 'Reserviert für beschriftete Ordner der oberen N Ebenen einen Streifen für den Ordnernamen; der Streifen ersetzt dort den oberen Abstand. Thesis: Beschriftungen verbessern die Orientierung, kosten aber Blattfläche. Wirkt auf: beide Algorithmen.',
+      en: 'Reserves a strip for the folder name on the top N levels of labeled folders; the strip replaces the top gap there. Thesis: labels improve orientation but cost leaf area. Affects: both algorithms.',
+    },
+    amountOfTopLabels: {
+      de: 'N = Anzahl der oberen Ebenen, deren Ordner eine Beschriftung erhalten (Wurzel = Ebene 0 zählt mit; 0 = keine). Thesis: N = 2–5 praktikabel, der finale Vergleich nutzt N = 3. Wirkt auf: beide Algorithmen.',
+      en: 'N = number of top levels whose folders get a label (root = level 0 counts; 0 = none). Thesis: N = 2–5 practical, the final comparison uses N = 3. Affects: both algorithms.',
+    },
+    labelLength: {
+      de: 'L = relative Länge des für die Beschriftung reservierten Streifens (% der Seitenlänge der Wurzel). Größeres L → größere Schrift, aber weniger Blattfläche und mehr potenziell fehlende Knoten. Thesis: L = 3–10 %, finaler Vergleich ≈ 4 %. Wirkt auf: beide Algorithmen.',
+      en: 'L = relative length of the reserved label strip (% of the root side length). Larger L → larger text, but less leaf area and more potentially missing nodes. Thesis: L = 3–10 %, final comparison ≈ 4 %. Affects: both algorithms.',
+    },
+    variableLabel: {
+      de: 'Berechnet die Beschriftungshöhe je Ordner aus dessen eigener Breite (an CodeCharta angelehnt) statt mit fester Länge L. Wirkt auf: nur den Improved-Algorithmus (die Nested-Karte übernimmt nur den an der Wurzel gemessenen Wert als Näherung).',
+      en: 'Computes the label height per folder from its own width (CodeCharta-style) instead of a fixed length L. Affects: only the improved algorithm (the nested map only mirrors the root-measured value as an approximation).',
+    },
+    passes: {
+      de: 'Anzahl der Layout-Durchläufe. 1 = nur Standard-Squarify, Margin/Beschriftungen bleiben wirkungslos. 2 = Größenanpassung + zweiter Layoutschritt (empfohlen). Mehrfache Berechnung (>2) wird in der Thesis nicht empfohlen. Wirkt auf: nur den Improved-Algorithmus.',
+      en: 'Number of layout passes. 1 = plain squarify, margin/labels have no effect. 2 = size adjustment + second layout step (recommended). Multiple computation (>2) is not recommended in the thesis. Affects: only the improved algorithm.',
+    },
+    scale: {
+      de: 'Skaliert im zweiten Layoutschritt die Kindknoten auf die tatsächlich verfügbare Elternfläche (CodeCharta „Apply Scaling"). Verhindert, dass Knoten die Elternfläche überragen (valide Layouts). Empfohlen: an. Wirkt auf: nur den Improved-Algorithmus.',
+      en: 'In the second layout step, scales the children onto the actually available parent area (CodeCharta "Apply Scaling"). Prevents nodes from overflowing their parent (valid layouts). Recommended: on. Affects: only the improved algorithm.',
+    },
+    simpleIncrease: {
+      de: 'Wahl der Größenanpassung zwischen den beiden Layoutschritten: an = absolute, aus = relative Größenanpassung. Die Thesis bevorzugt die relative (aus): weniger fehlende Knoten; die absolute ist bei der Wertproportionalität minimal besser. Empfohlen: aus. Wirkt auf: nur den Improved-Algorithmus.',
+      en: 'Size adjustment between the two layout steps: on = absolute, off = relative. The thesis prefers relative (off): fewer missing nodes; absolute is marginally better in value proportionality. Recommended: off. Affects: only the improved algorithm.',
+    },
+    order: {
+      de: 'Strategie des zweiten Layoutschritts (relevant bei 2+ Durchläufen): „Neu" = nach der Größenanpassung neu absteigend sortieren (Thesis: empfohlen); „Behalten" = Reihenfolge aus dem ersten Durchlauf; „Platz" = Platzierung/Reihen aus dem ersten Durchlauf beibehalten. Wirkt auf: nur den Improved-Algorithmus.',
+      en: 'Second layout step strategy (relevant with 2+ passes): "New" = re-sort descending after the size adjustment (thesis: recommended); "Keep" = keep the first-pass order; "Place" = keep the first-pass placement/rows. Affects: only the improved algorithm.',
+    },
+    incrementMargin: {
+      de: 'Steigert den Abstand schrittweise über mehrere Durchläufe (nur bei Durchläufen > 2 relevant, die die Thesis nicht empfiehlt). Wirkt auf: nur den Improved-Algorithmus.',
+      en: 'Increases the gap gradually across multiple passes (only relevant for >2 passes, which the thesis does not recommend). Affects: only the improved algorithm.',
+    },
+    siblingMargin: {
+      de: 'Zusätzlicher Abstand zwischen Geschwisterknoten: jeder Knoten wird um den halben Abstand verkleinert, sehr schmale Knoten verschwinden dabei. Thesis: keine Geschwisterabstände empfohlen, stattdessen Umrandungen. Wirkt auf: beide Algorithmen (Nested: innerer Abstand).',
+      en: 'Extra gap between sibling nodes: each node shrinks by half the gap, very thin nodes disappear in the process. Thesis: no sibling gaps recommended, use outlines instead. Affects: both algorithms (nested: inner padding).',
+    },
+    collapse: {
+      de: 'Faltet Ordnerketten (Ordner mit genau einem Ordner als Kind) zu einem Knoten zusammen. Thesis: verwenden – rund zehnmal weniger fehlende Knoten und bessere Platznutzung. Wirkt auf: beide Algorithmen.',
+      en: 'Collapses folder chains (folders with exactly one folder child) into a single node. Thesis: use it — roughly ten times fewer missing nodes and better space utilization. Affects: both algorithms.',
+    },
+    sort: {
+      de: 'Sortierung der Knoten nach Größe vor der Einfügung. Thesis: absteigend nach Größe ist optimal (bessere Seitenverhältnisse, weniger fehlende Knoten). „Mitte" wird in der Demo wie absteigend behandelt. Wirkt auf: beide Algorithmen.',
+      en: 'Sorts nodes by size before insertion. Thesis: descending by size is optimal (better aspect ratios, fewer missing nodes). "Middle" is treated like descending in this demo. Affects: both algorithms.',
+    },
+    metric: {
+      de: 'Name des Metrik-Attributs im Datensatz (z. B. size oder rloc), dessen Wert die Fläche der Knoten bestimmt. Wirkt auf: beide Algorithmen.',
+      en: 'Name of the metric attribute in the dataset (e.g. size or rloc) whose value determines node area. Affects: both algorithms.',
+    },
+    dataset: {
+      de: 'Wählt die Beispieldaten (flare aus der Thesis bzw. ein kleines synthetisches Beispiel) oder lädt eine eigene JSON-Datei. Kein Algorithmus-Parameter.',
+      en: 'Selects the sample data (flare from the thesis or a small synthetic sample) or loads your own JSON file. Not an algorithm parameter.',
+    },
+  };
+
+  function help(key: string): string {
+    return helpTexts[key]?.[lang] ?? '';
+  }
+
   // Bundled example datasets, selectable in the header.
   interface ExampleDef {
     data: TreeNode;
@@ -156,15 +231,20 @@
   let loadedData: TreeNode = examples.flare.data;
 
   // Algorithm settings (CodeCharta improved squarify / "Improved Squarifying").
+  // Defaults follow the recommendation table of the master thesis (Fazit of
+  // the improve-squarify chapter): relative size adjustment, gap 0.5–3 %
+  // (chosen 1 %), floor labels N = 3 / L = 3 % on the top levels (recommended
+  // N 2–5, L 3–10 %), sorting descending, collapse folder chains, no sibling
+  // margins, two passes only.
   let areaMetric = 'size';
-  let marginPercent = 1.5;
+  let marginPercent = 1;
   let enableFloorLabels = true;
-  let amountOfTopLabels = 2;
-  let labelPercent = 5;
+  let amountOfTopLabels = 3;
+  let labelPercent = 3;
   let variableLabelSize = false;
   let numberOfPasses = 2;
   let useScale = true;
-  let simpleIncreaseValues = true;
+  let simpleIncreaseValues = false;
   let orderOption: OrderOption = OrderOption.NEW_ORDER;
   let incrementMargin = false;
   let applySiblingMargin = false;
@@ -521,7 +601,7 @@
     </div>
 
     <div class="controls">
-      <label class="c">
+      <label class="c" title={help('margin')}>
         <span class="lbl">{t.margin}</span>
         <span class="field">
           <input type="range" min="0" max="3" step="0.1" bind:value={marginPercent} />
@@ -529,19 +609,19 @@
         </span>
       </label>
 
-      <div class="c">
+      <div class="c" title={help('floorLabels')}>
         <span class="lbl">&nbsp;</span>
         <button class="toggle {enableFloorLabels ? 'on' : ''}" on:click={() => (enableFloorLabels = !enableFloorLabels)}>
           {enableFloorLabels ? '✓' : '✗'} {t.floorLabels}
         </button>
       </div>
 
-      <label class="c">
+      <label class="c" title={help('amountOfTopLabels')}>
         <span class="lbl">{t.amountOfTopLabels}</span>
         <input type="number" min="-1" step="1" bind:value={amountOfTopLabels} />
       </label>
 
-      <label class="c">
+      <label class="c" title={help('labelLength')}>
         <span class="lbl">{t.labelLength}</span>
         <span class="field">
           <input type="range" min="0" max="20" step="0.5" bind:value={labelPercent} />
@@ -549,33 +629,33 @@
         </span>
       </label>
 
-      <div class="c">
+      <div class="c" title={help('variableLabel')}>
         <span class="lbl">&nbsp;</span>
         <button class="toggle {variableLabelSize ? 'on' : ''}" on:click={() => (variableLabelSize = !variableLabelSize)}>
           {variableLabelSize ? '✓' : '✗'} {t.variableLabel}
         </button>
       </div>
 
-      <label class="c">
+      <label class="c" title={help('passes')}>
         <span class="lbl">{t.passes}</span>
         <input type="number" min="1" step="1" bind:value={numberOfPasses} />
       </label>
 
-      <div class="c">
+      <div class="c" title={help('scale')}>
         <span class="lbl">&nbsp;</span>
         <button class="toggle {useScale ? 'on' : ''}" on:click={() => (useScale = !useScale)}>
           {useScale ? '✓' : '✗'} {t.scale}
         </button>
       </div>
 
-      <div class="c">
+      <div class="c" title={help('simpleIncrease')}>
         <span class="lbl">&nbsp;</span>
         <button class="toggle {simpleIncreaseValues ? 'on' : ''}" on:click={() => (simpleIncreaseValues = !simpleIncreaseValues)}>
           {simpleIncreaseValues ? '✓' : '✗'} {t.simpleIncrease}
         </button>
       </div>
 
-      <label class="c">
+      <label class="c" title={help('order')}>
         <span class="lbl">{t.order}</span>
         <select bind:value={orderOption}>
           {#each orderOptions as o (o)}
@@ -584,28 +664,28 @@
         </select>
       </label>
 
-      <div class="c">
+      <div class="c" title={help('incrementMargin')}>
         <span class="lbl">&nbsp;</span>
         <button class="toggle {incrementMargin ? 'on' : ''}" on:click={() => (incrementMargin = !incrementMargin)}>
           {incrementMargin ? '✓' : '✗'} {t.incrementMargin}
         </button>
       </div>
 
-      <div class="c">
+      <div class="c" title={help('siblingMargin')}>
         <span class="lbl">&nbsp;</span>
         <button class="toggle {applySiblingMargin ? 'on' : ''}" on:click={() => (applySiblingMargin = !applySiblingMargin)}>
           {applySiblingMargin ? '✓' : '✗'} {t.siblingMargin}
         </button>
       </div>
 
-      <div class="c">
+      <div class="c" title={help('collapse')}>
         <span class="lbl">&nbsp;</span>
         <button class="toggle {collapseFolders ? 'on' : ''}" on:click={() => (collapseFolders = !collapseFolders)}>
           {collapseFolders ? '✓' : '✗'} {t.collapse}
         </button>
       </div>
 
-      <label class="c">
+      <label class="c" title={help('sort')}>
         <span class="lbl">{t.sort}</span>
         <select bind:value={sorting}>
           {#each sortingOptions as s (s)}
@@ -616,12 +696,12 @@
         </select>
       </label>
 
-      <label class="c">
+      <label class="c" title={help('metric')}>
         <span class="lbl">{t.metric}</span>
         <input type="text" bind:value={areaMetric} />
       </label>
 
-      <div class="c">
+      <div class="c" title={help('dataset')}>
         <span class="lbl">&nbsp;</span>
         <label class="file">
           📁 {t.load}
@@ -629,7 +709,7 @@
         </label>
       </div>
 
-      <div class="c">
+      <div class="c" title={help('dataset')}>
         <span class="lbl">{t.dataPreset}</span>
         <select value={exampleId} on:change={loadExample}>
           {#each exampleOrder as ex (ex.id)}
