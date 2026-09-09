@@ -17,3 +17,11 @@ export { hierarchy } from "./hierarchy";
 export type { HierarchyNode, HierarchyLink, HierarchyChildrenAccessor } from "./hierarchy";
 export { treemap } from "./treemap";
 export type { Treemap, AreaValue } from "./treemap";
+
+// CodeCharta improved squarify layout (1:1 port, additive)
+export { ImprovedTreemapLayout } from "./improved/layout";
+export { ImprovedTreemapConfigBuilder, DEFAULT_IMPROVED_CONFIG } from "./improved/config";
+export type { ImprovedTreemapConfig } from "./improved/config";
+export { generateImprovedSquarifyLayoutNodes } from "./improved/startAlgo";
+export { OrderOption, SortingOption as ImprovedSortingOption } from "./improved/squarify";
+export type { LabelLength as ImprovedLabelLength, LabelSizeResolver as ImprovedLabelSizeResolver } from "./improved/squarify";

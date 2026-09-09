@@ -2,9 +2,11 @@
   import { hierarchy, treemap, type HierarchyRectangularNode } from 'd3-hierarchy';
   import TreemapSvg from '$lib/components/TreemapSvg.svelte';
   import {
-    TreemapLayout,
-    SortingOption,
-    LabelPosition,
+    ImprovedTreemapLayout,
+    ImprovedSortingOption,
+    OrderOption,
+    getFloorLabelPadding,
+    DEFAULT_FLOOR_LABEL_CONFIG,
     type TreeNode,
     type TreemapRect,
   } from 'area-true-treemap';
@@ -17,28 +19,34 @@
   const translations: Record<Lang, Record<string, string>> = {
     de: {
       title: 'Treemap Vergleich',
-      subtitle: 'Area-True Treemap vs. Nested Treemap',
+      subtitle: 'Improved Squarify vs. Nested Treemap',
       thesis: 'zur Masterthesis',
       margin: 'Margin',
+      floorLabels: 'Etagen-Labels',
+      amountOfTopLabels: 'Anzahl Labels',
+      labelLength: 'Label-Länge',
+      variableLabel: 'Variable Label-Größe',
+      passes: 'Durchläufe',
+      scale: 'Skalieren',
+      simpleIncrease: 'Einfache Werterhöhung',
+      order: 'Reihenfolge',
+      incrementMargin: 'Margin erhöhen',
       siblingMargin: 'Geschwisterabstand',
-      labels: 'Labels',
-      height: 'Höhe',
-      position: 'Position',
+      collapse: 'Ordnerketten',
       sort: 'Sortierung',
       metric: 'Metrik',
-      collapse: 'Ordnerketten',
       load: 'JSON',
       sample: 'Beispiel',
       dataPreset: 'Beispieldaten',
       presetFlare: 'flare (d3, aus der Masterarbeit)',
       presetSample: 'kleines Beispiel (synthetisch)',
-      posTop: 'oben',
-      posBottom: 'unten',
-      posLeft: 'links',
-      posRight: 'rechts',
-      sortDesc: 'absteigend',
-      sortAsc: 'aufsteigend',
       sortNone: 'keine',
+      sortAsc: 'aufsteigend',
+      sortDesc: 'absteigend',
+      sortMiddle: 'mitte',
+      orderNew: 'neu',
+      orderKeep: 'behalten',
+      orderPlace: 'platz',
       metricCol: 'Metrik',
       mNodes: 'Knoten',
       mLeaves: 'Blätter',
@@ -60,36 +68,42 @@
       hSpace:
         'Platznutzung (These): Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Bester Wert: 100 % (volle Ausnutzung).',
       hTime: 'Zeitaufwand (These): Reine Berechnungszeit des Layout-Algorithmus in ms (ohne Rendering). Bester Wert: möglichst niedrig.',
-      areaTrue: 'Area-True Treemap',
-      areaTrueSub: 'verbessert, mit Abständen und Labels',
+      areaTrue: 'Improved Squarify',
+      areaTrueSub: 'CodeCharta improved algorithm',
       nested: 'Nested Treemap',
       nestedSub: 'd3.js nested treemap',
       empty: 'Keine Daten.',
     },
     en: {
       title: 'Treemap Comparison',
-      subtitle: 'Area-True Treemap vs. Nested Treemap',
+      subtitle: 'Improved Squarify vs. Nested Treemap',
       thesis: 'master thesis',
       margin: 'Margin',
+      floorLabels: 'Floor labels',
+      amountOfTopLabels: 'Amount of labels',
+      labelLength: 'Label length',
+      variableLabel: 'Variable label size',
+      passes: 'Passes',
+      scale: 'Scale',
+      simpleIncrease: 'Simple increase',
+      order: 'Order',
+      incrementMargin: 'Increment margin',
       siblingMargin: 'Sibling margin',
-      labels: 'Labels',
-      height: 'Height',
-      position: 'Position',
+      collapse: 'Collapse folders',
       sort: 'Sort',
       metric: 'Metric',
-      collapse: 'Folder chains',
       load: 'JSON',
       sample: 'Sample',
       dataPreset: 'Sample data',
       presetFlare: 'flare (d3, from master thesis)',
       presetSample: 'small sample (synthetic)',
-      posTop: 'top',
-      posBottom: 'bottom',
-      posLeft: 'left',
-      posRight: 'right',
-      sortDesc: 'descending',
-      sortAsc: 'ascending',
       sortNone: 'none',
+      sortAsc: 'ascending',
+      sortDesc: 'descending',
+      sortMiddle: 'middle',
+      orderNew: 'new',
+      orderKeep: 'keep',
+      orderPlace: 'place',
       metricCol: 'Metric',
       mNodes: 'Nodes',
       mLeaves: 'Leaves',
@@ -111,8 +125,8 @@
       hSpace:
         'Space utilization (thesis): fraction of the root area occupied by leaf nodes. Best value: 100% (full usage).',
       hTime: 'Time (thesis): pure layout computation time in ms (without rendering). Best value: as low as possible.',
-      areaTrue: 'Area-True Treemap',
-      areaTrueSub: 'improved, with gaps and labels',
+      areaTrue: 'Improved Squarify',
+      areaTrueSub: 'CodeCharta improved algorithm',
       nested: 'Nested Treemap',
       nestedSub: 'd3.js nested treemap',
       empty: 'No data.',
@@ -121,9 +135,7 @@
 
   $: t = translations[lang];
 
-  // Bundled example datasets, selectable in the header. "flare" is the
-  // real-world d3 example used in the master thesis (with gaps, 48 nodes
-  // disappear in the plain nested treemap) and is therefore the default.
+  // Bundled example datasets, selectable in the header.
   interface ExampleDef {
     data: TreeNode;
     metric: string;
@@ -137,21 +149,35 @@
     { id: 'flare', labelKey: 'presetFlare' },
     { id: 'sample', labelKey: 'presetSample' },
   ];
-  const defaultExample = 'flare';
 
-  let exampleId: string = defaultExample;
-  let loadedData: TreeNode = examples[defaultExample].data;
+  let exampleId = 'flare';
+  let loadedData: TreeNode = examples.flare.data;
 
+  // Algorithm settings (CodeCharta improved squarify / "Improved Squarifying").
   let areaMetric = 'size';
-  let marginPercent = 1.5;
+  let margin = 10;
+  let enableFloorLabels = true;
+  let amountOfTopLabels = 2;
+  let labelLength = 1;
+  let variableLabelSize = false;
+  let numberOfPasses = 2;
+  let useScale = false;
+  let simpleIncreaseValues = false;
+  let orderOption: OrderOption = OrderOption.NEW_ORDER;
+  let incrementMargin = false;
   let applySiblingMargin = true;
-  let topN = 3;
-  let labelSizePercent = 5;
-  let labelPosition: LabelPosition = LabelPosition.TOP;
-  let collapseFolders = true;
-  let sorting: SortingOption = SortingOption.DESCENDING;
+  let collapseFolders = false;
+  let sorting: ImprovedSortingOption = ImprovedSortingOption.DESCENDING;
 
   const containerSize = 400;
+
+  const sortingOptions: ImprovedSortingOption[] = [
+    ImprovedSortingOption.NONE,
+    ImprovedSortingOption.ASCENDING,
+    ImprovedSortingOption.DESCENDING,
+    ImprovedSortingOption.MIDDLE,
+  ];
+  const orderOptions: OrderOption[] = [OrderOption.NEW_ORDER, OrderOption.KEEP_ORDER, OrderOption.KEEP_PLACE];
 
   interface Stats {
     nodes: number;
@@ -170,15 +196,13 @@
     subtitle: string;
     repoUrl: string;
     rects: TreemapRect[];
-    labelPosition: LabelPosition;
     stats: Stats;
   }
 
   let results: Result[] = [];
 
   // Measures the average runtime of `fn` in milliseconds over enough
-  // iterations to yield sub-millisecond precision (two decimals) even when
-  // `performance.now()` is coarse (e.g. returns integer ms in some browsers).
+  // iterations to yield sub-millisecond precision (two decimals).
   function measureMs(fn: () => void): number {
     fn(); // warm-up so JIT/initialization does not skew the result
     const budgetMs = 20;
@@ -196,57 +220,77 @@
   }
 
   $: {
-    const gapPx = (marginPercent / 100) * containerSize;
-    const labelPx = (labelSizePercent / 100) * containerSize;
     const totalLeaves = countLeaves(loadedData);
 
-    // 1) Area-True Treemap (the area-true algorithm).
-    const config = TreemapLayout.builder()
+    // 1) Improved Squarify (CodeCharta improved algorithm).
+    const builder = ImprovedTreemapLayout.builder()
       .areaMetric(areaMetric)
-      .margin(marginPercent / 100)
-      .applySiblingMargin(applySiblingMargin)
-      .labels(topN, labelSizePercent / 100)
-      .labelPosition(labelPosition)
-      .collapseFolders(collapseFolders)
+      .margin(margin)
+      .numberOfPasses(numberOfPasses)
+      .scale(useScale)
+      .simpleIncreaseValues(simpleIncreaseValues)
       .sorting(sorting)
-      .build();
+      .order(orderOption)
+      .incrementMargin(incrementMargin)
+      .applySiblingMargin(applySiblingMargin)
+      .collapseFolders(collapseFolders)
+      .floorLabels(enableFloorLabels)
+      .amountOfTopLabels(amountOfTopLabels);
 
-    let areaTrueRects: TreemapRect[] = [];
-    const areaTrueMs = measureMs(() => {
-      areaTrueRects = new TreemapLayout(config).compute(loadedData, { width: containerSize, height: containerSize });
+    if (variableLabelSize) {
+      builder.labelLength((node) => getFloorLabelPadding(node.x1 - node.x0, node.depth, DEFAULT_FLOOR_LABEL_CONFIG));
+    } else {
+      builder.labelLength(labelLength);
+    }
+    const improvedConfig = builder.build();
+
+    let improvedRects: TreemapRect[] = [];
+    const improvedMs = measureMs(() => {
+      const raw = new ImprovedTreemapLayout(improvedConfig).compute(loadedData);
+      const root = raw[0];
+      const scale = root && root.width > 0 ? containerSize / root.width : 1;
+      // Translate to the root's origin so the root fills [0, containerSize].
+      improvedRects = raw.map((r) => ({
+        ...r,
+        x: (r.x - (root?.x ?? 0)) * scale,
+        y: (r.y - (root?.y ?? 0)) * scale,
+        width: r.width * scale,
+        height: r.height * scale,
+      }));
     });
 
-    // 2) Nested treemap (d3, with gaps, labels, sorting and collapsing —
-    //    mirroring the area-true settings as far as d3 supports them).
+    // 2) Nested treemap (d3, as a baseline that mirrors the settings as far as
+    //    d3 supports them). Simple documented mapping of margin/labelLength.
+    const nestedGap = Math.max(1, margin * 0.5);
     let nestedRects: TreemapRect[] = [];
     const nestedMs = measureMs(() => {
       nestedRects = computeNestedD3(loadedData, {
         metric: areaMetric,
         size: containerSize,
-        gapPx,
-        innerGapPx: applySiblingMargin ? gapPx : 0,
-        labelPx,
-        topLevels: topN,
-        labelPosition,
+        gapPx: nestedGap,
+        innerGapPx: applySiblingMargin ? nestedGap : 0,
+        labelPx: enableFloorLabels ? Math.max(6, labelLength * 12) : 0,
+        topLevels: amountOfTopLabels,
         sorting,
         collapseFolders,
       });
     });
 
     results = [
-      { key: 'area-true', title: t.areaTrue, subtitle: t.areaTrueSub, repoUrl: 'https://github.com/BenediktMehl/master-thesis', rects: areaTrueRects, labelPosition, stats: computeStats(areaTrueRects, areaTrueMs, totalLeaves, containerSize) },
-      { key: 'nested', title: t.nested, subtitle: t.nestedSub, repoUrl: 'https://github.com/d3/d3-hierarchy', rects: nestedRects, labelPosition, stats: computeStats(nestedRects, nestedMs, totalLeaves, containerSize) },
+      { key: 'area-true', title: t.areaTrue, subtitle: t.areaTrueSub, repoUrl: 'https://github.com/MaibornWolff/codecharta', rects: improvedRects, stats: computeStats(improvedRects, improvedMs, totalLeaves, containerSize) },
+      { key: 'nested', title: t.nested, subtitle: t.nestedSub, repoUrl: 'https://github.com/d3/d3-hierarchy', rects: nestedRects, stats: computeStats(nestedRects, nestedMs, totalLeaves, containerSize) },
     ];
   }
 
   function computeStats(rects: TreemapRect[], ms: number, totalLeaves: number, size: number): Stats {
     const leaves = rects.filter((r) => r.isLeaf);
-    const aspects = rects.map((r) => Math.max(r.width / r.height, r.height / r.width));
+    const aspects = rects
+      .filter((r) => r.width > 0 && r.height > 0)
+      .map((r) => Math.max(r.width / r.height, r.height / r.width));
     const meanAspect = aspects.length ? aspects.reduce((s, a) => s + a, 0) / aspects.length : 0;
     const maxAspect = aspects.length ? Math.max(...aspects) : 0;
 
-    // Wertproportionalität: Varianzkoeffizient des Fläche/Metrik-Verhältnisses.
-    const ratios = rects.filter((r) => r.value > 0).map((r) => (r.width * r.height) / r.value);
+    const ratios = rects.filter((r) => r.value > 0 && r.width > 0 && r.height > 0).map((r) => (r.width * r.height) / r.value);
     let valuePropCV = 0;
     if (ratios.length > 1) {
       const mean = ratios.reduce((s, x) => s + x, 0) / ratios.length;
@@ -254,7 +298,6 @@
       valuePropCV = Math.sqrt(variance) / mean;
     }
 
-    // Platznutzung: Anteil der Wurzelfläche, der von Blattknoten eingenommen wird.
     const leafArea = leaves.reduce((s, r) => s + r.width * r.height, 0);
     const spaceUtil = size > 0 ? leafArea / (size * size) : 0;
 
@@ -275,7 +318,6 @@
     return tree.children.reduce((sum, c) => sum + countLeaves(c), 0);
   }
 
-  /** Settings passed to the d3 nested treemap, mirroring the area-true config. */
   interface NestedD3Options {
     metric: string;
     size: number;
@@ -283,23 +325,18 @@
     innerGapPx: number;
     labelPx: number;
     topLevels: number;
-    labelPosition: LabelPosition;
-    sorting: SortingOption;
+    sorting: ImprovedSortingOption;
     collapseFolders: boolean;
   }
 
   function computeNestedD3(tree: TreeNode, opts: NestedD3Options): TreemapRect[] {
-    // Apply collapseFolders on a copy of the data before handing it to d3:
-    // single-child folder chains are merged into one node (name "a/b/c"),
-    // exactly like the area-true layout does.
     const data = opts.collapseFolders ? collapseFolderChains(tree) : tree;
 
-    const root = hierarchy(data)
-      // Only leaf nodes carry a value; internal nodes accumulate from children.
-      .sum((d) => (!d.children || d.children.length === 0 ? d.attributes?.[opts.metric] ?? 0 : 0));
+    const root = hierarchy(data).sum((d) => (!d.children || d.children.length === 0 ? (d.attributes?.[opts.metric] ?? 0) : 0));
 
-    if (opts.sorting !== SortingOption.NONE) {
-      const dir = opts.sorting === SortingOption.ASCENDING ? 1 : -1;
+    if (opts.sorting !== ImprovedSortingOption.NONE) {
+      // MIDDLE behaves like DESCENDING (same as the improved squarify comparator).
+      const dir = opts.sorting === ImprovedSortingOption.ASCENDING ? 1 : -1;
       root.sort((a, b) => dir * ((a.value ?? 0) - (b.value ?? 0)));
     }
 
@@ -309,34 +346,16 @@
       .paddingOuter(opts.gapPx)
       .paddingInner(opts.innerGapPx);
 
-    // Reserve the label strip on the side chosen by the user (only folders
-    // that actually get a label reserve space).
-    const labelPad = (n: HierarchyRectangularNode<TreeNode>): number => (isLabeled(n, opts.topLevels) ? opts.labelPx : 0);
-    switch (opts.labelPosition) {
-      case LabelPosition.BOTTOM:
-        layout.paddingBottom(labelPad);
-        break;
-      case LabelPosition.LEFT:
-        layout.paddingLeft(labelPad);
-        break;
-      case LabelPosition.RIGHT:
-        layout.paddingRight(labelPad);
-        break;
-      case LabelPosition.TOP:
-      default:
-        layout.paddingTop(labelPad);
-        break;
-    }
+    const isLabeled = (n: HierarchyRectangularNode<TreeNode>): boolean =>
+      n.depth > 0 && n.depth <= opts.topLevels && !!n.children && n.children.length > 0;
+    layout.paddingTop((n) => (isLabeled(n) ? opts.labelPx : 0));
 
     const laidOut = layout(root);
-    return flattenD3(laidOut, (n) => isLabeled(n, opts.topLevels));
+    return flattenD3(laidOut, isLabeled);
   }
 
   /**
-   * Merge single-child folder chains into one node (like the area-true
-   * `collapseFolders` option): a folder whose only child is again a folder is
-   * folded into that child and the names joined with "/". The returned tree
-   * is a copy, the input stays untouched.
+   * Merge single-child folder chains into one node (like `collapseFolders`).
    */
   function collapseFolderChains(node: TreeNode): TreeNode {
     const collapse = (n: TreeNode): TreeNode => {
@@ -352,14 +371,10 @@
     return collapse(node);
   }
 
-  function isLabeled(n: HierarchyRectangularNode<TreeNode>, topLevels: number): boolean {
-    return n.depth > 0 && n.depth <= topLevels && !!n.children && n.children.length > 0;
-  }
-
   function flattenD3(root: HierarchyRectangularNode<TreeNode>, hasLabel: (n: HierarchyRectangularNode<TreeNode>) => boolean): TreemapRect[] {
     const rects: TreemapRect[] = [];
     const walk = (n: HierarchyRectangularNode<TreeNode>): void => {
-      if (n.depth > 0 && n.x1 - n.x0 > 0 && n.y1 - n.y0 > 0) {
+      if (n.x1 - n.x0 > 0 && n.y1 - n.y0 > 0) {
         const isLeaf = !n.children || n.children.length === 0;
         rects.push({
           x: n.x0,
@@ -384,7 +399,6 @@
     return v.toFixed(digits);
   }
 
-  // Metric definitions (labels/hints are translated; see `translations`).
   type BetterDir = 'lower' | 'higher' | 'none';
   const metricRows: { labelKey: string; hintKey: string; value: (s: Stats) => number; format: (s: Stats) => string; better: BetterDir }[] = [
     { labelKey: 'mNodes', hintKey: 'hNodes', value: (s) => s.nodes, format: (s) => String(s.nodes), better: 'none' },
@@ -397,7 +411,6 @@
     { labelKey: 'mTime', hintKey: 'hTime', value: (s) => s.ms, format: (s) => fmt(s.ms) + ' ms', better: 'lower' },
   ];
 
-  // Returns the index of the better result for a metric row, or -1 for none/tie.
   function betterIndex(m: (typeof metricRows)[number], stats: Stats[]): number {
     if (m.better === 'none' || stats.length < 2) return -1;
     const a = m.value(stats[0]);
@@ -450,11 +463,67 @@
     <div class="controls">
       <label class="c">
         <span class="lbl">{t.margin}</span>
-        <span class="field">
-          <input type="range" min="0" max="3" step="0.1" bind:value={marginPercent} />
-          <output>{marginPercent.toFixed(1)}%</output>
-        </span>
+        <input type="number" min="0" step="0.1" bind:value={margin} />
       </label>
+
+      <div class="c">
+        <span class="lbl">&nbsp;</span>
+        <button class="toggle {enableFloorLabels ? 'on' : ''}" on:click={() => (enableFloorLabels = !enableFloorLabels)}>
+          {enableFloorLabels ? '✓' : '✗'} {t.floorLabels}
+        </button>
+      </div>
+
+      <label class="c">
+        <span class="lbl">{t.amountOfTopLabels}</span>
+        <input type="number" min="-1" step="1" bind:value={amountOfTopLabels} />
+      </label>
+
+      <label class="c">
+        <span class="lbl">{t.labelLength}</span>
+        <input type="number" min="0.1" step="0.1" bind:value={labelLength} />
+      </label>
+
+      <div class="c">
+        <span class="lbl">&nbsp;</span>
+        <button class="toggle {variableLabelSize ? 'on' : ''}" on:click={() => (variableLabelSize = !variableLabelSize)}>
+          {variableLabelSize ? '✓' : '✗'} {t.variableLabel}
+        </button>
+      </div>
+
+      <label class="c">
+        <span class="lbl">{t.passes}</span>
+        <input type="number" min="1" step="1" bind:value={numberOfPasses} />
+      </label>
+
+      <div class="c">
+        <span class="lbl">&nbsp;</span>
+        <button class="toggle {useScale ? 'on' : ''}" on:click={() => (useScale = !useScale)}>
+          {useScale ? '✓' : '✗'} {t.scale}
+        </button>
+      </div>
+
+      <div class="c">
+        <span class="lbl">&nbsp;</span>
+        <button class="toggle {simpleIncreaseValues ? 'on' : ''}" on:click={() => (simpleIncreaseValues = !simpleIncreaseValues)}>
+          {simpleIncreaseValues ? '✓' : '✗'} {t.simpleIncrease}
+        </button>
+      </div>
+
+      <label class="c">
+        <span class="lbl">{t.order}</span>
+        <select bind:value={orderOption}>
+          {#each orderOptions as o (o)}
+            <option value={o}>{o === OrderOption.NEW_ORDER ? t.orderNew : o === OrderOption.KEEP_ORDER ? t.orderKeep : t.orderPlace}</option>
+          {/each}
+        </select>
+      </label>
+
+      <div class="c">
+        <span class="lbl">&nbsp;</span>
+        <button class="toggle {incrementMargin ? 'on' : ''}" on:click={() => (incrementMargin = !incrementMargin)}>
+          {incrementMargin ? '✓' : '✗'} {t.incrementMargin}
+        </button>
+      </div>
 
       <div class="c">
         <span class="lbl">&nbsp;</span>
@@ -463,35 +532,21 @@
         </button>
       </div>
 
-      <label class="c">
-        <span class="lbl">{t.labels}</span>
-        <input type="number" min="0" max="10" bind:value={topN} />
-      </label>
-
-      <label class="c">
-        <span class="lbl">{t.height}</span>
-        <span class="field">
-          <input type="number" min="0" max="20" bind:value={labelSizePercent} />
-          <span class="unit">%</span>
-        </span>
-      </label>
-
-      <label class="c">
-        <span class="lbl">{t.position}</span>
-        <select bind:value={labelPosition}>
-          <option value={LabelPosition.TOP}>{t.posTop}</option>
-          <option value={LabelPosition.BOTTOM}>{t.posBottom}</option>
-          <option value={LabelPosition.LEFT}>{t.posLeft}</option>
-          <option value={LabelPosition.RIGHT}>{t.posRight}</option>
-        </select>
-      </label>
+      <div class="c">
+        <span class="lbl">&nbsp;</span>
+        <button class="toggle {collapseFolders ? 'on' : ''}" on:click={() => (collapseFolders = !collapseFolders)}>
+          {collapseFolders ? '✓' : '✗'} {t.collapse}
+        </button>
+      </div>
 
       <label class="c">
         <span class="lbl">{t.sort}</span>
         <select bind:value={sorting}>
-          <option value={SortingOption.DESCENDING}>{t.sortDesc}</option>
-          <option value={SortingOption.ASCENDING}>{t.sortAsc}</option>
-          <option value={SortingOption.NONE}>{t.sortNone}</option>
+          {#each sortingOptions as s (s)}
+            <option value={s}>
+              {s === ImprovedSortingOption.NONE ? t.sortNone : s === ImprovedSortingOption.ASCENDING ? t.sortAsc : s === ImprovedSortingOption.DESCENDING ? t.sortDesc : t.sortMiddle}
+            </option>
+          {/each}
         </select>
       </label>
 
@@ -499,13 +554,6 @@
         <span class="lbl">{t.metric}</span>
         <input type="text" bind:value={areaMetric} />
       </label>
-
-      <div class="c">
-        <span class="lbl">&nbsp;</span>
-        <button class="toggle {collapseFolders ? 'on' : ''}" on:click={() => (collapseFolders = !collapseFolders)}>
-          {collapseFolders ? '✓' : '✗'} {t.collapse}
-        </button>
-      </div>
 
       <div class="c">
         <span class="lbl">&nbsp;</span>
@@ -556,7 +604,7 @@
           <span class="sub"><a href={r.repoUrl} target="_blank" rel="noopener">{r.subtitle} ↗</a></span>
         </div>
         {#if r.rects.length > 0}
-          <TreemapSvg rects={r.rects} {containerSize} labelPosition={r.labelPosition} showValues />
+          <TreemapSvg rects={r.rects} {containerSize} showValues />
         {:else}
           <div class="empty">{t.empty}</div>
         {/if}
@@ -639,12 +687,6 @@
     color: var(--muted);
   }
 
-  .field {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
   .c input[type='number'],
   .c input[type='text'] {
     background: #fff;
@@ -653,7 +695,7 @@
     color: var(--text);
     padding: 5px 7px;
     font-size: 12px;
-    width: 64px;
+    width: 72px;
   }
 
   .c input[type='text'] {
@@ -668,21 +710,6 @@
     padding: 5px 7px;
     font-size: 12px;
     min-width: 110px;
-  }
-
-  .c input[type='range'] {
-    width: 120px;
-  }
-
-  .c output {
-    font-size: 12px;
-    color: var(--text);
-    min-width: 36px;
-  }
-
-  .unit {
-    font-size: 12px;
-    color: var(--muted);
   }
 
   .toggle,

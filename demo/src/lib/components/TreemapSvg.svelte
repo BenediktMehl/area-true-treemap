@@ -1,12 +1,10 @@
 <script lang="ts">
   import type { TreemapRect } from 'area-true-treemap';
-  import { LabelPosition } from 'area-true-treemap';
   import { interpolateInferno } from 'd3-scale-chromatic';
 
   export let rects: TreemapRect[] = [];
   export let containerSize = 400;
   export let minSize = 6;
-  export let labelPosition: LabelPosition = LabelPosition.TOP;
   export let showValues = true;
 
   $: depthRange = {
@@ -14,6 +12,7 @@
     max: Math.max(...rects.map((r) => r.depth), 1),
   };
 
+  // Rects are in pre-order (root first); render them so the root ends up behind.
   $: visibleRects = rects.filter((r) => r.width >= minSize || r.height >= minSize);
 
   // d3 "lava" sequential scale (Inferno) by depth.
@@ -35,25 +34,11 @@
   function canShowCenter(rect: TreemapRect): boolean {
     return Math.min(rect.width, rect.height) > 40;
   }
-
-  function labelTransform(rect: TreemapRect): { x: number; y: number; anchor: string; rotate: number } {
-    switch (labelPosition) {
-      case LabelPosition.BOTTOM:
-        return { x: rect.x + rect.width / 2, y: rect.y + rect.height - 8, anchor: 'middle', rotate: 0 };
-      case LabelPosition.LEFT:
-        return { x: rect.x + 11, y: rect.y + rect.height / 2, anchor: 'middle', rotate: -90 };
-      case LabelPosition.RIGHT:
-        return { x: rect.x + rect.width - 11, y: rect.y + rect.height / 2, anchor: 'middle', rotate: 90 };
-      case LabelPosition.TOP:
-      default:
-        return { x: rect.x + rect.width / 2, y: rect.y + 14, anchor: 'middle', rotate: 0 };
-    }
-  }
 </script>
 
 <div class="container">
   <svg width={containerSize} height={containerSize} viewBox="0 0 {containerSize} {containerSize}">
-    {#each visibleRects as rect (rect.name + rect.x + rect.y)}
+    {#each visibleRects as rect (rect.name + rect.x + rect.y + rect.depth)}
       <g>
         <title>{rect.name} · {rect.value}</title>
         <rect
@@ -66,16 +51,14 @@
           opacity="0.95"
         />
         {#if rect.hasLabel}
-          {@const l = labelTransform(rect)}
           <text
-            x={l.x}
-            y={l.y}
-            text-anchor={l.anchor}
+            x={rect.x + rect.width / 2}
+            y={rect.y + 12}
+            text-anchor="middle"
             font-size="12"
             font-weight="700"
             fill="#fff"
             pointer-events="none"
-            transform={l.rotate ? `rotate(${l.rotate} ${l.x} ${l.y})` : undefined}
           >
             {truncate(rect.name)}
           </text>
