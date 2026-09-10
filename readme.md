@@ -120,29 +120,3 @@ The full option mapping and every trade-off: **[docs/porting-from-d3-hierarchy.m
 | `round(v)` | `false` | Round all coordinates to integers. |
 
 All setters validate their input and throw on invalid values.
-
-## Demo
-
-An interactive Svelte demo lives in [`demo/`](./demo): both layouts side by side, driven by the same settings,
-with the thesis' metrics underneath (node visibility, value proportionality, aspect ratio, space utilization,
-computation time). It loads the `flare` dataset, real CodeCharta maps or your own JSON / `cc.json`, and speaks
-German and English.
-
-```bash
-npm install
-npm run dev:demo      # http://localhost:5174
-```
-
-## Benchmark
-
-The numbers above are reproducible with your own data:
-
-```bash
-npm run benchmark     # flare, 400x400, markdown tables
-node benchmarks/d3-vs-area-true.mjs --size 1000
-node benchmarks/d3-vs-area-true.mjs --data demo/public/data/ccjson/junit4_2019-10-26.cc.json --metric rloc
-```
-
-## License
-
-BSD-3-Clause. See [LICENSE](./LICENSE).
