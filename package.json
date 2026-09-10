@@ -12,6 +12,7 @@
     "build:demo": "npm run build && npm run build --workspace treemap-demo",
     "dev:demo": "npm run build && npm run dev --workspace treemap-demo",
     "test": "npm run test --workspace area-true-treemap",
-    "typecheck": "npm run typecheck --workspace area-true-treemap"
+    "typecheck": "npm run typecheck --workspace area-true-treemap",
+    "benchmark": "node benchmarks/d3-vs-area-true.mjs"
   }
 }
