@@ -93,6 +93,14 @@ layout realizes the same gap and keeps them. With larger maps the absolute numbe
 1000×1000) loses 226 leaves with d3 and 178 with this library at a 1 % sibling gap, 445 vs. 355 at 3 %. That is
 not a rendering trick — same SVG, same rectangles, just rectangles that did not lose their area to the padding.
 
+![Median number of nodes without area over the relative gap — improved squarify vs. d3.js nested treemap](./docs/img/missing-nodes-vs-d3.png)
+
+*Missing nodes (y) over the relative gap in percent (x), median across the 70 software projects evaluated in the
+[master thesis](https://github.com/BenediktMehl/master-thesis). `Verbesserter Squarify-Algorithmus` is this
+library, `d3.js - Nested Treemap mit Beschriftung` is the d3 panel: d3 already loses ~200 nodes without any gap
+at all, this library only reaches that level at a gap of ~2 %. The thesis figures used here are copied into
+[`docs/img/`](./docs/img).*
+
 Reproduce it yourself:
 
 ```bash
@@ -349,6 +357,20 @@ npm run benchmark     # flare, 400x400, markdown tables
 node benchmarks/d3-vs-area-true.mjs --size 1000
 node benchmarks/d3-vs-area-true.mjs --data demo/public/data/ccjson/junit4_2019-10-26.cc.json --metric rloc
 ```
+
+### Value proportionality: how area-true the layout really is
+
+The other half of the name is *value proportionality*: how proportional a node's drawn area is to the value it
+represents, measured as the coefficient of variation of the area/value ratio, where 0 is perfect. It is the row
+**Value proportionality** in the demo's live metrics table.
+
+![Median coefficient of variation of the value–area ratio over the realized relative gap — improved squarify vs. d3.js nested treemap](./docs/img/value-proportionality-vs-d3.png)
+
+*The thesis' Wertproportionalität (y) — the coefficient of variation of the area/value ratio — over the realized
+relative gap (x), median across the 70 projects evaluated there. The thesis summarises this figure as values "um
+den Faktor von etwa 2,5 besser", i.e. roughly 2.5× better than the d3.js nested treemap: the layout stays
+area-true while it realizes its gap. The same metric is the **Value proportionality** row of the live demo table
+and of the benchmark above (figure from the thesis, see [`docs/img/`](./docs/img)).*
 
 ## Development
 
