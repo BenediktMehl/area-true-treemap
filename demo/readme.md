@@ -62,3 +62,29 @@ Die Demo erwartet einen JSON-Baum:
 ```
 
 Der Flächenwert eines Blatts steht in `attributes[size]` (bzw. unter der eingestellten Metrik). Summen auf Ordnern werden automatisch berechnet.
+
+## Beispieldaten (Maps)
+
+Im Kopf der Seite lassen sich verschiedene Karten auswählen:
+
+- **flare** — d3-Datensatz aus der Masterthesis (direkt mitgeliefert).
+- **kleines Beispiel** — kleiner synthetischer Baum.
+- **CodeCharta-Maps** — echte Open-Source-Projekte aus dem
+  [CodeCharta-Showcase](https://github.com/MaibornWolff/codecharta): *JUnit 4*, *JUnit 5*,
+  *httpd*, *Apache OpenOffice* und *NetBeans*. Die Dateien liegen unverändert als
+  `.cc.json` unter `demo/public/data/ccjson/` und werden erst beim Auswählen geladen
+  (nicht ins JavaScript-Bundle gepackt), damit die Demo auch mit den großen Maps
+  (Apache OpenOffice ~24 MB, NetBeans ~17 MB) klein bleibt.
+
+Beim Laden erkennt die Demo das CodeCharta-Format automatisch und wandelt es intern in
+denselben Baum um, den auch `flare`/`sample` nutzen — inklusive der Metrik-Auswahl
+(Standard bei CodeCharta-Maps: `rloc`). Über das Feld **Metrik** lässt sich jede andere
+Metrik der Map verwenden (z. B. `mcc`, `functions`, `loc`, `empty_lines`).
+
+Dasselbe gilt für das **Hochladen eigener Dateien**: sowohl einfache JSON-Bäume als auch
+rohe `.cc.json`-Dateien (CodeCharta-Exporte der Versionen 1.x und 2.0) können direkt
+geöffnet werden.
+
+Hinweis: Apache OpenOffice und NetBeans sind sehr groß; das Layout wird bei jeder
+Parameteränderung neu berechnet. Für flüssiges Arbeiten sind JUnit 4/5 oder httpd die
+besseren Beispiele.

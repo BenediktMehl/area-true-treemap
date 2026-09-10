@@ -154,7 +154,7 @@ Exported symbols: `hierarchy`, `treemap`, `HierarchyNode`, `HierarchyLink`, `Hie
 
 An interactive demo (Svelte) is included in [`demo/`](./demo). It renders the **Area-True Treemap** (this library) and a **d3.js Nested Treemap** side by side and compares them using the evaluation metrics defined in the thesis (node visibility, value proportionality, aspect ratio, space utilization, and computation time).
 
-By default the demo loads the real-world **flare** dataset. A small synthetic example can be selected via the *Sample data* dropdown, and CodeCharta `cc.json` exports or any JSON file can be loaded as well.
+By default the demo loads the real-world **flare** dataset. A small synthetic example and a set of real CodeCharta maps (**JUnit 4**, **JUnit 5**, **httpd**, **Apache OpenOffice**, **NetBeans** — raw `cc.json` files from the [CodeCharta showcase](https://github.com/MaibornWolff/codecharta), loaded on demand) can be selected via the *Sample data* dropdown, and CodeCharta `cc.json` exports (1.x and 2.0) or any JSON file can be loaded as well.
 
 ```bash
 npm install
