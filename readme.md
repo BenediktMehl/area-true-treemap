@@ -22,13 +22,13 @@ Live demo, d3.js and area-true side by side with all settings:
   `siblingMarginLeavesOnly()`, `collapseFolders()` — instead of glue code around the layout.
 - **Drop-in for d3-hierarchy:** the same `hierarchy()` + `treemap()` calls, the same `x0/y0/x1/y1` on every node.
 
-![Nodes without area over the gap — area-true-treemap vs. d3.js nested treemap](./docs/img/missing-nodes-vs-d3.png)
+<img src="./docs/img/missing-nodes-vs-d3.png" width="620" alt="Nodes without area over the gap — area-true-treemap vs. d3.js nested treemap">
 
 *Nodes that disappear (y) over the gap in percent (x), median across the 70 software projects of the
 [master thesis](https://github.com/BenediktMehl/master-thesis): d3 already loses ~200 nodes without any gap at
 all, area-true-treemap only reaches that level at a gap of ~2 %.*
 
-![Value proportionality over the realized gap — area-true-treemap vs. d3.js nested treemap](./docs/img/value-proportionality-vs-d3.png)
+<img src="./docs/img/value-proportionality-vs-d3.png" width="620" alt="Value proportionality over the realized gap — area-true-treemap vs. d3.js nested treemap">
 
 *How proportional a node's drawn area is to the value it represents (y, lower is better) over the realized gap
 (x), median across the thesis' 70 projects: roughly 2.5× better than d3 — the map stays area-true while it
