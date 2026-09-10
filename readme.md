@@ -14,8 +14,8 @@ Live demo, d3.js and area-true side by side with all settings:
 
 ## What is better
 
-- **The gap no longer deletes nodes.** At the same realized gap, d3 loses 67 of 220 leaves on `flare` at 3 %
-  (4 at 1 %), this library 6 (0 at 1 %).
+- **Fewer nodes disappear.** At the same gap d3 loses far more of them — and it already loses nodes when
+  there is no gap at all (charts below).
 - **Gaps are relative, not pixels.** `margin(0.02)` means 2 % of the map width, so one configuration is right on
   a thumbnail and on a 4K screen.
 - **Labels, sibling-gap modes and folder collapsing are built in** — `floorLabels()`, `labelLength()`,
@@ -36,11 +36,10 @@ realizes its gap.*
 
 ## What it costs
 
-- **2–3× the compute time** of a plain d3 squarify (0.22 ms vs. 0.07 ms for `flare` at 400×400) — both far below
-  a frame budget.
+- **About 2–3× the compute time** of a plain d3 squarify — still far below a frame budget.
 - **Squarified tiling only** — no `slice`, `dice`, `binary`, `sliceDice`, and no `treemapResquarify` for animated
   transitions.
-- **Large gaps** (above ~3 %) degrade any treemap; the thesis recommends 0.5–3 %.
+- **Large gaps** (above ~3 %) degrade any treemap; the recommended range is 0.5–3 %.
 
 ## Installation
 
@@ -59,9 +58,9 @@ treemap()
   .size([1000, 1000])
   .margin(0.01)                 // gap: 1 % of the map width
   .applySiblingMargin(false)    // thesis recommendation: no gaps between siblings
-  .floorLabels(2)               // label strip on the top 2 folder levels
-  .labelLength(0.03)
-  .collapseFolders(true)        // merge single-child folder chains
+  .floorLabels(2)
+  .labelLength(0.03)            // strip thickness: 3 % of the map width
+  .collapseFolders(true)
   .sorting(SortingOption.DESCENDING)(root);
 
 for (const node of root.descendants()) {
@@ -69,8 +68,8 @@ for (const node of root.descendants()) {
 }
 ```
 
-The layout writes the coordinates onto the tree in place, exactly like `d3.treemap`; your data stays on
-`node.data` and `node.value` is not modified. Any node shape works — `hierarchy(myNode, (n) => n.kids)`.
+Coordinates are written onto the tree in place and `node.value` is not modified. Any node shape works —
+`hierarchy(myNode, (n) => n.kids)`.
 
 ## Coming from d3-hierarchy
 
@@ -95,9 +94,8 @@ Swap the import, replace the padding calls with `margin()` — nothing else in y
 | `.tile(...)` | built in (squarify, golden-ratio target); no `.tile()` setter |
 | `node.copy()` | rebuild with `hierarchy(data)` |
 
-Everything else stays: `hierarchy()` with `.sum()` / `.count()` / `.sort()`, in-place mutation, `x0/y0/x1/y1` on
-every node, the traversal helpers (`descendants`, `leaves`, `links`, `path`, `ancestors`, ...) and iteration.
-The full option mapping and every trade-off: **[docs/porting-from-d3-hierarchy.md](./docs/porting-from-d3-hierarchy.md)**.
+Everything else stays: `.sum()` / `.count()` / `.sort()`, in-place mutation, `x0/y0/x1/y1` on every node, the
+traversal helpers and iteration. The full option mapping: **[docs/porting-from-d3-hierarchy.md](./docs/porting-from-d3-hierarchy.md)**.
 
 ## Options
 
@@ -119,4 +117,5 @@ The full option mapping and every trade-off: **[docs/porting-from-d3-hierarchy.m
 | `incrementMargin(v)` | `false` | Grow the gap across passes (>2 passes). |
 | `round(v)` | `false` | Round all coordinates to integers. |
 
-All setters validate their input and throw on invalid values.
+The exact numbers, all measured configurations and the derivations behind them are in the
+[master thesis](https://github.com/BenediktMehl/master-thesis) — this readme only summarises the result.
