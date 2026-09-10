@@ -1,5 +1,6 @@
-import { TreeNode, TreemapRect } from "../types";
-import { AreaTrueTreemapConfig, AreaTrueTreemapConfigBuilder } from "./config";
+import type { TreeNode, TreemapRect } from "../types";
+import type { AreaTrueTreemapConfig } from "../config/area-true-config";
+import { AreaTrueTreemapConfigBuilder } from "../config/area-true-config-builder";
 import { generateAreaTrueSquarifyLayoutNodes } from "./startAlgo";
 
 /**

@@ -1,6 +1,6 @@
 # area-true-treemap
 
-> Area-true squarified treemap layout with configurable gaps between nodes — without losing any node.
+> Area-true squarified treemap layout with configurable gaps between nodes - without losing any node.
 
 <p align="center">
   <a href="https://benediktmehl.github.io/area-true-treemap/">
@@ -8,19 +8,18 @@
   </a>
 </p>
 
-👉 **Live-Demo: https://benediktmehl.github.io/area-true-treemap/**
+Live-Demo: https://benediktmehl.github.io/area-true-treemap/
 
-`area-true-treemap` is a dependency-free TypeScript library that computes a **squarified treemap** (Bruls et al.) extended with configurable gaps ("margin") between nodes and optional folder labels. Unlike a plain squarify that simply insets rectangles, the margin is applied during layout so that no node disappears and area proportions are preserved as closely as possible.
-
-The algorithm is based on the concepts described in [Vergleich und Optimierung von 3D-Visualisierungen für die Darstellung von Software-Qualitätsmetriken](https://github.com/BenediktMehl/master-thesis/blob/main/thesis.pdf).
+`area-true-treemap` is a dependency-free TypeScript library implementing the **improved squarify algorithm** from the master thesis [Vergleich und Optimierung von 3D-Visualisierungen für die Darstellung von Software-Qualitätsmetriken](https://github.com/BenediktMehl/master-thesis/blob/main/thesis.pdf). It is a faithful 1:1 port of CodeCharta's `squarifyLayoutImproved` (branch `thesis/improve-treemap-algorithm`) that adds **real margins between nodes during the layout**, so gaps are realized without any node collapsing to zero area.
 
 ## Features
 
-- Area-true rectangles: proportional areas, no node vanishes.
-- Configurable relative gaps between sibling nodes.
-- Optional folder labels for the top N hierarchy levels — fixed-size or CodeCharta-style variable per-folder sizing.
+- **Area-true layout**: proportional node areas, no node vanishes.
+- **Multi-pass squarify** (`numberOfPasses`): 1 pass = plain squarify, 2+ passes = the area-true two-pass algorithm with margin compensation.
+- **Margins between nodes** - between all siblings or only between leaves (`applySiblingMargin` / `siblingMarginLeavesOnly`).
+- **Floor labels** on the top N folder levels - fixed strip or CodeCharta-style variable per-folder sizing.
+- Configurable **sorting** (none / ascending / descending / middle) and **row order across passes**.
 - Collapsing of single-child folder chains.
-- Configurable sorting (descending / ascending / none).
 - Fluent **builder pattern** for configuration.
 - Zero runtime dependencies, tree-shakeable, ships ESM + CJS + TypeScript types.
 
@@ -33,7 +32,7 @@ npm install area-true-treemap
 ## Quick start
 
 ```ts
-import { TreemapLayout, SortingOption } from "area-true-treemap";
+import { AreaTrueTreemapLayout, AreaTrueSortingOption } from "area-true-treemap";
 
 const data = {
   name: "root",
@@ -49,50 +48,30 @@ const data = {
   ],
 };
 
-const config = TreemapLayout.builder()
+const config = AreaTrueTreemapLayout.builder()
   .areaMetric("size")
-  .margin(0.02) // 2% gap between siblings
-  .labels(3, 0.05) // labels on top 3 levels, 5% height
-  .collapseFolders(true)
-  .sorting(SortingOption.DESCENDING)
+  .numberOfPasses(2)
+  .applySiblingMargin(true)
+  .sorting(AreaTrueSortingOption.DESCENDING)
+  .floorLabels(true)
+  .amountOfTopLabels(2)
   .build();
 
-const layout = new TreemapLayout(config);
-const rects = layout.compute(data, { width: 1000, height: 1000 });
-// rects: [{ x, y, width, height, name, depth, isLeaf, hasLabel, value, ... }, ...]
+const rects = new AreaTrueTreemapLayout(config).compute(data);
+
+// rects[0] is the root container. Scale everything to your canvas size:
+const scale = 1000 / rects[0].width;
+const px = rects.map((r) => ({
+  x: r.x * scale,
+  y: r.y * scale,
+  width: r.width * scale,
+  height: r.height * scale,
+  name: r.name,
+  depth: r.depth,
+  isLeaf: r.isLeaf,
+  hasLabel: r.hasLabel,
+}));
 ```
-
-## d3-hierarchy-compatible API (drop-in for CodeCharta)
-
-For consumers that integrate a treemap through `d3-hierarchy` — [CodeCharta](https://github.com/maibornwolff/codecharta) does this in `visualization/app/codeCharta/renderer/threeViewer/algorithm/treeMapLayout/treeMapGenerator.ts` — the package also ships a `d3-hierarchy`-shaped API so it can be swapped in with minimal changes:
-
-```ts
-import { hierarchy, treemap } from "area-true-treemap";
-
-// CodeCharta today: treemap(map).sum(...) → treeMap with x0/x1/y0/y1 per node.
-const layout = treemap<CodeMapNode>()
-  .size([width, height])
-  .margin(marginFraction); // area-true gap instead of d3's .padding* inset
-
-const root = layout(
-  hierarchy(map).sum((node) => calculateAreaValue(node, /* ... */)),
-);
-
-for (const node of root.descendants()) {
-  // node.x0, node.x1, node.y0, node.y1, node.data, node.depth, node.children
-}
-```
-
-The wrapped nodes expose the same `x0`, `x1`, `y0`, `y1`, `data`, `depth`,
-`children` and traversal helpers (`each`, `descendants`, `leaves`, …) that
-`d3-hierarchy` provides, so downstream code (e.g. CodeCharta's
-`TreeMapHelper.buildNodeFrom`) keeps working unchanged. The difference is the gap
-handling: `d3-treemap` insets rectangles via per-edge `padding*`, while this
-package applies an **area-true margin** during layout so no node collapses to
-zero area.
-
-See `packages/area-true-treemap/README.md` for the full `treemap()` method table
-and a side-by-side CodeCharta migration.
 
 ## Input data format
 
@@ -108,22 +87,20 @@ interface TreeNode {
 
 - The area of a node is read from `attributes[areaMetric]` (default metric `"size"`).
 - **Leaf** nodes contribute their own attribute value.
-- The value of a **non-leaf** node is the sum of its children and is computed automatically — you do not need to store aggregate values on folders.
-- Nodes with a non-positive total value are omitted from the output.
+- The value of a **folder** is its own attribute value if present, otherwise the sum of its children - you do not need to store aggregate values on folders.
 
 ## Configuration (builder pattern)
 
-Build a configuration with the fluent builder and pass it to `TreemapLayout`:
+Build a configuration with the fluent builder and pass it to `AreaTrueTreemapLayout`:
 
 ```ts
-const config = TreemapLayout.builder()
+const config = AreaTrueTreemapLayout.builder()
   .areaMetric("size")
-  .margin(0.015)
-  .labels(3, 0.05)
-  .labelPosition(LabelPosition.TOP)
-  .collapseFolders(true)
-  .sorting(SortingOption.DESCENDING)
-  .aspectRatio(1.618)
+  .margin(10)           // raw margin value, applied in multi-pass mode
+  .numberOfPasses(2)    // 2 = area-true two-pass algorithm
+  .applySiblingMargin(true)
+  .floorLabels(true)
+  .amountOfTopLabels(2)
   .build();
 ```
 
@@ -132,63 +109,65 @@ const config = TreemapLayout.builder()
 | Method | Type | Default | Description |
 | --- | --- | --- | --- |
 | `areaMetric(name)` | `string` | `"size"` | Attribute name used for the area of each node. |
-| `margin(fraction)` | `number` (0–1) | `0.015` | Relative gap between sibling nodes, as a fraction of the shorter canvas side. |
-| `collapseFolders(value)` | `boolean` | `true` | Merge single-child folder chains into a combined name (`a/b/c`). |
-| `sorting(value)` | `SortingOption` | `DESCENDING` | Order in which siblings are placed. |
-| `labels(topLevels, sizeRatio)` | `number, number` | `3, 0.05` | Number of top levels that get a label and label height as fraction (0–1). |
-| `floorLabels(overrides?)` | `object` | — | Use CodeCharta-style variable per-folder label sizing (see below). |
-| `labelSize(resolver)` | `(node) => number` | — | Custom label-size function per folder (like CodeCharta's `paddingRight(node => …)`). |
-| `labelPosition(position)` | `LabelPosition` | `TOP` | Where labels are placed: `top`, `bottom`, `left`, or `right`. |
-| `aspectRatio(value)` | `number` | `1.618` | Target aspect ratio for the squarify heuristic. |
-| `build()` | — | — | Returns a resolved, immutable `TreemapConfig`. |
+| `margin(value)` | `number` (>= 0) | `10` | Raw margin; scaled internally by `MARGIN_DIVISOR` (CodeCharta formula). Takes effect with `numberOfPasses` >= 2. |
+| `numberOfPasses(value)` | `number` | `1` | 1 = single squarify pass, 2+ = area-true multi-pass layout. |
+| `scale(value)` | `boolean` | `false` | Scale node values in the final pass. |
+| `simpleIncreaseValues(value)` | `boolean` | `false` | Use the simpler increase-values variant for the second pass. |
+| `sorting(option)` | `AreaTrueSortingOption` | `NONE` | Sibling order: `NONE`, `ASCENDING`, `DESCENDING`, `MIDDLE`. |
+| `order(option)` | `OrderOption` | `NEW_ORDER` | Row order across passes: `NEW_ORDER`, `KEEP_ORDER`, `KEEP_PLACE`. |
+| `incrementMargin(value)` | `boolean` | `false` | Grow the margin between passes instead of keeping it constant. |
+| `applySiblingMargin(value)` | `boolean` | `true` | Separate sibling nodes by a margin (multi-pass mode). |
+| `siblingMarginLeavesOnly(value)` | `boolean` | `false` | Shrink only leaf nodes, so gaps appear only between leaves (additive extension). |
+| `collapseFolders(value)` | `boolean` | `false` | Merge single-child folder chains into a combined name (`a/b/c`). |
+| `floorLabels(enabled)` | `boolean` | `true` | Reserve space for folder floor labels. |
+| `amountOfTopLabels(value)` | `number` | `2` | Number of top levels (including the root) that get a floor label. |
+| `labelLength(value)` | `number | (node) => number` | `1` | Fixed strip size or per-folder function. |
+| `build()` | - | - | Returns a resolved, immutable `AreaTrueTreemapConfig`. |
 
-`SortingOption` is one of `"descending"`, `"ascending"`, or `"none"`. `LabelPosition` is one of `"top"`, `"bottom"`, `"left"`, or `"right"`.
+`AreaTrueSortingOption` is one of `"none"`, `"ascending"`, `"descending"`, `"middle"`; `OrderOption` is one of `"newOrder"`, `"keepOrder"`, `"keepPlace"`.
 
-### Settings explained
+### Variable floor-label sizing
 
-- **margin** — the core "gap" feature. A value of `0.02` means a gap of roughly 2% of the canvas size between sibling nodes. Because the exact relative distance can only be determined after a layout pass, the value is an approximation based on the first pass (this matches the thesis finding of choosing between 0.5% and 3% relative distance).
-- **labels** — `topLevels` is the number of top hierarchy levels that reserve space for a folder label (thesis recommends N between 2 and 5). `sizeRatio` is the label height as a fraction of the canvas (thesis recommends L between 3% and 10%).
-- **floorLabels** — optional CodeCharta-style variable label sizing. Instead of one fixed `sizeRatio` strip, each folder reserves a strip proportional to its own width, clamped between a depth-dependent minimum and 15% of the folder: `min(max(folderWidth * scaling, minPadding), folderWidth * 0.15)`, with scaling `0.035` (root) / `0.028` (sub) and min `120` / `95` (ported from CodeCharta's `getFloorLabelPadding`). Call `.floorLabels()` (with optional parameter overrides) to enable it; `.labels(topLevels, sizeRatio)` switches back to fixed sizing.
-- **labelSize(resolver)** — pass an arbitrary function `(node) => number`, evaluated per folder during layout. This mirrors how CodeCharta passes `paddingRight(node => getFloorLabelPadding(node.x1 - node.x0, node.depth))` to d3's treemap, so the same call-site shape works. Takes precedence over `labels()` and `floorLabels()`. The resolver type `LabelSizeResolver = (node: SquarifyNode) => number` and `SquarifyNode` are exported.
-- **collapseFolders** — whether to merge single-child folder chains. This is a design decision left to the user; the thesis default is `true`.
-- **sorting** — the thesis default is descending by size.
+Pass a per-folder function to `labelLength` for CodeCharta-style variable strips - each folder reserves a strip proportional to its own width, clamped between a depth-dependent minimum and 15% of the folder:
+
+```ts
+import { getFloorLabelPadding, DEFAULT_FLOOR_LABEL_CONFIG } from "area-true-treemap";
+
+const config = AreaTrueTreemapLayout.builder()
+  .labelLength((node) => getFloorLabelPadding(node.x1 - node.x0, node.depth, DEFAULT_FLOOR_LABEL_CONFIG))
+  .build();
+```
 
 ## API
 
-### `TreemapLayout`
+### `AreaTrueTreemapLayout`
 
 ```ts
-class TreemapLayout {
-  constructor(config: TreemapConfig);
-  static builder(): TreemapConfigBuilder;
-  compute(tree: TreeNode, options?: LayoutOptions): TreemapRect[];
+class AreaTrueTreemapLayout {
+  constructor(config: AreaTrueTreemapConfig);
+  static builder(): AreaTrueTreemapConfigBuilder;
+  compute(tree: TreeNode): TreemapRect[];
 }
 ```
 
-`LayoutOptions` is `{ width?: number; height?: number }`. When omitted, a square `1000x1000` canvas is used. The layout is scale-invariant: the same tree produces the same relative rectangles for any size.
+`compute` returns the flattened list of rectangles - **including the root** as the first entry. Coordinates are in the algorithm's own unit: the layout square is `Math.sqrt(totalValue)` wide (plus reserved label/margin space in multi-pass mode). Scale the result to your canvas (see Quick start).
 
-The returned `TreemapRect[]` contains absolute coordinates starting at the top-left `(0, 0)`. The root container itself is **not** included.
+### Exported symbols
 
-### `TreemapConfigBuilder`
-
-Fluent builder as documented above. All setter methods return `this` for chaining and validate their input (invalid values throw).
-
-### Exported types
-
-`TreeNode`, `TreemapRect`, `TreemapConfig`, `LabelConfig`, `FloorLabelConfig`, `LayoutOptions`, `SortingOption`, `LabelPosition`, `DEFAULT_CONFIG`, `DEFAULT_ASPECT_RATIO`, `DEFAULT_FLOOR_LABEL_CONFIG`, `getFloorLabelPadding`, `floorLabelSizeResolver`, `LabelSizeResolver`, `SquarifyNode`, `SquarifyRow`.
+`AreaTrueTreemapLayout`, `AreaTrueTreemapConfigBuilder`, `AreaTrueTreemapConfig`, `DEFAULT_AREA_TRUE_CONFIG`, `AreaTrueSortingOption`, `OrderOption`, `AreaTrueLabelLength`, `AreaTrueLabelSizeResolver`, `generateAreaTrueSquarifyLayoutNodes`, `MARGIN_DIVISOR`, `FloorLabelConfig`, `DEFAULT_FLOOR_LABEL_CONFIG`, `getFloorLabelPadding`, `TreeNode`, `TreemapRect`.
 
 ## Demo
 
-An interactive demo (Svelte) that lets you tweak every setting live is included in [`demo/`](./demo). It renders the **Area-True Treemap** and the **d3.js Nested Treemap** side by side and compares them using the evaluation metrics defined in the thesis (node visibility, value proportionality, aspect ratio, space utilization, and computation time — see the thesis section "Bewertungsgrundlage").
+An interactive demo (Svelte) is included in [`demo/`](./demo). It renders the **Area-True Treemap** (this library) and a **d3.js Nested Treemap** side by side and compares them using the evaluation metrics defined in the thesis (node visibility, value proportionality, aspect ratio, space utilization, and computation time).
 
-By default the demo loads the real-world **flare** dataset (the d3 example used in the thesis to show how nodes disappear when the nested treemap reserves space for gaps). A small synthetic example can be selected via the *Sample data* dropdown, and any JSON file can be uploaded as well.
+By default the demo loads the real-world **flare** dataset. A small synthetic example can be selected via the *Sample data* dropdown, and any JSON file can be uploaded as well.
 
 ```bash
 npm install
 npm run dev:demo      # starts the demo on http://localhost:5174
 ```
 
-👉 Live version: https://benediktmehl.github.io/area-true-treemap/
+Live version: https://benediktmehl.github.io/area-true-treemap/
 
 ## Development
 

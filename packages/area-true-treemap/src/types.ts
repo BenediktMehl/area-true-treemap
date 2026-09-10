@@ -1,9 +1,9 @@
 /**
- * Input tree accepted by {@link TreemapLayout}.
+ * Input tree accepted by {@link AreaTrueTreemapLayout}.
  *
  * The area of a node is read from `attributes[areaMetric]` (default metric:
- * `"size"`). Leaf nodes contribute their own value; the value of a non-leaf
- * node is the sum of its children and is computed automatically.
+ * `"size"`). Leaf nodes contribute their own attribute value; the value of a
+ * folder is computed automatically from its children.
  */
 export interface TreeNode {
     name: string;
@@ -12,8 +12,12 @@ export interface TreeNode {
 }
 
 /**
- * A single laid-out rectangle. Coordinates are absolute, starting at the
- * top-left corner (0, 0) of the requested layout size.
+ * A single laid-out rectangle. Coordinates are absolute and start at the
+ * top-left corner (0, 0) of the algorithm's layout square; unlike the root
+ * container, every folder and leaf is part of the result list. The layout
+ * square is `Math.sqrt(total value)` wide (plus reserved label/margin space in
+ * multi-pass mode) — scale the rectangles to your canvas with
+ * `factor = canvasSize / root.width`.
  */
 export interface TreemapRect {
     x: number;
@@ -23,24 +27,9 @@ export interface TreemapRect {
     name: string;
     depth: number;
     isLeaf: boolean;
+    /** Whether this folder reserves a floor-label strip (folders only). */
     hasLabel: boolean;
-    /**
-     * Reserved label-strip thickness in layout units (0 when `hasLabel` is false).
-     * With fixed-size labels this is the same for every labeled node; with
-     * CodeCharta-style variable labels it differs per folder.
-     */
-    labelSize?: number;
+    /** The node's own value for the configured area metric (`attributes[areaMetric]`). */
     value: number;
     attributes?: Record<string, number>;
-}
-
-/**
- * Output dimensions of the layout. When omitted, a square 1000x1000 canvas is
- * used. The layout is scale-invariant: the same tree produces the same relative
- * rectangles for any size, only the absolute coordinates (and pixel-based gaps)
- * change.
- */
-export interface LayoutOptions {
-    width?: number;
-    height?: number;
 }

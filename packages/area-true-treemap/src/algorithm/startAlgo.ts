@@ -11,9 +11,9 @@
  *     preprocessing).
  */
 
-import { TreeNode, TreemapRect } from "../types";
-import { SquarifyNode, squarify, OrderOption, LabelLength } from "./squarify";
-import { AreaTrueTreemapConfig } from "./config";
+import type { TreeNode, TreemapRect } from "../types";
+import { squarify, OrderOption, type SquarifyNode, type LabelLength } from "./squarify";
+import type { AreaTrueTreemapConfig } from "../config/area-true-config";
 
 /** Raw-margin → algorithm-margin scaling, taken 1:1 from CodeCharta. */
 export const MARGIN_DIVISOR = 4.331109347824219 * 3.9340057382606775;
