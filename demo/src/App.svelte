@@ -77,7 +77,7 @@
       hValueProp:
         'Wertproportionalität (These): Varianzkoeffizient des Fläche/Metrik-Verhältnisses über alle Knoten. Bester Wert: 0 (perfekt proportional).',
       hSpace:
-        'Platznutzung (Vergleichbarkeit): Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Es gibt kein Besser/Schlechter – wichtig ist nur, dass beide Werte ähnlich sind, damit die beiden Outputs überhaupt verglichen werden können.',
+        'Platznutzung (Vergleichbarkeit): Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Es gibt kein Besser/Schlechter – wichtig ist nur, dass beide Werte ähnlich sind, damit die beiden Outputs überhaupt verglichen werden können. Hinweis: Ein niedrigerer Wert bedeutet, dass mehr Platz für Ränder, Abstände usw. verbraucht wird – die unten stehenden Werte sind dadurch potentiell schlechter.',
       hTime: 'Zeitaufwand (These): Reine Berechnungszeit des Layout-Algorithmus in ms (ohne Rendering). Bester Wert: möglichst niedrig.',
       areaTrue: 'Area-True Treemap',
       areaTrueSub: 'CodeCharta improved algorithm',
@@ -143,7 +143,7 @@
       hValueProp:
         'Value proportionality (thesis): coefficient of variation of the area/metric ratio across all nodes. Best value: 0 (perfectly proportional).',
       hSpace:
-        'Space utilization (comparability): fraction of the root area occupied by leaf nodes. There is no better or worse — what matters is only that both values are similar, so the two outputs can be compared at all.',
+        'Space utilization (comparability): fraction of the root area occupied by leaf nodes. There is no better or worse — what matters is only that both values are similar, so the two outputs can be compared at all. Note: a lower value means that more space is consumed by margins, paddings etc., so the values below are potentially worse.',
       hTime: 'Time (thesis): pure layout computation time in ms (without rendering). Best value: as low as possible.',
       areaTrue: 'Area-True Treemap',
       areaTrueSub: 'CodeCharta improved algorithm',

@@ -13,7 +13,7 @@ Dazu gibt es eine **Metriken-Tabelle**, die für beide Layouts direkt vergleicht
 - **Fehlende Knoten** — *Knotensichtbarkeit*: Blattknoten mit Breite/Höhe ≤ 0, die komplett verschwinden (wichtigste Kennzahl).
 - **Ø / Max Seitenverhältnis** — Verhältnis der längeren zur kürzeren Seite (1 = Quadrat).
 - **Wertproportionalität** — Varianzkoeffizient des Fläche/Metrik-Verhältnisses (0 = perfekt proportional).
-- **Platznutzung** — Anteil der Wurzelfläche, der von Blattknoten eingenommen wird.
+- **Platznutzung** — Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Ein niedrigerer Wert heißt, dass mehr Platz für Ränder, Abstände usw. verbraucht wird – die darunter stehenden Werte sind dadurch potentiell schlechter.
 - **Berechnungszeit** — reine Layout-Berechnung in ms.
 
 Über jede Metrik lässt sich hovern, um eine Erklärung zu sehen.
