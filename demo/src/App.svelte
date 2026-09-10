@@ -86,25 +86,27 @@
       empty: 'Keine Daten.',
       whyTitle: 'Warum ein anderer Algorithmus als d3.js?',
       whyLead:
-        'Beide Karten zeigen dieselben Daten und schreiben dieselben Rechtecke (x0/y0/x1/y1). Der Unterschied ist, wer den Abstand bezahlt — daraus folgt alles andere.',
+        'Beide Karten zeigen dieselben Daten mit demselben Abstand zwischen den Knoten. Der Unterschied liegt darin, wie das Layout diesen Abstand berücksichtigt.',
       whyD3Head: 'd3.js Nested Treemap',
-      whyAtHead: 'Area-True Treemap (dieses Layout)',
-      whyD3a: 'Der Abstand wird aus jedem Rechteck herausgeschnitten (padding, in Pixel).',
+      whyAtHead: 'Area-True Treemap (verbesserter Squarify)',
+      whyD3a:
+        'Der Abstand wird realisiert, indem jeder Knoten um die Größe des Abstands verkleinert wird (padding, in Pixel).',
       whyD3b:
-        'Ist ein Knoten kleiner als der Abstand, wird seine Breite oder Höhe 0: Er verschwindet aus dem Bild, obwohl er in den Daten steht.',
-      whyD3c: 'Labelstreifen, Ordnerketten und gültige Layouts müssen drumherum gebaut werden.',
+        'Knoten, die schmaler oder flacher als der Abstand sind, verlieren dadurch ihre gesamte Fläche und verschwinden vollständig.',
+      whyD3c:
+        'Beschriftungen, das Zusammenfassen von Ordnerketten und die Skalierung der Kindknoten auf die verfügbare Elternfläche müssen selbst ergänzt werden.',
       whyAta:
-        'Der Abstand wird ins Layout eingerechnet: Vor dem zweiten Durchlauf wächst jeder Wert um die Fläche, die seine Ränder und sein Labelstreifen brauchen.',
-      whyAtb:
-        'Der Abstand kostet die Karte, nicht den kleinsten Knoten — jeder Knoten behält seine proportionale Fläche, keiner fällt auf 0.',
-      whyAtc: 'Labelstreifen, Abstand nur zwischen Blättern, Ordnerketten und gültige Layouts sind Teil des Layouts.',
+        'Vor dem zweiten Durchlauf werden die Knotengrößen so angepasst, dass die angestrebten Abstände berücksichtigt sind (Größenanpassung).',
+      whyAtb: 'Dadurch bleibt die Fläche jedes Knotens proportional zu seinem Wert, und kein Knoten verliert seine Fläche.',
+      whyAtc:
+        'Beschriftungen, Abstände nur zwischen Blattknoten und das Zusammenfassen von Ordnerketten sind bereits Teil des Layouts.',
       whyLive:
-        'Genau dieser Effekt steht oben in der Tabelle in der Zeile „Fehlende Knoten": Mit den Standardeinstellungen (1 % Abstand, Geschwisterabstand „Alle") verliert d3 auf flare 4 von 220 Blättern, dieses Layout 0; bei 3 % Abstand sind es 67 gegen 6. Beide Layouts bekommen dabei denselben realisierten Abstand.',
-      whyMore: 'Wie der Algorithmus den Abstand bezahlt — und was er kostet',
+        'Genau das zeigt die Zeile „Fehlende Knoten" in der Tabelle oben: Mit den Standardeinstellungen (1 % Abstand, Geschwisterabstand „Alle") fehlen bei d3 4 von 220 Blattknoten, hier 0; bei 3 % Abstand sind es 67 gegenüber 6. Beide Layouts verwenden dabei denselben realisierten Abstand.',
+      whyMore: 'Wie das Layout den Abstand berücksichtigt — und was das kostet',
       whyHow:
-        'Drei Schritte: (1) reines Squarify ohne Abstand und Labels schätzt Lage und Größe jedes Knotens, (2) jeder Wert wird um die Fläche erhöht, die seine Ränder und sein Labelstreifen verbrauchen, (3) ein zweiter Durchlauf mit dem echten Abstand legt aus — die übrigen Rechtecke sind dadurch wieder proportional. Der Abstand ist ein Anteil der Kartenbreite (margin(0.02) = 2 %), dieselbe Einstellung stimmt also auf dem Thumbnail und auf 4K.',
+        'Das Layout wird in zwei Durchläufen berechnet: Der erste Durchlauf erzeugt ein vorläufiges Layout ohne Abstände. Darauf aufbauend werden die Knotengrößen so angepasst, dass die angestrebten Abstände berücksichtigt sind (Größenanpassung); der zweite Durchlauf erzeugt daraus das endgültige Layout. Der Abstand ist relativ: 1 % entspricht 1 % der Seitenlänge des Wurzelknotens.',
       whyCost:
-        'Preis: rund 2–3× Rechenzeit von d3 (0,22 ms statt 0,07 ms für flare bei 400×400, beides weit unter einem Frame) und als Tiling nur Squarify; über ca. 3 % Abstand degradieren beide Layouts. Die API bleibt trotzdem ein Drop-in: hierarchy() + treemap() und x0/y0/x1/y1 in-place, Rendering und Traversierung unverändert.',
+        'Der Mehraufwand: rund 2–3× so viel Rechenzeit wie bei d3, in beiden Fällen weit unter einem Frame. Als Kachelungsverfahren steht nur Squarify zur Verfügung, und ab etwa 3 % Abstand nimmt das Treemap-Problem bei beiden Layouts deutlich zu. Die API bleibt ein Drop-in: hierarchy() + treemap() mit x0/y0/x1/y1 wie gewohnt.',
       whyRepo: 'README',
       whyDocs: 'Messwerte & Portierungsanleitung',
     },
@@ -175,25 +177,25 @@
       empty: 'No data.',
       whyTitle: 'Why a different algorithm than d3.js?',
       whyLead:
-        'Both maps show the same data and write the same rectangles (x0/y0/x1/y1). The difference is who pays for the gap — everything else follows from it.',
+        'Both maps show the same data with the same gap between the nodes. The difference is how the layout takes that gap into account.',
       whyD3Head: 'd3.js nested treemap',
-      whyAtHead: 'Area-True Treemap (this layout)',
-      whyD3a: 'The gap is cut out of every rectangle (padding, in pixels).',
+      whyAtHead: 'Area-True Treemap (improved squarify)',
+      whyD3a: 'The gap is realized by shrinking every node by the size of the gap (padding, in pixels).',
       whyD3b:
-        'If a node is smaller than the gap, its width or height becomes 0: it disappears from the picture although it is still in the data.',
-      whyD3c: 'Label strips, folder chains and valid layouts have to be built around it.',
+        'Nodes that are narrower or flatter than the gap lose their whole area as a result and disappear completely.',
+      whyD3c:
+        'Labels, collapsing folder chains and scaling the children onto the available parent area have to be added on top.',
       whyAta:
-        'The gap is built into the layout: before the second pass every value grows by the area its margins and its label strip will consume.',
-      whyAtb:
-        'The gap costs the map, not the smallest node — every node keeps its proportional area, none collapses to 0.',
-      whyAtc: 'Label strips, gaps only between leaves, folder chains and valid layouts are part of the layout.',
+        'Before the second pass the node sizes are adjusted so that the intended gaps are taken into account (size adjustment).',
+      whyAtb: 'That keeps the area of every node proportional to its value, and no node loses its area.',
+      whyAtc: 'Labels, gaps only between leaf nodes and collapsing folder chains are already part of the layout.',
       whyLive:
-        'That is exactly what the table above shows in the “Missing nodes” row: with the default settings (1 % gap, sibling margin “All”) d3 loses 4 of 220 leaves on flare, this layout 0; at a 3 % gap it is 67 vs. 6. Both layouts are given the same realized gap.',
-      whyMore: 'How the algorithm pays for the gap — and what it costs',
+        'That is exactly what the “Missing nodes” row in the table above shows: with the default settings (1 % gap, sibling margin “All”) 4 of 220 leaf nodes are missing with d3 and 0 here; at a 3 % gap it is 67 versus 6. Both layouts use the same realized gap.',
+      whyMore: 'How the layout takes the gap into account — and what it costs',
       whyHow:
-        'Three steps: (1) a plain squarify without gap and labels estimates the position and size of every node, (2) every value grows by the area its margins and its label strip will consume, (3) a second pass with the real gap lays the tree out again — the remaining boxes are proportional again. The gap is a fraction of the map width (margin(0.02) = 2 %), so the same setting is right on a thumbnail and on a 4K screen.',
+        'The layout is computed in two passes: the first pass produces a preliminary layout without gaps. Based on it, the node sizes are adjusted so that the intended gaps are taken into account (size adjustment); the second pass produces the final layout from those sizes. The gap is relative: 1 % means 1 % of the side length of the root node.',
       whyCost:
-        'The price: roughly 2–3× the compute time of d3 (0.22 ms vs. 0.07 ms for flare at 400×400, both far below a frame) and squarify as the only tiling; above roughly 3 % gap both layouts degrade. The API stays a drop-in either way: hierarchy() + treemap() with x0/y0/x1/y1 written in place, renderer and traversal unchanged.',
+        'The extra cost: roughly 2–3× the compute time of d3, both far below a frame. Squarify is the only tiling available, and above a gap of about 3 % the treemap problem grows noticeably for both layouts. The API stays a drop-in: hierarchy() + treemap() with x0/y0/x1/y1 as before.',
       whyRepo: 'README',
       whyDocs: 'Measurements & porting guide',
     },

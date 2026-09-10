@@ -62,8 +62,8 @@ const inner = [x0 + pad, y0 + pad, x1 - pad, y1 - pad];   // paddingTop/Right/Bo
 tile(parent, ...inner);                                    // children tile the shrunken box
 ```
 
-The gap is therefore paid for by *shrinking* every rectangle, and it is paid twice: once by the parent (its
-children box is smaller) and once by the child itself (when it becomes a parent). Two consequences:
+The gap therefore comes out of the rectangles themselves, and twice over: once through the parent (its
+children box is smaller) and once through the child itself (when it becomes a parent). Two consequences:
 
 - A node whose value share is smaller than the gap loses its entire area. It is still in your tree, but
   `x1 - x0` or `y1 - y0` is `0`: the node is gone from the picture. On real maps with thousands of files this
@@ -79,8 +79,8 @@ predictability. It is just the wrong trade-off when the gap is a first-class des
 
 The library implements the **improved squarify algorithm** from the master thesis
 [*Vergleich und Optimierung von 3D-Visualisierungen für die Darstellung von Software-Qualitätsmetriken*](https://github.com/BenediktMehl/master-thesis)
-(a faithful port of CodeCharta's `squarifyLayoutImproved`). Instead of insetting rectangles, it makes the
-*values* pay for the gap in two passes:
+(a faithful port of CodeCharta's `squarifyLayoutImproved`). Instead of insetting rectangles, it takes the gap
+into account while the layout is computed, in two passes:
 
 1. **Pass 1** runs a plain squarify without gaps or labels. This estimates where every node would sit and how
    much box it would get.
@@ -88,8 +88,8 @@ The library implements the **improved squarify algorithm** from the master thesi
    consume - leaves by `width · margin + length · margin + margin²`, folders additionally by the growth of
    their children (`increaseValues()` in `src/algorithm/engine.ts`).
 3. **Pass 2** lays the tree out again with the real `margin` (and label strips). Because the values now
-   include the gap, the *remaining* boxes are proportional again - the gap is paid for by the map, not by the
-   smallest node.
+   include the gap, the *remaining* boxes are proportional again - the gap is taken into account by the layout
+   instead of being cut out of the smallest node.
 4. Optionally the siblings are separated (`applySiblingMargin`): every rectangle is shrunk by `margin / 2` per
    side, or - with `siblingMarginLeavesOnly(true)` - only the leaves, so folders stay seamless.
 

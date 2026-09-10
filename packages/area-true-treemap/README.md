@@ -24,7 +24,8 @@ Three additive adaptations on top of the 1:1 port:
 ## Features
 
 - **d3-style API**: `hierarchy()` + chainable `treemap()`, coordinates written in place onto the wrapped tree.
-- **Area-true**: proportional node areas; the gap is paid for by the layout, not by the smallest node.
+- **Area-true**: proportional node areas; the gap is taken into account by the layout instead of being cut
+  out of the nodes.
 - **Multi-pass squarify**: 1 pass = plain squarify baseline, 2+ passes = the area-true layout in which margins
   and floor labels take effect.
 - **Margins between nodes** — between all siblings, only between leaves, or off.

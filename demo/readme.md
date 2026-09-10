@@ -21,11 +21,12 @@ Die Oberfläche gibt es auf **Deutsch und Englisch** (DE/EN-Schalter oben rechts
 ## Warum-Block unter den Karten
 
 Ganz unten auf der Seite steht der Block **„Warum ein anderer Algorithmus als d3.js?"**: links das Area-True-Layout
-(der Abstand wird ins Layout eingerechnet und von den Knotenwerten bezahlt), rechts das d3-Layout (der Abstand wird
-aus jedem Rechteck herausgeschnitten, in Pixel). Darunter steht, was das konkret bedeutet — mit Verweis auf die
-Zeile **Fehlende Knoten** der Metriken-Tabelle oberhalb, in der man den Effekt live sieht — sowie aufklappbar die
-drei Schritte des Algorithmus, sein Preis (Rechenzeit, nur Squarify als Tiling) und Links zu README und
-Portierungsanleitung. Der Block ist wie die übrige Oberfläche zweisprachig (DE/EN).
+(die Knotengrößen werden vor dem zweiten Durchlauf so angepasst, dass der angestrebte Abstand berücksichtigt ist),
+rechts das d3-Layout (jeder Knoten wird um den Abstand verkleinert, in Pixel). Darunter steht, was das konkret
+bedeutet — mit Verweis auf die Zeile **Fehlende Knoten** der Metriken-Tabelle oberhalb, in der man den Effekt live
+sieht — sowie aufklappbar die zwei Durchläufe des Layouts, der Mehraufwand (Rechenzeit, nur Squarify als
+Kachelungsverfahren) und Links zu README und Portierungsanleitung. Der Block ist wie die übrige Oberfläche
+zweisprachig (DE/EN).
 
 ## Metriken-Tabelle
 
