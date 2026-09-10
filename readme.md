@@ -12,29 +12,112 @@
 Live demo (area-true vs. d3, side by side, with all settings):
 <https://benediktmehl.github.io/area-true-treemap/>
 
+**The difference in one sentence:** `d3.treemap()` pays for its padding by **shrinking every rectangle**, so a
+node smaller than the gap collapses to zero area and disappears from the picture. This library pays for the gap
+by **growing the node values during the layout**, so the gap costs the map — never the smallest node.
+
 `area-true-treemap` is a dependency-free TypeScript library implementing the **improved squarify algorithm**
 from the master thesis
 [Vergleich und Optimierung von 3D-Visualisierungen für die Darstellung von Software-Qualitätsmetriken](https://github.com/BenediktMehl/master-thesis/blob/main/thesis.pdf)
-(a faithful port of CodeCharta's `squarifyLayoutImproved`).
+(a faithful port of CodeCharta's `squarifyLayoutImproved`). It ships a **d3-hierarchy-compatible API**
+(`hierarchy()` + `treemap()`), so a consumer that already lays out a treemap with d3 swaps one import and
+keeps everything else: renderer, traversal, data layer.
 
-It ships a **d3-hierarchy-compatible API** (`hierarchy()` + `treemap()`), so a consumer that already lays out
-a treemap with d3 swaps one import and keeps everything else — renderer, traversal, data layer. The layout
-itself is different: the gap is realized **during** the layout by growing the node values, instead of insetting
-every rectangle afterwards. That is why gaps do not make nodes collapse to zero area the way d3's `padding`
-does.
+## Why this instead of `d3.treemap()`?
 
-## Why not just `d3.treemap().padding()`?
+Both libraries lay out a squarified treemap and write the same `x0/y0/x1/y1` onto your nodes. The difference
+is *who pays for the gap* — everything else follows from it.
 
-- **The gap stops eating the smallest nodes.** d3 subtracts the padding from every rectangle, so a node smaller
-  than the padding disappears. The area-true layout inflates the values so the requested gap fits; at equal
-  realized gaps it loses roughly an order of magnitude fewer leaves (measured: 6 vs. 67 on the flare dataset at
-  a 3 % gap, 0 vs. 4 at 1 %).
-- **Gaps are relative, not pixels.** `margin(0.02)` means 2 % of the map width, so one configuration is
-  correct on a thumbnail and on a 4K canvas.
-- **Labels, sibling-gap modes and folder collapsing are part of the layout** (`floorLabels`, `labelLength`,
-  `siblingMarginLeavesOnly`, `collapseFolders`) instead of glue code around it.
+### The two mechanisms
 
-The details, the option-by-option mapping, the measured comparison and the honest trade-offs are in
+**d3 cuts the gap out of the rectangles.** `padding()` shrinks the parent box, the children tile what is left,
+and every child is inset again when it becomes a parent:
+
+```js
+// what d3.treemap() does with padding, simplified
+const inner = [x0 + pad, y0 + pad, x1 - pad, y1 - pad];  // paddingTop/Right/Bottom/Left
+tile(parent, ...inner);                                   // children tile the shrunken box
+```
+
+So a node whose value share is smaller than the gap ends up with width or height `0`: it is still in your
+tree, but it is gone from the picture. And because `pad` is a **pixel** value, the same configuration behaves
+differently on a 400 px thumbnail and on a 4K canvas.
+
+**area-true-treemap lets the values pay.** The gap is built **into** the layout instead of subtracted
+afterwards — three steps, that is the whole idea (`src/algorithm/engine.ts`):
+
+```ts
+squarify(root, 0, false, …);       // 1) plain squarify without gap/labels → estimates where every node sits
+increaseValues(root, margin, …);   // 2) grow each value by the area its margins / label strip will consume
+squarify(root, margin, …, true);   // 3) lay out again with the real gap → the remaining boxes stay proportional
+```
+
+The gap therefore comes out of the map, not out of the smallest node, and it is a **fraction of the map width**
+(`margin(0.02)` = 2 %), so one configuration is right at every canvas size.
+
+### Side by side
+
+| | `d3.treemap()` | `area-true-treemap` |
+| --- | --- | --- |
+| How the gap is realized | insetting every rectangle (`padding()`, `paddingInner()`, `paddingOuter()`) | growing node values, then a second layout pass with the real gap |
+| Who pays for the gap | the smallest nodes — below the gap size they collapse to area `0` | the map; every node keeps its proportional area |
+| Gap unit | pixels | fraction of `size()[0]` (`4 / width` is still exactly 4 px) |
+| Where gaps appear | around every parent (`padding`/`paddingOuter`) and between all siblings (`paddingInner`) | parent↔children, between siblings, or **only between leaves** (`siblingMarginLeavesOnly`) |
+| Label strips | hand-rolled `paddingTop(fn)` plus patched padding | `floorLabels(n)` + `labelLength(x)`; the strip *replaces* the top gap |
+| Single-child folder chains | your own preprocessing | `collapseFolders(true)` |
+| Children stay inside their parent | implied by the padding, paid for with area | `scale(true)` rescales in the final pass |
+| Tiling | six tilings (`slice`, `dice`, `binary`, `sliceDice`, `squarify`, `resquarify`) | squarified with the golden-ratio target (1.618) |
+| Zero-area nodes | possible at any gap | impossible by construction |
+
+### Measured, at the same realized gap
+
+Both layouts get the **same data, same canvas and the same realized gap** — the d3 panel is handed the gap and
+label strip the area-true layout actually produced, exactly like the demo and `npm run benchmark` do.
+`flare`, 220 leaves, 400×400, descending sort, folder chains collapsed, label strip on the top 3 levels; values
+are **area-true · d3**:
+
+| Metric | 1 % gap, no sibling gaps (thesis recommendation) | 1 % gap, sibling gaps | 3 % gap, sibling gaps |
+| --- | --- | --- | --- |
+| **Missing leaves** (visibility) | 0 · 0 | **0** · 4 | **6** · 67 |
+| Value proportionality (CV) | **0.210** · 0.262 | **0.285** · 0.490 | 0.846 · **0.759** |
+| Median aspect ratio | **1.72** · 1.77 | **1.96** · 2.05 | 2.35 · **1.90** |
+| Space utilization | 65.3 % · 66.5 % | 52.8 % · 54.4 % | 23.9 % · 29.6 % |
+| Compute time | 0.219 ms · 0.068 ms | 0.126 ms · 0.055 ms | 0.094 ms · 0.056 ms |
+
+Bold marks the better value (space utilization has no better or worse — it only has to be similar so the other
+numbers are comparable at all).
+
+The headline is the missing-leaves row: **as soon as siblings are separated — which is how d3 draws a treemap by
+default — its padding starts deleting nodes**, 67 of 220 at a 3 % gap and 4 of 220 at 1 %, while the area-true
+layout realizes the same gap and keeps them. With larger maps the absolute numbers grow: `junit4` (625 leaves,
+1000×1000) loses 226 leaves with d3 and 178 with this library at a 1 % sibling gap, 445 vs. 355 at 3 %. That is
+not a rendering trick — same SVG, same rectangles, just rectangles that did not lose their area to the padding.
+
+Reproduce it yourself:
+
+```bash
+npm install && npm run benchmark
+```
+
+### What it costs
+
+The trade-offs, because the picture is not one-sided:
+
+- **Compute time** is roughly 2–3× a plain d3 squarify (0.22 ms vs. 0.07 ms for flare at 400×400). Both are far
+  below a frame budget, and the layout does not re-run per frame.
+- **Above ~3 % gap** the treemap problem dominates and both layouts degrade (the thesis recommends 0.5–3 %). The
+  area-true layout keeps small nodes alive as sub-pixel slivers, which shows up in the *mean* aspect ratio
+  (median stays good).
+- **Sibling gaps are the expensive feature** on both sides. `applySiblingMargin(true)` shrinks rectangles after
+  the layout and is the same failure mode as d3's `paddingInner` — it just hits far less often. The thesis
+  recommends *no* sibling gaps and outlines instead.
+- **Small canvas, huge map**: if a leaf's value share is below one pixel, no algorithm can show it. At 1000×1000
+  both libraries lose the same number of leaves on `junit4` at a 1 % gap without sibling gaps (163 vs. 163) —
+  that is a resolution limit, not an algorithm property.
+- **Only one tiling**: slice-and-dice, binary, `sliceDice` and `treemapResquarify` (stable re-layouts for
+  animated transitions) are not implemented. If you need those, keep d3 for that view.
+
+Full guide with the complete option mapping, all measured configurations and every trade-off:
 **[docs/porting-from-d3-hierarchy.md](./docs/porting-from-d3-hierarchy.md)**.
 
 ## Features
@@ -128,8 +211,8 @@ Everything else stays: `hierarchy(data, children)` with `.sum()` / `.count()` / 
 `x0/y0/x1/y1` on every node, and the traversal helpers (`each*`, `descendants`, `leaves`, `links`, `path`,
 `ancestors`, `find`, iteration).
 
-Full guide — including what the algorithm does differently, the complete option mapping, the measured
-comparison and when *not* to switch: **[docs/porting-from-d3-hierarchy.md](./docs/porting-from-d3-hierarchy.md)**.
+Full guide — the complete option mapping, all measured configurations and when *not* to switch:
+**[docs/porting-from-d3-hierarchy.md](./docs/porting-from-d3-hierarchy.md)**.
 
 ## Input data & values
 
@@ -240,7 +323,9 @@ An interactive demo (Svelte) is included in [`demo/`](./demo). It renders the **
 library) and a **d3.js Nested Treemap** side by side and compares them using the evaluation metrics defined in
 the thesis (node visibility, value proportionality, aspect ratio, space utilization, and computation time).
 Both layouts are driven by the same settings, and the d3 panel is given the gap/label strip the area-true
-layout actually realized, so the metrics are comparable.
+layout actually realized, so the metrics are comparable. The page opens with a short explanation of the
+mechanism difference described [above](#why-this-instead-of-d3treemap), aimed at the *Missing nodes* row of the
+metrics table.
 
 By default the demo loads the real-world **flare** dataset. A small synthetic example and a set of real
 CodeCharta maps (**JUnit 4**, **JUnit 5**, **httpd**, **Apache OpenOffice**, **NetBeans** — raw `cc.json`

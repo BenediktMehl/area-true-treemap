@@ -84,6 +84,29 @@
       nested: 'Nested Treemap',
       nestedSub: 'd3.js nested treemap',
       empty: 'Keine Daten.',
+      whyTitle: 'Warum ein anderer Algorithmus als d3.js?',
+      whyLead:
+        'Beide Karten zeigen dieselben Daten und schreiben dieselben Rechtecke (x0/y0/x1/y1). Der Unterschied ist, wer den Abstand bezahlt — daraus folgt alles andere.',
+      whyD3Head: 'd3.js Nested Treemap',
+      whyAtHead: 'Area-True Treemap (dieses Layout)',
+      whyD3a: 'Der Abstand wird aus jedem Rechteck herausgeschnitten (padding, in Pixel).',
+      whyD3b:
+        'Ist ein Knoten kleiner als der Abstand, wird seine Breite oder Höhe 0: Er verschwindet aus dem Bild, obwohl er in den Daten steht.',
+      whyD3c: 'Labelstreifen, Ordnerketten und gültige Layouts müssen drumherum gebaut werden.',
+      whyAta:
+        'Der Abstand wird ins Layout eingerechnet: Vor dem zweiten Durchlauf wächst jeder Wert um die Fläche, die seine Ränder und sein Labelstreifen brauchen.',
+      whyAtb:
+        'Der Abstand kostet die Karte, nicht den kleinsten Knoten — jeder Knoten behält seine proportionale Fläche, keiner fällt auf 0.',
+      whyAtc: 'Labelstreifen, Abstand nur zwischen Blättern, Ordnerketten und gültige Layouts sind Teil des Layouts.',
+      whyLive:
+        'Genau dieser Effekt steht unten in der Tabelle in der Zeile „Fehlende Knoten": Mit den Standardeinstellungen (1 % Abstand, Geschwisterabstand „Alle") verliert d3 auf flare 4 von 220 Blättern, dieses Layout 0; bei 3 % Abstand sind es 67 gegen 6. Beide Layouts bekommen dabei denselben realisierten Abstand.',
+      whyMore: 'Wie der Algorithmus den Abstand bezahlt — und was er kostet',
+      whyHow:
+        'Drei Schritte: (1) reines Squarify ohne Abstand und Labels schätzt Lage und Größe jedes Knotens, (2) jeder Wert wird um die Fläche erhöht, die seine Ränder und sein Labelstreifen verbrauchen, (3) ein zweiter Durchlauf mit dem echten Abstand legt aus — die übrigen Rechtecke sind dadurch wieder proportional. Der Abstand ist ein Anteil der Kartenbreite (margin(0.02) = 2 %), dieselbe Einstellung stimmt also auf dem Thumbnail und auf 4K.',
+      whyCost:
+        'Preis: rund 2–3× Rechenzeit von d3 (0,22 ms statt 0,07 ms für flare bei 400×400, beides weit unter einem Frame) und als Tiling nur Squarify; über ca. 3 % Abstand degradieren beide Layouts. Die API bleibt trotzdem ein Drop-in: hierarchy() + treemap() und x0/y0/x1/y1 in-place, Rendering und Traversierung unverändert.',
+      whyRepo: 'README',
+      whyDocs: 'Messwerte & Portierungsanleitung',
     },
     en: {
       title: 'Treemap Comparison',
@@ -150,6 +173,29 @@
       nested: 'Nested Treemap',
       nestedSub: 'd3.js nested treemap',
       empty: 'No data.',
+      whyTitle: 'Why a different algorithm than d3.js?',
+      whyLead:
+        'Both maps show the same data and write the same rectangles (x0/y0/x1/y1). The difference is who pays for the gap — everything else follows from it.',
+      whyD3Head: 'd3.js nested treemap',
+      whyAtHead: 'Area-True Treemap (this layout)',
+      whyD3a: 'The gap is cut out of every rectangle (padding, in pixels).',
+      whyD3b:
+        'If a node is smaller than the gap, its width or height becomes 0: it disappears from the picture although it is still in the data.',
+      whyD3c: 'Label strips, folder chains and valid layouts have to be built around it.',
+      whyAta:
+        'The gap is built into the layout: before the second pass every value grows by the area its margins and its label strip will consume.',
+      whyAtb:
+        'The gap costs the map, not the smallest node — every node keeps its proportional area, none collapses to 0.',
+      whyAtc: 'Label strips, gaps only between leaves, folder chains and valid layouts are part of the layout.',
+      whyLive:
+        'That is exactly what the table below shows in the “Missing nodes” row: with the default settings (1 % gap, sibling margin “All”) d3 loses 4 of 220 leaves on flare, this layout 0; at a 3 % gap it is 67 vs. 6. Both layouts are given the same realized gap.',
+      whyMore: 'How the algorithm pays for the gap — and what it costs',
+      whyHow:
+        'Three steps: (1) a plain squarify without gap and labels estimates the position and size of every node, (2) every value grows by the area its margins and its label strip will consume, (3) a second pass with the real gap lays the tree out again — the remaining boxes are proportional again. The gap is a fraction of the map width (margin(0.02) = 2 %), so the same setting is right on a thumbnail and on a 4K screen.',
+      whyCost:
+        'The price: roughly 2–3× the compute time of d3 (0.22 ms vs. 0.07 ms for flare at 400×400, both far below a frame) and squarify as the only tiling; above roughly 3 % gap both layouts degrade. The API stays a drop-in either way: hierarchy() + treemap() with x0/y0/x1/y1 written in place, renderer and traversal unchanged.',
+      whyRepo: 'README',
+      whyDocs: 'Measurements & porting guide',
     },
   };
 
@@ -825,6 +871,47 @@
     </div>
   </header>
 
+  <section class="why">
+    <h2>{t.whyTitle}</h2>
+    <p class="why-lead">{t.whyLead}</p>
+
+    <div class="why-grid">
+      <div class="why-col">
+        <h3>{t.whyD3Head}</h3>
+        <ul>
+          <li>{t.whyD3a}</li>
+          <li>{t.whyD3b}</li>
+          <li>{t.whyD3c}</li>
+        </ul>
+      </div>
+      <div class="why-col at">
+        <h3>{t.whyAtHead}</h3>
+        <ul>
+          <li>{t.whyAta}</li>
+          <li>{t.whyAtb}</li>
+          <li>{t.whyAtc}</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="why-live">{t.whyLive}</p>
+
+    <details class="why-more">
+      <summary>{t.whyMore}</summary>
+      <p>{t.whyHow}</p>
+      <p>{t.whyCost}</p>
+      <p class="why-links">
+        <a href="https://github.com/BenediktMehl/area-true-treemap" target="_blank" rel="noopener">{t.whyRepo} ↗</a>
+        ·
+        <a
+          href="https://github.com/BenediktMehl/area-true-treemap/blob/main/docs/porting-from-d3-hierarchy.md"
+          target="_blank"
+          rel="noopener">{t.whyDocs} ↗</a
+        >
+      </p>
+    </details>
+  </section>
+
   <section class="metrics">
     <table>
       <thead>
@@ -1008,6 +1095,87 @@
     border-color: #bbb;
   }
 
+  .why {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 18px;
+    margin-bottom: 22px;
+  }
+
+  .why h2 {
+    margin: 0 0 6px;
+    font-size: 17px;
+  }
+
+  .why-lead {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 13px;
+    max-width: 95ch;
+  }
+
+  .why-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .why-col {
+    background: #fafafa;
+    border: 1px solid var(--border);
+    border-left: 3px solid #c9c9c9;
+    border-radius: 4px;
+    padding: 10px 12px;
+  }
+
+  .why-col.at {
+    border-left-color: var(--accent);
+  }
+
+  .why-col h3 {
+    margin: 0 0 6px;
+    font-size: 13px;
+  }
+
+  .why-col ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+
+  .why-col li + li {
+    margin-top: 4px;
+  }
+
+  .why-live {
+    margin: 14px 0 0;
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+
+  .why-more {
+    margin-top: 12px;
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+
+  .why-more summary {
+    cursor: pointer;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .why-more p {
+    margin: 8px 0 0;
+    max-width: 95ch;
+  }
+
+  .why-links a {
+    font-weight: 600;
+  }
+
   .metrics {
     margin-bottom: 22px;
   }
@@ -1076,7 +1244,8 @@
   }
 
   @media (max-width: 900px) {
-    .panels {
+    .panels,
+    .why-grid {
       grid-template-columns: 1fr;
     }
   }
