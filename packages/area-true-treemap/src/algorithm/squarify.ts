@@ -27,6 +27,11 @@ export interface SquarifyNode {
     x1: number;
     y1: number;
     attributes?: Record<string, number>;
+    /**
+     * Optional back-reference for hierarchy-based layouts (e.g. the nodes of a
+     * d3-style wrapper that should receive the layout coordinates).
+     */
+    data?: unknown;
 }
 
 export interface SquarifyRow {

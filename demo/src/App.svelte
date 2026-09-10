@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { hierarchy, treemap, type HierarchyRectangularNode } from 'd3-hierarchy';
+  import { hierarchy as d3Hierarchy, treemap as d3Treemap, type HierarchyRectangularNode } from 'd3-hierarchy';
   import TreemapSvg from '$lib/components/TreemapSvg.svelte';
   import {
-    AreaTrueTreemapLayout,
-    AreaTrueSortingOption,
+    hierarchy,
+    treemap,
+    SortingOption as AreaTrueSortingOption,
     OrderOption,
     getFloorLabelPadding,
     DEFAULT_FLOOR_LABEL_CONFIG,
-    MARGIN_DIVISOR,
-    type AreaTrueLabelSizeResolver,
-    type TreeNode,
-    type TreemapRect,
+    type HierarchyNode,
   } from 'area-true-treemap';
+  import type { TreeNode, TreemapRect } from '$lib/types';
   import sample from '$lib/data/sample.json';
   import flare from '$lib/data/flare.json';
+  import { ccJsonToTree, isCodeChartaJson, suggestAreaMetric } from '$lib/codecharta';
 
   type Lang = 'de' | 'en';
   let lang: Lang = 'de';
@@ -45,6 +45,12 @@
       dataPreset: 'Beispieldaten',
       presetFlare: 'flare (d3, aus der Masterarbeit)',
       presetSample: 'kleines Beispiel (synthetisch)',
+      presetJunit4: 'JUnit 4 (cc.json)',
+      presetJunit5: 'JUnit 5 (cc.json)',
+      presetHttpd: 'httpd (cc.json)',
+      presetAoo: 'Apache OpenOffice (cc.json)',
+      presetNetbeans: 'NetBeans (cc.json)',
+      loading: 'Lädt…',
       sortNone: 'keine',
       sortAsc: 'aufsteigend',
       sortDesc: 'absteigend',
@@ -105,6 +111,12 @@
       dataPreset: 'Sample data',
       presetFlare: 'flare (d3, from master thesis)',
       presetSample: 'small sample (synthetic)',
+      presetJunit4: 'JUnit 4 (cc.json)',
+      presetJunit5: 'JUnit 5 (cc.json)',
+      presetHttpd: 'httpd (cc.json)',
+      presetAoo: 'Apache OpenOffice (cc.json)',
+      presetNetbeans: 'NetBeans (cc.json)',
+      loading: 'Loading…',
       sortNone: 'none',
       sortAsc: 'ascending',
       sortDesc: 'descending',
@@ -218,23 +230,43 @@
     return helpTexts[key]?.[lang] ?? '';
   }
 
-  // Bundled example datasets, selectable in the header.
+  // Example datasets, selectable in the header.
+  //
+  // Two flavours: datasets that are small enough to be bundled directly
+  // (`data`, imported above) and raw CodeCharta cc.json maps that are served
+  // from `public/data/ccjson/` and fetched on demand (`url`) — the latter keeps
+  // the big real-world maps (up to ~25 MB) out of the JavaScript bundle.
   interface ExampleDef {
-    data: TreeNode;
+    data?: TreeNode;
+    url?: string;
     metric: string;
     labelKey: string;
   }
+  const ccJsonUrl = (file: string): string => `${import.meta.env.BASE_URL}data/ccjson/${file}`;
   const examples: Record<string, ExampleDef> = {
     flare: { data: flare as unknown as TreeNode, metric: 'size', labelKey: 'presetFlare' },
     sample: { data: sample as TreeNode, metric: 'size', labelKey: 'presetSample' },
+    junit4: { url: ccJsonUrl('junit4_2019-10-26.cc.json'), metric: 'rloc', labelKey: 'presetJunit4' },
+    junit5: { url: ccJsonUrl('junit5_2019-10-26.cc.json'), metric: 'rloc', labelKey: 'presetJunit5' },
+    httpd: { url: ccJsonUrl('httpd_2019-10-26.cc.json'), metric: 'rloc', labelKey: 'presetHttpd' },
+    aoo: { url: ccJsonUrl('aoo_2019-08-02.cc.json'), metric: 'rloc', labelKey: 'presetAoo' },
+    netbeans: { url: ccJsonUrl('netbeans_2019-10-19.cc.json'), metric: 'rloc', labelKey: 'presetNetbeans' },
   };
   const exampleOrder: { id: string; labelKey: string }[] = [
     { id: 'flare', labelKey: 'presetFlare' },
     { id: 'sample', labelKey: 'presetSample' },
+    { id: 'junit4', labelKey: 'presetJunit4' },
+    { id: 'junit5', labelKey: 'presetJunit5' },
+    { id: 'httpd', labelKey: 'presetHttpd' },
+    { id: 'aoo', labelKey: 'presetAoo' },
+    { id: 'netbeans', labelKey: 'presetNetbeans' },
   ];
 
   let exampleId = 'flare';
-  let loadedData: TreeNode = examples.flare.data;
+  let loadedData: TreeNode = examples.flare.data as TreeNode;
+  // Once fetched, a cc.json map is kept around, so switching back is instant.
+  const exampleCache = new Map<string, TreeNode>();
+  let loadingExample = false;
 
   // Algorithm settings (CodeCharta improved squarify / "Improved Squarifying").
   // Defaults follow the recommendation table of the master thesis (Fazit of
@@ -310,33 +342,33 @@
   $: {
     const totalLeaves = countLeaves(loadedData);
 
-    // --- 1) Area-True Treemap (CodeCharta) ---
-    // The CodeCharta margin/label inputs live in the algorithm's sqrt-space, so
-    // we first probe the root size (no margin/label) and then derive raw inputs
-    // that realize the chosen percentage of the canvas — independent of the
-    // data set. The nested panel is fed the same *realized* gap/label later.
-    const baseCfg = AreaTrueTreemapLayout.builder()
-      .areaMetric(areaMetric)
-      .margin(0)
+    // --- 1) Area-True Treemap (CodeCharta improved squarify, d3-style API) ---
+    // The layout is configured like d3-hierarchy: wrap the tree, sum the leaf
+    // metrics, then call the configured layout function on the wrapped root.
+    // It mutates the wrapped nodes in place, so every wrapped node carries its
+    // x0/x1/y0/y1 rectangle afterwards.
+    const labelTopLevels = enableFloorLabels ? Math.max(0, amountOfTopLabels) : 0;
+    const areaTree = hierarchy(structuredClone(loadedData) as TreeNode).sum((d) =>
+      !d.children || d.children.length === 0 ? d.attributes?.[areaMetric] ?? 0 : 0,
+    );
+    const areaLayout = treemap<TreeNode>()
+      .size([containerSize, containerSize])
       .numberOfPasses(numberOfPasses)
       .scale(useScale)
       .simpleIncreaseValues(simpleIncreaseValues)
+      .margin(marginPercent / 100)
+      .applySiblingMargin(siblingMode !== 'none')
+      .siblingMarginLeavesOnly(siblingMode === 'leaves')
+      .floorLabels(labelTopLevels)
       .sorting(sorting)
       .order(orderOption)
       .incrementMargin(incrementMargin)
-      .applySiblingMargin(siblingMode !== 'none')
-      .siblingMarginLeavesOnly(siblingMode === 'leaves')
       .collapseFolders(collapseFolders)
-      .floorLabels(enableFloorLabels)
-      .amountOfTopLabels(amountOfTopLabels)
-      .build();
-    const probeRects = new AreaTrueTreemapLayout({ ...baseCfg, margin: 0, labelLength: 0 }).compute(loadedData);
-    const baseRootW = probeRects[0]?.width || 1;
-
-    const rawMargin = (marginPercent / 100) * MARGIN_DIVISOR * baseRootW;
-    const rawLabel: number | AreaTrueLabelSizeResolver = variableLabelSize
-      ? (node) => getFloorLabelPadding(node.x1 - node.x0, node.depth, DEFAULT_FLOOR_LABEL_CONFIG)
-      : (labelPercent / 100) * baseRootW;
+      .labelLength(
+        variableLabelSize
+          ? (node) => getFloorLabelPadding(node.x1 - node.x0, node.depth, DEFAULT_FLOOR_LABEL_CONFIG)
+          : labelPercent / 100,
+      );
 
     let areaTrueRects: TreemapRect[] = [];
     let areaTrueMs = 0;
@@ -345,31 +377,14 @@
     {
       // Measure the average over many iterations (same as the nested panel),
       // so a single fast run cannot show a misleading 0.00 ms.
-      let rawRects: TreemapRect[] = [];
       areaTrueMs = measureMs(() => {
-        rawRects = new AreaTrueTreemapLayout({ ...baseCfg, margin: rawMargin, labelLength: rawLabel }).compute(loadedData);
+        areaLayout(areaTree);
+        areaTrueRects = flattenWrapped(areaTree, labelTopLevels);
       });
-      const root = rawRects[0];
-      const scale = root && root.width > 0 ? containerSize / root.width : 1;
-      areaTrueRects = rawRects.map((r) => ({
-        ...r,
-        x: (r.x - (root?.x ?? 0)) * scale,
-        y: (r.y - (root?.y ?? 0)) * scale,
-        width: r.width * scale,
-        height: r.height * scale,
-      }));
-      // The layout stores each node's *own* metric, so folders without an own
-      // value (e.g. flare) show 0. Aggregate bottom-up like the algorithm does
-      // internally (own value ?? sum of children) so hover/center values match
-      // the nested panel's hierarchy sums.
-      areaTrueRects = aggregateAreaTrueValues(areaTrueRects, areaMetric);
-      // Realized gap the area-true layout produces (≈ marginPercent % of the canvas).
-      realizedMarginPx = (rawMargin / MARGIN_DIVISOR) * scale;
-      // Root label strip thickness (its children start below it).
-      const d1 = rawRects.filter((r) => r.depth === 1 && r.width > 0 && r.height > 0);
-      if (root?.hasLabel && d1.length > 0) {
-        realizedLabelPx = (Math.min(...d1.map((r) => r.y)) - root.y) * scale;
-      }
+      // Measured on the layout output, so the nested panel can mirror the gap
+      // and label strip the area-true layout actually realized.
+      realizedMarginPx = outerInsetPx(areaTrueRects, labelTopLevels > 0);
+      realizedLabelPx = rootLabelStripPx(areaTrueRects, labelTopLevels > 0);
     }
 
     // --- 2) Nested treemap (d3) with the same realized margin/label ---
@@ -450,7 +465,7 @@
   function computeNestedD3(tree: TreeNode, opts: NestedD3Options): TreemapRect[] {
     const data = opts.collapseFolders ? collapseFolderChains(tree) : tree;
 
-    const root = hierarchy(data).sum((d) => (!d.children || d.children.length === 0 ? (d.attributes?.[opts.metric] ?? 0) : 0));
+    const root = d3Hierarchy(data).sum((d) => (!d.children || d.children.length === 0 ? (d.attributes?.[opts.metric] ?? 0) : 0));
 
     if (opts.sorting !== AreaTrueSortingOption.NONE) {
       // MIDDLE behaves like DESCENDING (same as the improved squarify comparator).
@@ -458,7 +473,7 @@
       root.sort((a, b) => dir * ((a.value ?? 0) - (b.value ?? 0)));
     }
 
-    const layout = treemap<TreeNode>()
+    const layout = d3Treemap<TreeNode>()
       .size([opts.size, opts.size])
       .round(false)
       .paddingOuter(opts.gapPx);
@@ -530,32 +545,49 @@
     return rects;
   }
 
-  /**
-   * The area-true layout reports each node's *own* metric value only, so
-   * folders without an own attribute show 0. Fill them bottom-up with the
-   * effective value the algorithm itself uses (own value ?? sum of children):
-   * `rects` are in pre-order (parent before its whole subtree), which lets us
-   * derive parents and aggregate in one pass.
-   */
-  function aggregateAreaTrueValues(rects: TreemapRect[], metric: string): TreemapRect[] {
-    const n = rects.length;
-    if (n === 0) return rects;
-    const parent = new Array<number>(n).fill(-1);
-    const stack: number[] = [];
-    for (let i = 0; i < n; i++) {
-      while (stack.length && rects[stack[stack.length - 1]].depth >= rects[i].depth) stack.pop();
-      if (stack.length) parent[i] = stack[stack.length - 1];
-      stack.push(i);
-    }
-    const childSums = new Array<number>(n).fill(0);
-    const result = rects.map((r) => ({ ...r }));
-    for (let i = n - 1; i >= 0; i--) {
-      const own = result[i].attributes?.[metric];
-      const effective = own !== undefined ? own : childSums[i];
-      result[i].value = effective;
-      if (parent[i] >= 0) childSums[parent[i]] += effective;
-    }
-    return result;
+  /** Flatten the wrapped hierarchy of the area-true layout into render rects. */
+  function flattenWrapped(root: HierarchyNode<TreeNode>, labelTopLevels: number): TreemapRect[] {
+    const rects: TreemapRect[] = [];
+    const walk = (n: HierarchyNode<TreeNode>): void => {
+      rects.push({
+        x: n.x0 ?? 0,
+        y: n.y0 ?? 0,
+        width: (n.x1 ?? 0) - (n.x0 ?? 0),
+        height: (n.y1 ?? 0) - (n.y0 ?? 0),
+        name: n.data.name,
+        depth: n.depth,
+        isLeaf: !n.children || n.children.length === 0,
+        hasLabel: labelTopLevels > 0 && !!n.children && n.children.length > 0 && n.depth < labelTopLevels,
+        value: n.value ?? 0,
+        attributes: n.data.attributes,
+      });
+      if (n.children) for (const c of n.children) walk(c);
+    };
+    walk(root);
+    return rects;
+  }
+
+  /** Realized outer gap of the area-true layout (root edge to its children). */
+  function outerInsetPx(rects: TreemapRect[], rootLabeled: boolean): number {
+    const root = rects[0];
+    const d1 = rects.filter((r) => r.depth === 1 && r.width > 0 && r.height > 0);
+    if (!root || d1.length === 0) return 0;
+    const candidates = [
+      Math.min(...d1.map((r) => r.x)) - root.x,
+      root.x + root.width - Math.max(...d1.map((r) => r.x + r.width)),
+      root.y + root.height - Math.max(...d1.map((r) => r.y + r.height)),
+    ];
+    if (!rootLabeled) candidates.push(Math.min(...d1.map((r) => r.y)) - root.y);
+    const positive = candidates.filter((v) => v > 1e-6);
+    return positive.length ? Math.min(...positive) : 0;
+  }
+
+  /** Thickness of the root label strip (its children start below it). */
+  function rootLabelStripPx(rects: TreemapRect[], rootLabeled: boolean): number {
+    const root = rects[0];
+    const d1 = rects.filter((r) => r.depth === 1 && r.width > 0 && r.height > 0);
+    if (!root || !rootLabeled || d1.length === 0) return 0;
+    return Math.max(0, Math.min(...d1.map((r) => r.y)) - root.y);
   }
 
   function fmt(v: number, digits = 2): string {
@@ -583,6 +615,17 @@
     return a > b ? 0 : 1;
   }
 
+  /** Parses a JSON string and adapts CodeCharta cc.json maps to the demo's
+   *  tree format, so both plain trees and raw cc.json files can be opened. */
+  function dataFromJson(text: string): { data: TreeNode; metric?: string } {
+    const parsed: unknown = JSON.parse(text);
+    if (isCodeChartaJson(parsed)) {
+      const data = ccJsonToTree(parsed);
+      return { data, metric: suggestAreaMetric(data) };
+    }
+    return { data: parsed as TreeNode };
+  }
+
   function handleFileUpload(e: Event) {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -590,7 +633,9 @@
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        loadedData = JSON.parse(event.target?.result as string) as TreeNode;
+        const { data, metric } = dataFromJson(event.target?.result as string);
+        loadedData = data;
+        if (metric) areaMetric = metric;
       } catch {
         alert(lang === 'de' ? 'Ungültige JSON-Datei' : 'Invalid JSON file');
       }
@@ -599,13 +644,40 @@
     input.value = '';
   }
 
-  function loadExample(e: Event) {
+  async function loadExample(e: Event) {
     const id = (e.currentTarget as HTMLSelectElement).value;
     const example = examples[id];
     if (!example) return;
     exampleId = id;
-    loadedData = example.data;
-    areaMetric = example.metric;
+
+    if (example.data) {
+      loadedData = example.data;
+      areaMetric = example.metric;
+      return;
+    }
+    if (!example.url) return;
+
+    const cached = exampleCache.get(example.url);
+    if (cached) {
+      loadedData = cached;
+      areaMetric = example.metric;
+      return;
+    }
+
+    loadingExample = true;
+    try {
+      const response = await fetch(example.url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      // A dropped cc.json also works: the JSON itself decides the format.
+      const { data, metric } = dataFromJson(await response.text());
+      exampleCache.set(example.url, data);
+      loadedData = data;
+      areaMetric = metric ?? example.metric;
+    } catch {
+      alert(lang === 'de' ? `cc.json konnte nicht geladen werden: ${example.url}` : `Could not load cc.json: ${example.url}`);
+    } finally {
+      loadingExample = false;
+    }
   }
 </script>
 
@@ -730,18 +802,25 @@
         <span class="lbl">&nbsp;</span>
         <label class="file">
           📁 {t.load}
-          <input type="file" accept=".json,application/json" on:change={handleFileUpload} hidden />
+          <input type="file" accept=".json,application/json,.cc.json" on:change={handleFileUpload} hidden />
         </label>
       </div>
 
       <div class="c" title={help('dataset')}>
         <span class="lbl">{t.dataPreset}</span>
-        <select value={exampleId} on:change={loadExample}>
+        <select value={exampleId} on:change={loadExample} disabled={loadingExample}>
           {#each exampleOrder as ex (ex.id)}
             <option value={ex.id}>{t[ex.labelKey]}</option>
           {/each}
         </select>
       </div>
+
+      {#if loadingExample}
+        <div class="c">
+          <span class="lbl">&nbsp;</span>
+          <span class="loading">{t.loading}</span>
+        </div>
+      {/if}
     </div>
   </header>
 
@@ -915,6 +994,13 @@
     background: var(--accent);
     border-color: var(--accent);
     color: #fff;
+  }
+
+  .loading {
+    color: var(--muted);
+    font-size: 12px;
+    padding: 5px 0;
+    white-space: nowrap;
   }
 
   .file:hover {

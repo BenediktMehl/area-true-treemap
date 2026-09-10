@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { TreemapRect } from 'area-true-treemap';
+  import type { TreemapRect } from '$lib/types';
   import { interpolateInferno } from 'd3-scale-chromatic';
 
   export let rects: TreemapRect[] = [];

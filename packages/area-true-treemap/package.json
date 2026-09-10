@@ -1,6 +1,6 @@
 {
   "name": "area-true-treemap",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Area-true squarified treemap layout with configurable gaps between nodes, without losing any node.",
   "keywords": [
     "treemap",
