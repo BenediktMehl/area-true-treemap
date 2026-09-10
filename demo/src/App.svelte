@@ -99,7 +99,7 @@
         'Der Abstand kostet die Karte, nicht den kleinsten Knoten — jeder Knoten behält seine proportionale Fläche, keiner fällt auf 0.',
       whyAtc: 'Labelstreifen, Abstand nur zwischen Blättern, Ordnerketten und gültige Layouts sind Teil des Layouts.',
       whyLive:
-        'Genau dieser Effekt steht unten in der Tabelle in der Zeile „Fehlende Knoten": Mit den Standardeinstellungen (1 % Abstand, Geschwisterabstand „Alle") verliert d3 auf flare 4 von 220 Blättern, dieses Layout 0; bei 3 % Abstand sind es 67 gegen 6. Beide Layouts bekommen dabei denselben realisierten Abstand.',
+        'Genau dieser Effekt steht oben in der Tabelle in der Zeile „Fehlende Knoten": Mit den Standardeinstellungen (1 % Abstand, Geschwisterabstand „Alle") verliert d3 auf flare 4 von 220 Blättern, dieses Layout 0; bei 3 % Abstand sind es 67 gegen 6. Beide Layouts bekommen dabei denselben realisierten Abstand.',
       whyMore: 'Wie der Algorithmus den Abstand bezahlt — und was er kostet',
       whyHow:
         'Drei Schritte: (1) reines Squarify ohne Abstand und Labels schätzt Lage und Größe jedes Knotens, (2) jeder Wert wird um die Fläche erhöht, die seine Ränder und sein Labelstreifen verbrauchen, (3) ein zweiter Durchlauf mit dem echten Abstand legt aus — die übrigen Rechtecke sind dadurch wieder proportional. Der Abstand ist ein Anteil der Kartenbreite (margin(0.02) = 2 %), dieselbe Einstellung stimmt also auf dem Thumbnail und auf 4K.',
@@ -188,7 +188,7 @@
         'The gap costs the map, not the smallest node — every node keeps its proportional area, none collapses to 0.',
       whyAtc: 'Label strips, gaps only between leaves, folder chains and valid layouts are part of the layout.',
       whyLive:
-        'That is exactly what the table below shows in the “Missing nodes” row: with the default settings (1 % gap, sibling margin “All”) d3 loses 4 of 220 leaves on flare, this layout 0; at a 3 % gap it is 67 vs. 6. Both layouts are given the same realized gap.',
+        'That is exactly what the table above shows in the “Missing nodes” row: with the default settings (1 % gap, sibling margin “All”) d3 loses 4 of 220 leaves on flare, this layout 0; at a 3 % gap it is 67 vs. 6. Both layouts are given the same realized gap.',
       whyMore: 'How the algorithm pays for the gap — and what it costs',
       whyHow:
         'Three steps: (1) a plain squarify without gap and labels estimates the position and size of every node, (2) every value grows by the area its margins and its label strip will consume, (3) a second pass with the real gap lays the tree out again — the remaining boxes are proportional again. The gap is a fraction of the map width (margin(0.02) = 2 %), so the same setting is right on a thumbnail and on a 4K screen.',
@@ -452,7 +452,7 @@
     });
 
     results = [
-      { key: 'area-true', title: t.areaTrue, subtitle: t.areaTrueSub, repoUrl: 'https://github.com/MaibornWolff/codecharta', rects: areaTrueRects, stats: computeStats(areaTrueRects, areaTrueMs, totalLeaves, containerSize) },
+      { key: 'area-true', title: t.areaTrue, subtitle: t.areaTrueSub, repoUrl: 'https://github.com/BenediktMehl/area-true-treemap', rects: areaTrueRects, stats: computeStats(areaTrueRects, areaTrueMs, totalLeaves, containerSize) },
       { key: 'nested', title: t.nested, subtitle: t.nestedSub, repoUrl: 'https://github.com/d3/d3-hierarchy', rects: nestedRects, stats: computeStats(nestedRects, nestedMs, totalLeaves, containerSize) },
     ];
   }
@@ -871,47 +871,6 @@
     </div>
   </header>
 
-  <section class="why">
-    <h2>{t.whyTitle}</h2>
-    <p class="why-lead">{t.whyLead}</p>
-
-    <div class="why-grid">
-      <div class="why-col">
-        <h3>{t.whyD3Head}</h3>
-        <ul>
-          <li>{t.whyD3a}</li>
-          <li>{t.whyD3b}</li>
-          <li>{t.whyD3c}</li>
-        </ul>
-      </div>
-      <div class="why-col at">
-        <h3>{t.whyAtHead}</h3>
-        <ul>
-          <li>{t.whyAta}</li>
-          <li>{t.whyAtb}</li>
-          <li>{t.whyAtc}</li>
-        </ul>
-      </div>
-    </div>
-
-    <p class="why-live">{t.whyLive}</p>
-
-    <details class="why-more">
-      <summary>{t.whyMore}</summary>
-      <p>{t.whyHow}</p>
-      <p>{t.whyCost}</p>
-      <p class="why-links">
-        <a href="https://github.com/BenediktMehl/area-true-treemap" target="_blank" rel="noopener">{t.whyRepo} ↗</a>
-        ·
-        <a
-          href="https://github.com/BenediktMehl/area-true-treemap/blob/main/docs/porting-from-d3-hierarchy.md"
-          target="_blank"
-          rel="noopener">{t.whyDocs} ↗</a
-        >
-      </p>
-    </details>
-  </section>
-
   <section class="metrics">
     <table>
       <thead>
@@ -948,6 +907,47 @@
         {/if}
       </div>
     {/each}
+  </section>
+
+  <section class="why">
+    <h2>{t.whyTitle}</h2>
+    <p class="why-lead">{t.whyLead}</p>
+
+    <div class="why-grid">
+      <div class="why-col at">
+        <h3>{t.whyAtHead}</h3>
+        <ul>
+          <li>{t.whyAta}</li>
+          <li>{t.whyAtb}</li>
+          <li>{t.whyAtc}</li>
+        </ul>
+      </div>
+      <div class="why-col">
+        <h3>{t.whyD3Head}</h3>
+        <ul>
+          <li>{t.whyD3a}</li>
+          <li>{t.whyD3b}</li>
+          <li>{t.whyD3c}</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="why-live">{t.whyLive}</p>
+
+    <details class="why-more">
+      <summary>{t.whyMore}</summary>
+      <p>{t.whyHow}</p>
+      <p>{t.whyCost}</p>
+      <p class="why-links">
+        <a href="https://github.com/BenediktMehl/area-true-treemap" target="_blank" rel="noopener">{t.whyRepo} ↗</a>
+        ·
+        <a
+          href="https://github.com/BenediktMehl/area-true-treemap/blob/main/docs/porting-from-d3-hierarchy.md"
+          target="_blank"
+          rel="noopener">{t.whyDocs} ↗</a
+        >
+      </p>
+    </details>
   </section>
 </main>
 

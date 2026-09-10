@@ -18,14 +18,14 @@ denselben sichtbaren Abstand; die Metriken darunter sind dadurch direkt vergleic
 
 Die Oberfläche gibt es auf **Deutsch und Englisch** (DE/EN-Schalter oben rechts).
 
-## Warum-Block über der Metriken-Tabelle
+## Warum-Block unter den Karten
 
-Oben auf der Seite steht ein kurzer Block **„Warum ein anderer Algorithmus als d3.js?"**: links die Mechanik des
-d3-Layouts (der Abstand wird aus jedem Rechteck herausgeschnitten, in Pixel), rechts die des Area-True-Layouts
-(der Abstand wird ins Layout eingerechnet und von den Knotenwerten bezahlt). Darunter steht, was das konkret
-bedeutet — mit Verweis auf die Zeile **Fehlende Knoten** der Metriken-Tabelle, in der man den Effekt live sieht
-— sowie aufklappbar die drei Schritte des Algorithmus, sein Preis (Rechenzeit, nur Squarify als Tiling) und
-Links zu README und Portierungsanleitung. Der Block ist wie die übrige Oberfläche zweisprachig (DE/EN).
+Ganz unten auf der Seite steht der Block **„Warum ein anderer Algorithmus als d3.js?"**: links das Area-True-Layout
+(der Abstand wird ins Layout eingerechnet und von den Knotenwerten bezahlt), rechts das d3-Layout (der Abstand wird
+aus jedem Rechteck herausgeschnitten, in Pixel). Darunter steht, was das konkret bedeutet — mit Verweis auf die
+Zeile **Fehlende Knoten** der Metriken-Tabelle oberhalb, in der man den Effekt live sieht — sowie aufklappbar die
+drei Schritte des Algorithmus, sein Preis (Rechenzeit, nur Squarify als Tiling) und Links zu README und
+Portierungsanleitung. Der Block ist wie die übrige Oberfläche zweisprachig (DE/EN).
 
 ## Metriken-Tabelle
 
