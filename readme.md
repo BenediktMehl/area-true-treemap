@@ -31,8 +31,12 @@ all, area-true-treemap only reaches that level at a gap of ~2 %.*
 <img src="./docs/img/value-proportionality-vs-d3.png" width="620" alt="Value proportionality over the realized gap — area-true-treemap vs. d3.js nested treemap">
 
 *How proportional a node's drawn area is to the value it represents (y, lower is better) over the realized gap
-(x), median across the thesis' 70 projects: roughly 2.5× better than d3 — the map stays area-true while it
+(x), median across the same 70 projects: roughly 2.5× better than d3 — the map stays area-true while it
 realizes its gap.*
+
+The exact numbers, all measured configurations and the derivations behind them are in the
+[master thesis](https://github.com/BenediktMehl/master-thesis) — this readme only summarises the result; both
+charts above are taken from it.
 
 ## What it costs
 
@@ -116,6 +120,3 @@ traversal helpers and iteration. The full option mapping: **[docs/porting-from-d
 | `simpleIncreaseValues(v)` | `false` | Absolute instead of relative size adjustment. |
 | `incrementMargin(v)` | `false` | Grow the gap across passes (>2 passes). |
 | `round(v)` | `false` | Round all coordinates to integers. |
-
-The exact numbers, all measured configurations and the derivations behind them are in the
-[master thesis](https://github.com/BenediktMehl/master-thesis) — this readme only summarises the result.
