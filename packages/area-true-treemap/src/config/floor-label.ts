@@ -1,6 +1,6 @@
 /**
- * Parameters for CodeCharta-style variable floor-label sizing, ported 1:1 from
- * CodeCharta's `treeMapGenerator.ts` (`getFloorLabelPadding`).
+ * Parameters for the variable (per-folder) floor-label sizing used by
+ * `getFloorLabelPadding`.
  */
 export interface FloorLabelConfig {
     /** Label strip scaling for the root folder (depth 0), as a fraction of its width. */
@@ -15,7 +15,7 @@ export interface FloorLabelConfig {
     maxFraction: number;
 }
 
-/** CodeCharta's default floor-label sizing (root 3.5% / sub 2.8%, min 120/95, capped at 15%). */
+/** Default floor-label sizing (root 3.5% / sub 2.8%, min 120/95, capped at 15%). */
 export const DEFAULT_FLOOR_LABEL_CONFIG: FloorLabelConfig = {
     rootScaling: 0.035,
     subScaling: 0.028,
@@ -25,8 +25,8 @@ export const DEFAULT_FLOOR_LABEL_CONFIG: FloorLabelConfig = {
 };
 
 /**
- * Variable per-folder label size, ported 1:1 from CodeCharta's
- * `getFloorLabelPadding(folderWidth, depth)`: proportional to the folder's own
+ * Variable per-folder label size, `getFloorLabelPadding(folderWidth, depth)`:
+ * proportional to the folder's own
  * width, clamped to a depth-dependent minimum, and never larger than a fixed
  * fraction of the folder. This is what lets differently sized folders reserve
  * differently sized label strips instead of one global label height.

@@ -1,13 +1,13 @@
 /**
- * Faithful port of the CodeCharta `squarifyLayoutImproved` squarify
- * (`squarify.ts`, branch `thesis/improve-treemap-algorithm`).
+ * The squarify algorithm with the improvements described in the master thesis
+ * "Vergleich und Optimierung von 3D-Visualisierungen für die Darstellung von
+ * Software-Qualitätsmetriken".
  *
- * Two adaptations were applied on top of the 1:1 port:
+ * Two adaptations are layered on top of the plain algorithm:
  *   1. the floor-label size (`labelLength`) also accepts a per-node function;
  *   2. the floor-label size *replaces* the margin on the label side instead of
  *      being added on top of it.
  *
- * Everything else is byte-for-byte identical to CodeCharta.
  */
 
 /** Default target aspect ratio used by the squarify worst-ratio heuristic. */

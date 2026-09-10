@@ -79,7 +79,7 @@ predictability. It is just the wrong trade-off when the gap is a first-class des
 
 The library implements the **improved squarify algorithm** from the master thesis
 [*Vergleich und Optimierung von 3D-Visualisierungen für die Darstellung von Software-Qualitätsmetriken*](https://github.com/BenediktMehl/master-thesis)
-(a faithful port of CodeCharta's `squarifyLayoutImproved`). Instead of insetting rectangles, it takes the gap
+(a faithful implementation of the algorithm evaluated there). Instead of insetting rectangles, it takes the gap
 into account while the layout is computed, in two passes:
 
 1. **Pass 1** runs a plain squarify without gaps or labels. This estimates where every node would sit and how
@@ -98,7 +98,7 @@ Two details worth knowing:
 - `margin` and `labelLength` are **fractions of the requested width**, not pixel values. `.margin(0.02)` means
   "2 % of `size()[0]`" and therefore behaves identically at every canvas size (the layout is scale-invariant:
   the median aspect ratio is the same for 400×400 and 1000×1000, only the px gap changes).
-- `scale(true)` (the default, CodeCharta's "Apply Scaling") rescales the children onto the actually available
+- `scale(true)` (the default) rescales the children onto the actually available
   parent area in the final pass, which is what keeps the layout valid - without it nodes can overflow their
   parent. d3 has no equivalent switch because it never inflates values.
 
@@ -157,8 +157,8 @@ label into the folder rectangle and hope it fits. Here the strip is part of the 
 + .labelLength(0.03)       // strip thickness: 3 % of the map width
 ```
 
-`labelLength()` also accepts a function `(node) => thickness` in layout units, which is how CodeCharta's
-variable per-folder sizing is reproduced:
+`labelLength()` also accepts a function `(node) => thickness` in layout units, which is how the variable
+per-folder sizing is reproduced:
 
 ```ts
 import { getFloorLabelPadding, DEFAULT_FLOOR_LABEL_CONFIG } from "area-true-treemap";
@@ -231,7 +231,7 @@ for (const node of root.descendants()) {
 | - | `.numberOfPasses(n)` | 1 = plain squarify baseline, 2 = area-true (default), >2 = iterative refinement (not recommended by the thesis). |
 | - | `.collapseFolders(true)` | Merges single-child folder chains; the folded ancestors share the rectangle. |
 | - | `.order(OrderOption.*)` | How rows are re-placed across passes: `NEW_ORDER` (default), `KEEP_ORDER`, `KEEP_PLACE`. |
-| - | `.scale(true)` | CodeCharta "Apply Scaling"; rescales children onto the available parent area in the final pass. |
+| - | `.scale(true)` | Rescales children onto the available parent area in the final pass. |
 | - | `.simpleIncreaseValues(false)` | Absolute instead of relative value growth between passes. |
 | - | `.incrementMargin(false)` | Grow the gap across multiple passes (>2 passes). |
 
@@ -298,7 +298,7 @@ the padding.
 The demo needs roughly 80 lines of glue to fake these features for the d3 panel; with this library they are
 one setter each:
 
-- **Floor labels** incl. CodeCharta's variable per-folder sizing (`floorLabels`, `labelLength`).
+- **Floor labels** incl. variable per-folder sizing (`floorLabels`, `labelLength`).
 - **Gap only between files**, keeping folders seamless (`siblingMarginLeavesOnly`).
 - **Collapsing single-child folder chains** (`collapseFolders`), which was the thesis' single biggest win for
   node visibility.
@@ -327,7 +327,7 @@ one setter each:
   recommends *no* sibling gaps and outlines instead; if you need them, prefer
   `siblingMarginLeavesOnly(true)` or margins `≤ 1 %`.
   Heads-up: the library constructor defaults are `margin(0.02)` **with** `applySiblingMargin(true)` (the
-  CodeCharta-compatible default). On a 625-leaf map that default costs ~84 extra invisible leaves compared
+  library default). On a 625-leaf map that default costs ~84 extra invisible leaves compared
   to the same 2 % gap with sibling gaps switched off (257 vs. 173 missing leaves).
 - **Very large maps at a small canvas.** If a leaf's value share is below one pixel, no algorithm can show it.
   At 1000×1000 both libraries lose about the same number of leaves on `junit4` (163 vs. 163 at 1 % gap), which

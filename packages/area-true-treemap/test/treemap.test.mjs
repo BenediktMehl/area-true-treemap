@@ -250,7 +250,7 @@ test("builder validation rejects invalid values", () => {
   assert.throws(() => treemap().numberOfPasses(0), /numberOfPasses/);
   assert.throws(() => treemap().floorLabels(-1), /floorLabels/);
 });
-test("advanced CodeCharta options are exposed and produce finite layouts", () => {
+test("advanced layout options are exposed and produce finite layouts", () => {
   const root = treemap()
     .size([1000, 1000])
     .numberOfPasses(3)
@@ -266,7 +266,7 @@ test("advanced CodeCharta options are exposed and produce finite layouts", () =>
   }
 });
 
-test("scale(false) reproduces CodeCharta invalid layouts (overflow) and scale(true) keeps them valid", () => {
+test("scale(false) allows invalid layouts (overflow) and scale(true) keeps them valid", () => {
   const withScale = treemap().size([1000, 1000]).margin(0.02).numberOfPasses(2).scale(true)(wrap());
   assertValid(withScale, 1000, 1000);
 });

@@ -13,7 +13,7 @@
   import type { TreeNode, TreemapRect } from '$lib/types';
   import sample from '$lib/data/sample.json';
   import flare from '$lib/data/flare.json';
-  import { ccJsonToTree, isCodeChartaJson, suggestAreaMetric } from '$lib/codecharta';
+  import { ccJsonToTree, isCcJson, suggestAreaMetric } from '$lib/ccjson';
 
   type Lang = 'de' | 'en';
   let lang: Lang = 'de';
@@ -80,7 +80,7 @@
         'Platznutzung (Vergleichbarkeit): Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Es gibt kein Besser/Schlechter – wichtig ist nur, dass beide Werte ähnlich sind, damit die beiden Outputs überhaupt verglichen werden können. Hinweis: Ein niedrigerer Wert bedeutet, dass mehr Platz für Ränder, Abstände usw. verbraucht wird – die unten stehenden Werte sind dadurch potentiell schlechter.',
       hTime: 'Zeitaufwand (These): Reine Berechnungszeit des Layout-Algorithmus in ms (ohne Rendering). Bester Wert: möglichst niedrig.',
       areaTrue: 'Area-True Treemap',
-      areaTrueSub: 'CodeCharta improved algorithm',
+      areaTrueSub: 'area true algorithm',
       nested: 'Nested Treemap',
       nestedSub: 'd3.js nested treemap',
       empty: 'Keine Daten.',
@@ -171,7 +171,7 @@
         'Space utilization (comparability): fraction of the root area occupied by leaf nodes. There is no better or worse — what matters is only that both values are similar, so the two outputs can be compared at all. Note: a lower value means that more space is consumed by margins, paddings etc., so the values below are potentially worse.',
       hTime: 'Time (thesis): pure layout computation time in ms (without rendering). Best value: as low as possible.',
       areaTrue: 'Area-True Treemap',
-      areaTrueSub: 'CodeCharta improved algorithm',
+      areaTrueSub: 'area true algorithm',
       nested: 'Nested Treemap',
       nestedSub: 'd3.js nested treemap',
       empty: 'No data.',
@@ -229,16 +229,16 @@
       en: 'L = relative length of the reserved label strip (% of the root side length). Larger L → larger text, but less leaf area and more potentially missing nodes. Thesis: L = 3–10 %, final comparison ≈ 4 %. Affects: both algorithms.',
     },
     variableLabel: {
-      de: 'Berechnet die Beschriftungshöhe je Ordner aus dessen eigener Breite (an CodeCharta angelehnt) statt mit fester Länge L. Wirkt auf: nur den Area-True-Treemap-Algorithmus (die Nested-Karte übernimmt nur den an der Wurzel gemessenen Wert als Näherung).',
-      en: 'Computes the label height per folder from its own width (CodeCharta-style) instead of a fixed length L. Affects: only the Area-True Treemap algorithm (the nested map only mirrors the root-measured value as an approximation).',
+      de: 'Berechnet die Beschriftungshöhe je Ordner aus dessen eigener Breite (variabel je Ordner) statt mit fester Länge L. Wirkt auf: nur den Area-True-Treemap-Algorithmus (die Nested-Karte übernimmt nur den an der Wurzel gemessenen Wert als Näherung).',
+      en: 'Computes the label height per folder from its own width (variable per folder) instead of a fixed length L. Affects: only the Area-True Treemap algorithm (the nested map only mirrors the root-measured value as an approximation).',
     },
     passes: {
       de: 'Anzahl der Layout-Durchläufe. 1 = nur Standard-Squarify, Margin/Beschriftungen bleiben wirkungslos. 2 = Größenanpassung + zweiter Layoutschritt (empfohlen). Mehrfache Berechnung (>2) wird in der Thesis nicht empfohlen. Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
       en: 'Number of layout passes. 1 = plain squarify, margin/labels have no effect. 2 = size adjustment + second layout step (recommended). Multiple computation (>2) is not recommended in the thesis. Affects: only the Area-True Treemap algorithm.',
     },
     scale: {
-      de: 'Skaliert im zweiten Layoutschritt die Kindknoten auf die tatsächlich verfügbare Elternfläche (CodeCharta „Apply Scaling"). Verhindert, dass Knoten die Elternfläche überragen (valide Layouts). Empfohlen: an. Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
-      en: 'In the second layout step, scales the children onto the actually available parent area (CodeCharta "Apply Scaling"). Prevents nodes from overflowing their parent (valid layouts). Recommended: on. Affects: only the Area-True Treemap algorithm.',
+      de: 'Skaliert im zweiten Layoutschritt die Kindknoten auf die tatsächlich verfügbare Elternfläche (Skalierung auf die Elternfläche). Verhindert, dass Knoten die Elternfläche überragen (valide Layouts). Empfohlen: an. Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
+      en: 'In the second layout step, scales the children onto the actually available parent area (scaling onto the parent area). Prevents nodes from overflowing their parent (valid layouts). Recommended: on. Affects: only the Area-True Treemap algorithm.',
     },
     simpleIncrease: {
       de: 'Wahl der Größenanpassung zwischen den beiden Layoutschritten: an = absolute, aus = relative Größenanpassung. Die Thesis bevorzugt die relative (aus): weniger fehlende Knoten; die absolute ist bei der Wertproportionalität minimal besser. Empfohlen: aus. Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
@@ -281,7 +281,7 @@
   // Example datasets, selectable in the header.
   //
   // Two flavours: datasets that are small enough to be bundled directly
-  // (`data`, imported above) and raw CodeCharta cc.json maps that are served
+  // (`data`, imported above) and raw cc.json maps that are served
   // from `public/data/ccjson/` and fetched on demand (`url`) — the latter keeps
   // the big real-world maps (up to ~25 MB) out of the JavaScript bundle.
   interface ExampleDef {
@@ -316,7 +316,7 @@
   const exampleCache = new Map<string, TreeNode>();
   let loadingExample = false;
 
-  // Algorithm settings (CodeCharta improved squarify / "Improved Squarifying").
+  // Algorithm settings (area-true squarify).
   // Defaults follow the recommendation table of the master thesis (Fazit of
   // the improve-squarify chapter): relative size adjustment, gap 0.5–3 %
   // (chosen 1 %), floor labels N = 3 / L = 3 % on the top levels (recommended
@@ -391,7 +391,7 @@
   $: {
     const totalLeaves = countLeaves(loadedData);
 
-    // --- 1) Area-True Treemap (CodeCharta improved squarify, d3-style API) ---
+    // --- 1) Area-True Treemap (area-true squarify, d3-style API) ---
     // The layout is configured like d3-hierarchy: wrap the tree, sum the leaf
     // metrics, then call the configured layout function on the wrapped root.
     // It mutates the wrapped nodes in place, so every wrapped node carries its
@@ -664,11 +664,11 @@
     return a > b ? 0 : 1;
   }
 
-  /** Parses a JSON string and adapts CodeCharta cc.json maps to the demo's
+  /** Parses a JSON string and adapts cc.json maps to the demo's
    *  tree format, so both plain trees and raw cc.json files can be opened. */
   function dataFromJson(text: string): { data: TreeNode; metric?: string } {
     const parsed: unknown = JSON.parse(text);
-    if (isCodeChartaJson(parsed)) {
+    if (isCcJson(parsed)) {
       const data = ccJsonToTree(parsed);
       return { data, metric: suggestAreaMetric(data) };
     }

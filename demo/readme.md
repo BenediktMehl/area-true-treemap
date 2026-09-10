@@ -83,7 +83,7 @@ Alle Änderungen werden live angewendet. Die folgenden Einstellungen wirken auf 
   Thesis: N = 2–5 praktikabel.
 - **Label-Länge** (0–20 %) — Höhe des Labelstreifens relativ zur Kartenbreite; größere Werte = größere Schrift,
   aber weniger Blattfläche.
-- **Variable Label-Größe** — berechnet die Labelhöhe je Ordner aus dessen eigener Breite (CodeCharta-Formel
+- **Variable Label-Größe** — berechnet die Labelhöhe je Ordner aus dessen eigener Breite (Formel
   `getFloorLabelPadding`) statt mit fester Länge. Wirkt nur auf das Area-True-Layout; das d3-Panel übernimmt
   den an der Wurzel gemessenen Wert als Näherung.
 - **Geschwisterabstand** — *Keine* / *Alle* / *Nur Blätter*: trennt zusätzlich Geschwisterknoten (alle oder nur
@@ -100,7 +100,7 @@ Nur auf das Area-True-Layout wirken (d3 kennt keine Entsprechung):
 - **Durchläufe** — 1 = reines Squarify (Margin und Labels bleiben wirkungslos), 2 = Areal-Treue mit
   Größenanpassung (empfohlen), > 2 = mehrfache Berechnung (von der Thesis nicht empfohlen).
 - **Skalieren** — skaliert im zweiten Schritt die Kinder auf die tatsächlich verfügbare Elternfläche
-  (CodeCharta „Apply Scaling"), verhindert Überläufe. Empfohlen: an.
+  (Skalierung auf die verfügbare Elternfläche), verhindert Überläufe. Empfohlen: an.
 - **Einfache Werterhöhung** — absolute statt relative Größenanpassung zwischen den Durchläufen. Thesis bevorzugt
   relative (aus); absolut ist bei der Wertproportionalität minimal besser.
 - **Reihenfolge** — *neu* (nach der Größenanpassung neu absteigend sortieren, Thesis-Empfehlung),
@@ -138,28 +138,27 @@ Im Kopf der Seite lassen sich verschiedene Karten auswählen:
 
 - **flare** — d3-Datensatz aus der Masterthesis (direkt mitgeliefert).
 - **kleines Beispiel** — kleiner synthetischer Baum.
-- **CodeCharta-Maps** — echte Open-Source-Projekte aus dem
-  [CodeCharta-Showcase](https://github.com/MaibornWolff/codecharta): *JUnit 4*, *JUnit 5*,
+- **cc.json-Maps** — echte Open-Source-Projekte (*JUnit 4*, *JUnit 5*,
   *httpd*, *Apache OpenOffice* und *NetBeans*. Die Dateien liegen unverändert als
   `.cc.json` unter `demo/public/data/ccjson/` und werden erst beim Auswählen geladen
   (nicht ins JavaScript-Bundle gepackt), damit die Demo auch mit den großen Maps
   (Apache OpenOffice ~24 MB, NetBeans ~17 MB) klein bleibt. Einmal geladene Maps bleiben im Speicher, das
   Umschalten zurück ist also sofort.
 
-Beim Laden erkennt die Demo das CodeCharta-Format automatisch und wandelt es intern in denselben Baum um, den
-auch `flare`/`sample` nutzen — inklusive der Metrik-Auswahl (Standard bei CodeCharta-Maps: `rloc`). Über das
+Beim Laden erkennt die Demo das cc.json-Format automatisch und wandelt es intern in denselben Baum um, den
+auch `flare`/`sample` nutzen — inklusive der Metrik-Auswahl (Standard bei cc.json-Maps: `rloc`). Über das
 Feld **Metrik** lässt sich jede andere Metrik der Map verwenden (z. B. `mcc`, `functions`, `loc`,
 `empty_lines`).
 
 Dasselbe gilt für das **Hochladen eigener Dateien**: sowohl einfache JSON-Bäume als auch rohe
-`.cc.json`-Dateien (CodeCharta-Exporte der Versionen 1.x und 2.0) können direkt geöffnet werden.
+`.cc.json`-Dateien (Versionen 1.x und 2.0) können direkt geöffnet werden.
 
 Hinweis: Apache OpenOffice und NetBeans sind sehr groß; das Layout wird bei jeder Parameteränderung neu
 berechnet. Für flüssiges Arbeiten sind JUnit 4/5 oder httpd die besseren Beispiele.
 
 ## Benchmark ohne Browser
 
-Dieselbe Gegenüberstellung gibt es als Skript (flare, CodeCharta-Maps, beliebige Größe) mit Markdown-Tabellen
+Dieselbe Gegenüberstellung gibt es als Skript (flare, cc.json-Maps, beliebige Größe) mit Markdown-Tabellen
 für alle Kennzahlen:
 
 ```bash

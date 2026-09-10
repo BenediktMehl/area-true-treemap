@@ -1,13 +1,12 @@
 /**
- * A fluent, d3-hierarchy-compatible treemap layout based on the CodeCharta
- * improved squarify algorithm.
+ * A fluent, d3-hierarchy-compatible treemap layout implementing the area-true
+ * squarify algorithm.
  *
  * This is the drop-in entry point for consumers that already integrate a
- * treemap via `d3-hierarchy` (e.g. CodeCharta). It mirrors that integration
- * shape:
+ * treemap via `d3-hierarchy`. It mirrors that integration shape:
  *
  * ```ts
- * const layout = treemap<CodeMapNode>()
+ * const layout = treemap<MyMapNode>()
  *     .size([width, height])
  *     .margin(0.02)                  // gap as a fraction of the map size
  *     .numberOfPasses(2)             // area-true two-pass layout
@@ -83,15 +82,16 @@ export interface Treemap<T> {
     /**
      * Floor-label strip size. A number is interpreted as a fraction (0..1) of
      * the map size. A function is evaluated per folder during layout and
-     * returns the strip size in the units of `size()` (like CodeCharta's
-     * `paddingRight(node => ...)` - see `getFloorLabelPadding`).
+     * returns the strip size in the units of `size()` (see
+     * `getFloorLabelPadding` for the per-folder formula).
      */
     labelLength(value: number | LabelSizeResolver): this;
 
     /**
-     * CodeCharta's "Apply Scaling": in the final pass the children are scaled
+     * Scaling onto the parent area: in the final pass the children are scaled
      * onto the actually available parent area. Keeps layouts valid (default
-     * true); turning it off reproduces CodeCharta's invalid-layout comparison.
+     * true); turning it off lets children overflow their parent, which is what
+     * the invalid-layout comparison in the thesis shows.
      */
     scale(value: boolean): this;
 

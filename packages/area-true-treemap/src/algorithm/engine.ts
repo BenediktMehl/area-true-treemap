@@ -1,10 +1,8 @@
 /**
- * Internal layout engine for the CodeCharta improved squarify algorithm.
+ * Internal layout engine for the area-true squarify algorithm.
  *
  * This module runs the multi-pass "area-true" layout on an already built
- * {@link SquarifyNode} tree (in place). The pass logic is a 1:1 port of
- * CodeCharta's `squarifyLayoutImproved` (`startAlgo.ts`, branch
- * `thesis/improve-treemap-algorithm`); the tree construction and the
+ * {@link SquarifyNode} tree (in place); the tree construction and the
  * write-back of the coordinates are handled by the callers (plain-tree
  * converter or the d3-style `treemap()` wrapper).
  */
@@ -17,7 +15,7 @@ import {
     type SortingOption,
 } from "./squarify";
 
-/** Options controlling the layout passes (mirrors the CodeCharta settings). */
+/** Options controlling the layout passes (the evaluated setting combinations). */
 export interface EngineOptions {
     /** Raw margin in layout units. */
     margin: number;

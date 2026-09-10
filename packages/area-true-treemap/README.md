@@ -9,17 +9,16 @@ from the master thesis
 
 It exposes a **d3-hierarchy-compatible API** (`hierarchy()` + `treemap()`): the layout is a callable function
 that you configure with chained setters — exactly like `d3.treemap()` — so it can be dropped into consumers
-that already integrate a treemap through d3 (e.g. CodeCharta). The layout itself is a faithful 1:1 port of
-CodeCharta's `squarifyLayoutImproved` (branch `thesis/improve-treemap-algorithm`) with real margins applied
-**during** the layout: the node values are grown so the requested gap fits, instead of insetting every
-rectangle afterwards. That is why gaps do not make nodes collapse to zero area the way d3's `padding` does.
+that already integrate a treemap through d3. The layout applies its margins **during** the layout: the node
+values are grown so the requested gap fits, instead of insetting every rectangle afterwards. That is why gaps
+do not make nodes collapse to zero area the way d3's `padding` does.
 
-Three additive adaptations on top of the 1:1 port:
+Three additive details on top of the algorithm:
 
-1. The floor-label size can be a per-node function (CodeCharta's `paddingRight(node => ...)` style).
+1. The floor-label size can be a per-node function.
 2. The floor-label strip **replaces** the margin on the label side instead of being added on top of it.
-3. Folder nodes without an own metric aggregate bottom-up (equivalent to CodeCharta's
-   `translateAttributesToTop` preprocessing).
+3. Folder nodes without an own metric aggregate bottom-up, so a folder without a value still gets the sum of
+   its children.
 
 ## Features
 
@@ -29,9 +28,9 @@ Three additive adaptations on top of the 1:1 port:
 - **Multi-pass squarify**: 1 pass = plain squarify baseline, 2+ passes = the area-true layout in which margins
   and floor labels take effect.
 - **Margins between nodes** — between all siblings, only between leaves, or off.
-- **Floor labels** on the top N folder levels, fixed-size or CodeCharta-style variable per-folder sizing.
+- **Floor labels** on the top N folder levels, fixed-size or variable per-folder sizing.
 - Configurable **sorting** (none / ascending / descending / middle) and **row order across passes**.
-- CodeCharta options **scale**, **simple increase values** and **increment margin** as chainable setters.
+- The options **scale**, **simple increase values** and **increment margin** as chainable setters.
 - Collapsing of single-child folder chains, optional integer rounding.
 - Zero runtime dependencies, tree-shakeable, ships ESM + CJS + TypeScript types.
 
@@ -152,7 +151,7 @@ const root = hierarchy(myNode, (node) => node.kids).sum((node) => node.metric ??
 | `sorting(option)` | `SortingOption` | `DESCENDING` | `NONE`, `ASCENDING`, `DESCENDING`, `MIDDLE`. |
 | `order(option)` | `OrderOption` | `NEW_ORDER` | `NEW_ORDER`, `KEEP_ORDER`, `KEEP_PLACE`. |
 | `collapseFolders(value)` | `boolean` | `false` | Merge single-child folder chains (folded nodes share a rectangle). |
-| `scale(value)` | `boolean` | `true` | CodeCharta "Apply Scaling": rescale children onto the available parent area in the final pass. |
+| `scale(value)` | `boolean` | `true` | Rescale children onto the available parent area in the final pass. |
 | `simpleIncreaseValues(value)` | `boolean` | `false` | Simpler absolute size adjustment between the passes. |
 | `incrementMargin(value)` | `boolean` | `false` | Increase the margin gradually across passes (>2 passes). |
 | `round(value)` | `boolean` | `false` | Round all coordinates to integers. |
@@ -178,12 +177,12 @@ All setters validate their input and throw on invalid values.
   its rectangle, its children start below the strip. A number is a fraction of the map width, a function is
   evaluated per folder in `size()` units.
 - **collapseFolders** — merging single-child folder chains was the biggest single win for node visibility in
-  the thesis evaluation; off by default for compatibility with the raw port.
+  the thesis evaluation; off by default for backwards compatibility.
 - **scale** — rescaling the children in the final pass keeps layouts valid (nodes stay inside their parent).
-  Turning it off reproduces CodeCharta's invalid-layout comparison.
+  Turning it off reproduces the invalid layouts (children overflowing their parent) that the thesis compares against.
 - **sorting / order** — sibling order and how rows are placed in the later passes.
 
-### Variable floor labels (CodeCharta style)
+### Variable floor labels
 
 ```ts
 import { treemap, getFloorLabelPadding, DEFAULT_FLOOR_LABEL_CONFIG } from "area-true-treemap";
@@ -219,7 +218,7 @@ Exported symbols: `hierarchy`, `treemap`, `HierarchyNode`, `HierarchyLink`, `Hie
 ## Live demo
 
 An interactive demo compares this layout against a **d3.js Nested Treemap** on the real-world flare dataset and
-on five real CodeCharta maps, using the evaluation metrics defined in the thesis (node visibility, value
+on five real-world maps, using the evaluation metrics defined in the thesis (node visibility, value
 proportionality, aspect ratio, space utilization, and computation time). Both panels get the same settings, and
 the d3 panel is handed the gap/label strip the area-true layout actually realized:
 

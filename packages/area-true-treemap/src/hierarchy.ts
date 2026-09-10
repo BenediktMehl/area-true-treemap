@@ -6,8 +6,8 @@
  * `descendants`, ...) and value/coordinate fields that a treemap layout needs.
  *
  * This makes `area-true-treemap` a near drop-in replacement for
- * `d3-hierarchy` in consumers such as CodeCharta: the consumer passes its
- * own node type unchanged (e.g. `CodeMapNode`), sets an area accessor via
+ * `d3-hierarchy`: the consumer passes its own node type unchanged
+ * (e.g. `MyMapNode`), sets an area accessor via
  * `.sum()`, runs the layout, and reads `x0/x1/y0/y1` off the very same tree it
  * passed in - the original data stays untouched on `.data`.
  */
@@ -236,8 +236,7 @@ const defaultChildrenAccessor = <T>(node: T): T[] | undefined => (node as { chil
  * Wrap `data` (and its `children` tree) in a {@link HierarchyNode}.
  *
  * The `children` accessor defaults to reading a `children` property off each
- * node, so plain `{ children: [...] }` trees - including CodeCharta's
- * `CodeMapNode` - work without any adaptation.
+ * node, so plain `{ children: [...] }` trees work without any adaptation.
  */
 export function hierarchy<T>(data: T, children: HierarchyChildrenAccessor<T> = defaultChildrenAccessor): HierarchyNode<T> {
     return buildHierarchy(data, null, 0, children);

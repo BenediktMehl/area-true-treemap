@@ -31,7 +31,7 @@ const METRIC = arg("metric", "size");
 // ---------------------------------------------------------------- data
 const raw = JSON.parse(readFileSync(DATA, "utf8"));
 
-/** Convert a CodeCharta cc.json (v1.x / v2.0) into { name, children, attributes }. */
+/** Convert a cc.json map (v1.x / v2.0) into { name, children, attributes }. */
 function ccJsonToTree(json) {
   if (!Array.isArray(json.nodes) && !Array.isArray(json.files)) return json;
   const attributesById = new Map(Object.entries(json.lenses?.metrics?.attributes ?? {}));

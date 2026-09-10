@@ -1,9 +1,9 @@
 /**
- * Generic loader for CodeCharta cc.json maps.
+ * Generic loader for cc.json maps.
  *
  * The demo's internal tree format is { name, children, attributes } where a
  * node's area is read from `attributes[areaMetric]` (default metric "size").
- * A CodeCharta cc.json export wraps the same idea in its own schema:
+ * A cc.json export wraps the same idea in its own schema:
  *
  *  - v1.x:  { projectName, nodes: [ root ], edges, ... } where every node is
  *           { name, type: "Folder"|"File", attributes: { rloc, mcc, ... }, children }
@@ -28,9 +28,9 @@ interface CcNode {
   children?: CcNode[];
 }
 
-/** True if the parsed JSON is a CodeCharta cc.json (v1.x or v2.0) instead of a
+/** True if the parsed JSON is a cc.json map (v1.x or v2.0) instead of a
  *  plain { name, children, attributes } tree. */
-export function isCodeChartaJson(value: unknown): boolean {
+export function isCcJson(value: unknown): boolean {
   if (!value || typeof value !== 'object') return false;
   const v = value as Record<string, unknown>;
   if (Array.isArray(v.nodes)) return true;
@@ -64,7 +64,7 @@ function convertNode(
 /** Convert a parsed cc.json export into the demo TreeNode format. Falls back to
  *  returning the input untouched when it is not a cc.json. */
 export function ccJsonToTree(json: unknown): TreeNode {
-  if (!isCodeChartaJson(json)) return json as TreeNode;
+  if (!isCcJson(json)) return json as TreeNode;
   const v = json as Record<string, unknown>;
 
   let roots: CcNode[] = [];
@@ -99,9 +99,9 @@ export function treeHasMetric(tree: TreeNode, metric: string): boolean {
   return visit(tree);
 }
 
-/** Picks the area metric for a freshly loaded cc.json: CodeCharta's canonical
- *  default is `rloc`, so it wins whenever the map carries it at all; otherwise
- *  the first metric found on any node is used. */
+/** Picks the area metric for a freshly loaded cc.json: `rloc` is the canonical
+ *  default, so it wins whenever the map carries it at all; otherwise the first
+ *  metric found on any node is used. */
 export function suggestAreaMetric(tree: TreeNode): string {
   const seen = new Set<string>();
   let first: string | undefined;
