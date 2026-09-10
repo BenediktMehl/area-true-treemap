@@ -272,8 +272,9 @@
   // Defaults follow the recommendation table of the master thesis (Fazit of
   // the improve-squarify chapter): relative size adjustment, gap 0.5–3 %
   // (chosen 1 %), floor labels N = 3 / L = 3 % on the top levels (recommended
-  // N 2–5, L 3–10 %), sorting descending, collapse folder chains, no sibling
-  // margins, two passes only.
+  // N 2–5, L 3–10 %), sorting descending, collapse folder chains, two passes
+  // only. Sibling margins default to "all" (the thesis recommends none, but the
+  // UI starts with the gap realized between all siblings).
   let areaMetric = 'size';
   let marginPercent = 1;
   let enableFloorLabels = true;
@@ -285,7 +286,7 @@
   let simpleIncreaseValues = false;
   let orderOption: OrderOption = OrderOption.NEW_ORDER;
   let incrementMargin = false;
-  let siblingMode: 'none' | 'all' | 'leaves' = 'none';
+  let siblingMode: 'none' | 'all' | 'leaves' = 'all';
   let collapseFolders = true;
   let sorting: AreaTrueSortingOption = AreaTrueSortingOption.DESCENDING;
 
