@@ -43,9 +43,11 @@ hervorgehoben.
 
 Die Farbgebung nutzt die d3.js-„Lava"-Skala (`interpolateInferno` aus `d3-scale-chromatic`), nach Tiefe
 abgestuft; sehr kleine Rechtecke (< 6 px) werden nicht gezeichnet. Beschriftet wird nur, wo das Layout auch
-Platz reserviert hat: ein Ordnername steht in dem für ihn reservierten Labelstreifen (`hasLabel`), die Schrift
-wird an dessen Höhe angepasst (7–12 px) und auf die Ordnerbreite gekürzt (Auslassungspunkte + Clipping), damit
-sich Namen nicht überlappen oder aus ihrem Rechteck laufen. Werte stehen nur in Blattknoten und nur, wenn die
+Platz reserviert hat: jeder Ordner mit Labelstreifen (`hasLabel`) bekommt seinen Namen genau in diesen Streifen.
+Die Schrift folgt der Streifenhöhe (bis 12 px, bei schmalen Streifen kleiner; unter ~4,5 px bleibt der Ordner
+unbeschriftet), wird über die echten Glyphenmaße mittig in den Streifen gesetzt, auf die Ordnerbreite gekürzt
+(Auslassungspunkte) und zusätzlich auf den Streifen geclippt, damit sich Namen nicht überlappen oder aus ihrem
+Rechteck laufen. Werte stehen nur in Blattknoten und nur, wenn die
 Zahl allein in das Rechteck passt.
 
 ## Starten
