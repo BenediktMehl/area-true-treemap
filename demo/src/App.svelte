@@ -20,9 +20,28 @@
 
   const translations: Record<Lang, Record<string, string>> = {
     de: {
-      title: 'Treemap Vergleich',
-      subtitle: 'Area-True Treemap vs. Nested Treemap',
-      thesis: 'zur Masterthesis',
+      title: 'Area-True Treemap',
+      subtitle: 'Vergleich mit dem Nested Treemap aus d3.js — dem Standard in der Praxis',
+      thesis: 'zur wissenschaftlichen Auswertung (70 Projekte)',
+      // The claim is rendered with {@html} so a single sentence can carry its
+      // own emphasis. Static string authored here, so nothing user-supplied
+      // ever reaches the markup.
+      claim:
+        'Für die meisten Maps ist der <strong class="ours">Area-True Treemap</strong> in wesentlichen Aspekten besser als der herkömmliche Squarify-Ansatz des <strong>Nested Treemap</strong> in d3.js.',
+      verdictTitle: 'Ergebnis bei den aktuellen Einstellungen',
+      betterLabel: 'Besser',
+      worseLabel: 'Schlechter',
+      tieLabel: 'Gleichstand',
+      allTie: 'Bei diesen Einstellungen sind alle Vergleichsmetriken gleich.',
+      infoRows: 'Nur informativ — kein Besser/Schlechter',
+      settings: 'Einstellungen',
+      settingsNote:
+        'Die Standardwerte sind die Empfehlung aus der wissenschaftlichen Auswertung. Alle Einstellungen wirken auf beide Karten, außer in der Gruppe „Nur Area-True Treemap“.',
+      groupLayout: 'Layout der Karten',
+      groupArea: 'Nur Area-True Treemap',
+      groupData: 'Daten',
+      areaTrueRole: 'dieser Algorithmus',
+      nestedRole: 'd3.js-Standard',
       margin: 'Margin',
       floorLabels: 'Etagen-Labels',
       amountOfTopLabels: 'Anzahl Labels',
@@ -43,7 +62,7 @@
       load: 'JSON',
       sample: 'Beispiel',
       dataPreset: 'Beispieldaten',
-      presetFlare: 'flare (d3, aus der Masterarbeit)',
+      presetFlare: 'flare (d3)',
       presetSample: 'kleines Beispiel (synthetisch)',
       presetJunit4: 'JUnit 4 (cc.json)',
       presetJunit5: 'JUnit 5 (cc.json)',
@@ -70,24 +89,24 @@
       hNodes: 'Anzahl aller dargestellten Rechtecke (Ordner und Dateien). Rein informativ — kein „besserer" Wert.',
       hLeaves: 'Anzahl der Blattknoten (Dateien) im Layout. Rein informativ — kein „besserer" Wert.',
       hMissing:
-        'Knotensichtbarkeit (These): Anzahl Blattknoten, deren Breite oder Höhe ≤ 0 ist und die dadurch komplett verschwinden. Bester Wert: 0 (keine fehlenden Knoten).',
+        'Knotensichtbarkeit: Anzahl Blattknoten, deren Breite oder Höhe ≤ 0 ist und die dadurch komplett verschwinden. Bester Wert: 0 (keine fehlenden Knoten).',
       hMeanAspect:
-        'Seitenverhältnis (These): Durchschnittliches Verhältnis der längeren zur kürzeren Seite über alle Knoten. Bester Wert: 1 (Quadrat).',
+        'Seitenverhältnis: Durchschnittliches Verhältnis der längeren zur kürzeren Seite über alle Knoten. Bester Wert: 1 (Quadrat).',
       hMaxAspect: 'Schlechtestes (größtes) Seitenverhältnis über alle Knoten. Bester Wert: 1 (Quadrat).',
       hValueProp:
-        'Wertproportionalität (These): Varianzkoeffizient des Fläche/Metrik-Verhältnisses über alle Knoten. Bester Wert: 0 (perfekt proportional).',
+        'Wertproportionalität: Varianzkoeffizient des Fläche/Metrik-Verhältnisses über alle Knoten. Bester Wert: 0 (perfekt proportional).',
       hSpace:
-        'Platznutzung (Vergleichbarkeit): Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Es gibt kein Besser/Schlechter – wichtig ist nur, dass beide Werte ähnlich sind, damit die beiden Outputs überhaupt verglichen werden können. Hinweis: Ein niedrigerer Wert bedeutet, dass mehr Platz für Ränder, Abstände usw. verbraucht wird – die unten stehenden Werte sind dadurch potentiell schlechter.',
-      hTime: 'Zeitaufwand (These): Reine Berechnungszeit des Layout-Algorithmus in ms (ohne Rendering). Bester Wert: möglichst niedrig.',
+        'Platznutzung (Vergleichbarkeit): Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Es gibt kein Besser/Schlechter – wichtig ist nur, dass beide Werte ähnlich sind, damit die beiden Outputs überhaupt verglichen werden können. Hinweis: Ein niedrigerer Wert bedeutet, dass mehr Platz für Ränder, Abstände usw. verbraucht wird und die Vergleichswerte dadurch potentiell schlechter ausfallen.',
+      hTime: 'Zeitaufwand: Reine Berechnungszeit des Layout-Algorithmus in ms (ohne Rendering). Bester Wert: möglichst niedrig.',
       areaTrue: 'Area-True Treemap',
-      areaTrueSub: 'area true algorithm',
+      areaTrueSub: 'area-true-treemap',
       nested: 'Nested Treemap',
       nestedSub: 'd3.js nested treemap',
       empty: 'Keine Daten.',
-      whyTitle: 'Warum ein anderer Algorithmus als d3.js?',
+      whyTitle: 'Was besser ist — und was es kostet',
       whyLead:
         'Beide Karten zeigen dieselben Daten mit demselben Abstand zwischen den Knoten. Der Unterschied liegt darin, wie das Layout diesen Abstand berücksichtigt.',
-      whyD3Head: 'd3.js Nested Treemap',
+      whyD3Head: 'Nested Treemap',
       whyAtHead: 'Area-True Treemap (verbesserter Squarify)',
       whyD3a:
         'Der Abstand wird realisiert, indem jeder Knoten um die Größe des Abstands verkleinert wird (padding, in Pixel).',
@@ -111,9 +130,25 @@
       whyDocs: 'Messwerte & Portierungsanleitung',
     },
     en: {
-      title: 'Treemap Comparison',
-      subtitle: 'Area-True Treemap vs. Nested Treemap',
-      thesis: 'master thesis',
+      title: 'Area-True Treemap',
+      subtitle: 'Compared with the nested treemap from d3.js — the standard in practice',
+      thesis: 'scientific evaluation (70 projects)',
+      claim:
+        'For most maps the <strong class="ours">Area-True Treemap</strong> is better in the essential aspects than the conventional squarify approach of the <strong>Nested Treemap</strong> in d3.js.',
+      verdictTitle: 'Result with the current settings',
+      betterLabel: 'Better',
+      worseLabel: 'Worse',
+      tieLabel: 'Tie',
+      allTie: 'With these settings all compared metrics are equal.',
+      infoRows: 'Informational only — no better/worse',
+      settings: 'Settings',
+      settingsNote:
+        'The defaults are the recommendation of the scientific evaluation. Every setting affects both maps unless it is in the “Area-True Treemap only” group.',
+      groupLayout: 'Layout of the maps',
+      groupArea: 'Area-True Treemap only',
+      groupData: 'Data',
+      areaTrueRole: 'this algorithm',
+      nestedRole: 'd3.js standard',
       margin: 'Margin',
       floorLabels: 'Floor labels',
       amountOfTopLabels: 'Amount of labels',
@@ -134,7 +169,7 @@
       load: 'JSON',
       sample: 'Sample',
       dataPreset: 'Sample data',
-      presetFlare: 'flare (d3, from master thesis)',
+      presetFlare: 'flare (d3)',
       presetSample: 'small sample (synthetic)',
       presetJunit4: 'JUnit 4 (cc.json)',
       presetJunit5: 'JUnit 5 (cc.json)',
@@ -161,24 +196,24 @@
       hNodes: 'Number of all rendered rectangles (folders and files). Informational only — no "better" value.',
       hLeaves: 'Number of leaf nodes (files) in the layout. Informational only — no "better" value.',
       hMissing:
-        'Node visibility (thesis): number of leaf nodes whose width or height ≤ 0, so they disappear entirely. Best value: 0 (no missing nodes).',
+        'Node visibility: number of leaf nodes whose width or height ≤ 0, so they disappear entirely. Best value: 0 (no missing nodes).',
       hMeanAspect:
-        'Aspect ratio (thesis): average ratio of the longer to the shorter side across all nodes. Best value: 1 (square).',
+        'Aspect ratio: average ratio of the longer to the shorter side across all nodes. Best value: 1 (square).',
       hMaxAspect: 'Worst (largest) aspect ratio across all nodes. Best value: 1 (square).',
       hValueProp:
-        'Value proportionality (thesis): coefficient of variation of the area/metric ratio across all nodes. Best value: 0 (perfectly proportional).',
+        'Value proportionality: coefficient of variation of the area/metric ratio across all nodes. Best value: 0 (perfectly proportional).',
       hSpace:
-        'Space utilization (comparability): fraction of the root area occupied by leaf nodes. There is no better or worse — what matters is only that both values are similar, so the two outputs can be compared at all. Note: a lower value means that more space is consumed by margins, paddings etc., so the values below are potentially worse.',
-      hTime: 'Time (thesis): pure layout computation time in ms (without rendering). Best value: as low as possible.',
+        'Space utilization (comparability): fraction of the root area occupied by leaf nodes. There is no better or worse — what matters is only that both values are similar, so the two outputs can be compared at all. Note: a lower value means that more space is consumed by margins, paddings etc., which can make the compared values look worse.',
+      hTime: 'Time: pure layout computation time in ms (without rendering). Best value: as low as possible.',
       areaTrue: 'Area-True Treemap',
-      areaTrueSub: 'area true algorithm',
+      areaTrueSub: 'area-true-treemap',
       nested: 'Nested Treemap',
       nestedSub: 'd3.js nested treemap',
       empty: 'No data.',
-      whyTitle: 'Why a different algorithm than d3.js?',
+      whyTitle: 'What is better — and what it costs',
       whyLead:
         'Both maps show the same data with the same gap between the nodes. The difference is how the layout takes that gap into account.',
-      whyD3Head: 'd3.js nested treemap',
+      whyD3Head: 'Nested Treemap',
       whyAtHead: 'Area-True Treemap (improved squarify)',
       whyD3a: 'The gap is realized by shrinking every node by the size of the gap (padding, in pixels).',
       whyD3b:
@@ -204,73 +239,75 @@
   $: t = translations[lang];
 
   // Hover explanation per setting: what it does and whether it affects both
-  // algorithms or only the area-true one. Recommended values marked "Thesis"
-  // come from the recommendation table in the improve-squarify chapter of the
-  // master thesis (Fazit of the algorithm chapter).
+  // algorithms or only the area-true one. Values marked "Empfohlen" come from
+  // the recommendation table in the improve-squarify chapter of the master
+  // thesis (Fazit of the algorithm chapter) — the UI names the source as
+  // "wissenschaftliche Auswertung" instead, since the thesis itself is not what
+  // a visitor of the demo is after.
   interface HelpText {
     de: string;
     en: string;
   }
   const helpTexts: Record<string, HelpText> = {
     margin: {
-      de: 'Relativer Abstand zwischen benachbarten Knoten (in % der Seitenlänge der Wurzel; je Karte wird er so umgerechnet, dass beide denselben realisierten Abstand zeigen). Struktur ist ab ca. 0,5 % erkennbar, über ca. 3 % dominiert das Treemap-Problem. Thesis: manuelle Wahl 0,5–3 %. Wirkt auf: beide Algorithmen.',
-      en: 'Relative gap between neighbouring nodes (as % of the root side length; converted per map so both realize the same gap). Structure is visible from ~0.5 %, above ~3 % the treemap problem dominates. Thesis: manual choice 0.5–3 %. Affects: both algorithms.',
+      de: 'Relativer Abstand zwischen benachbarten Knoten (in % der Seitenlänge der Wurzel; je Karte wird er so umgerechnet, dass beide denselben realisierten Abstand zeigen). Struktur ist ab ca. 0,5 % erkennbar, über ca. 3 % dominiert das Treemap-Problem. Empfohlen: manuelle Wahl 0,5–3 %. Wirkt auf: beide Algorithmen.',
+      en: 'Relative gap between neighbouring nodes (as % of the root side length; converted per map so both realize the same gap). Structure is visible from ~0.5 %, above ~3 % the treemap problem dominates. Recommended: manual choice 0.5–3 %. Affects: both algorithms.',
     },
     floorLabels: {
-      de: 'Reserviert für beschriftete Ordner der oberen N Ebenen einen Streifen für den Ordnernamen; der Streifen ersetzt dort den oberen Abstand. Thesis: Beschriftungen verbessern die Orientierung, kosten aber Blattfläche. Wirkt auf: beide Algorithmen.',
-      en: 'Reserves a strip for the folder name on the top N levels of labeled folders; the strip replaces the top gap there. Thesis: labels improve orientation but cost leaf area. Affects: both algorithms.',
+      de: 'Reserviert für beschriftete Ordner der oberen N Ebenen einen Streifen für den Ordnernamen; der Streifen ersetzt dort den oberen Abstand. Beschriftungen verbessern die Orientierung, kosten aber Blattfläche. Wirkt auf: beide Algorithmen.',
+      en: 'Reserves a strip for the folder name on the top N levels of labeled folders; the strip replaces the top gap there. Labels improve orientation but cost leaf area. Affects: both algorithms.',
     },
     amountOfTopLabels: {
-      de: 'N = Anzahl der oberen Ebenen, deren Ordner eine Beschriftung erhalten (Wurzel = Ebene 0 zählt mit; 0 = keine). Thesis: N = 2–5 praktikabel, der finale Vergleich nutzt N = 3. Wirkt auf: beide Algorithmen.',
-      en: 'N = number of top levels whose folders get a label (root = level 0 counts; 0 = none). Thesis: N = 2–5 practical, the final comparison uses N = 3. Affects: both algorithms.',
+      de: 'N = Anzahl der oberen Ebenen, deren Ordner eine Beschriftung erhalten (Wurzel = Ebene 0 zählt mit; 0 = keine). Empfohlen: N = 2–5, der Vergleich nutzt N = 3. Wirkt auf: beide Algorithmen.',
+      en: 'N = number of top levels whose folders get a label (root = level 0 counts; 0 = none). Recommended: N = 2–5, the comparison uses N = 3. Affects: both algorithms.',
     },
     labelLength: {
-      de: 'L = relative Länge des für die Beschriftung reservierten Streifens (% der Seitenlänge der Wurzel). Größeres L → größere Schrift, aber weniger Blattfläche und mehr potenziell fehlende Knoten. Thesis: L = 3–10 %, finaler Vergleich ≈ 4 %. Wirkt auf: beide Algorithmen.',
-      en: 'L = relative length of the reserved label strip (% of the root side length). Larger L → larger text, but less leaf area and more potentially missing nodes. Thesis: L = 3–10 %, final comparison ≈ 4 %. Affects: both algorithms.',
+      de: 'L = relative Länge des für die Beschriftung reservierten Streifens (% der Seitenlänge der Wurzel). Größeres L → größere Schrift, aber weniger Blattfläche und mehr potenziell fehlende Knoten. Empfohlen: L = 3–10 %, Vergleich ≈ 4 %. Wirkt auf: beide Algorithmen.',
+      en: 'L = relative length of the reserved label strip (% of the root side length). Larger L → larger text, but less leaf area and more potentially missing nodes. Recommended: L = 3–10 %, comparison ≈ 4 %. Affects: both algorithms.',
     },
     variableLabel: {
       de: 'Berechnet die Beschriftungshöhe je Ordner aus dessen eigener Breite (variabel je Ordner) statt mit fester Länge L. Wirkt auf: nur den Area-True-Treemap-Algorithmus (die Nested-Karte übernimmt nur den an der Wurzel gemessenen Wert als Näherung).',
       en: 'Computes the label height per folder from its own width (variable per folder) instead of a fixed length L. Affects: only the Area-True Treemap algorithm (the nested map only mirrors the root-measured value as an approximation).',
     },
     passes: {
-      de: 'Anzahl der Layout-Durchläufe. 1 = nur Standard-Squarify, Margin/Beschriftungen bleiben wirkungslos. 2 = Größenanpassung + zweiter Layoutschritt (empfohlen). Mehrfache Berechnung (>2) wird in der Thesis nicht empfohlen. Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
-      en: 'Number of layout passes. 1 = plain squarify, margin/labels have no effect. 2 = size adjustment + second layout step (recommended). Multiple computation (>2) is not recommended in the thesis. Affects: only the Area-True Treemap algorithm.',
+      de: 'Anzahl der Layout-Durchläufe. 1 = nur Standard-Squarify, Margin/Beschriftungen bleiben wirkungslos. 2 = Größenanpassung + zweiter Layoutschritt (empfohlen). Mehrfache Berechnung (>2) wird nicht empfohlen. Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
+      en: 'Number of layout passes. 1 = plain squarify, margin/labels have no effect. 2 = size adjustment + second layout step (recommended). Multiple computation (>2) is not recommended. Affects: only the Area-True Treemap algorithm.',
     },
     scale: {
       de: 'Skaliert im zweiten Layoutschritt die Kindknoten auf die tatsächlich verfügbare Elternfläche (Skalierung auf die Elternfläche). Verhindert, dass Knoten die Elternfläche überragen (valide Layouts). Empfohlen: an. Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
       en: 'In the second layout step, scales the children onto the actually available parent area (scaling onto the parent area). Prevents nodes from overflowing their parent (valid layouts). Recommended: on. Affects: only the Area-True Treemap algorithm.',
     },
     simpleIncrease: {
-      de: 'Wahl der Größenanpassung zwischen den beiden Layoutschritten: an = absolute, aus = relative Größenanpassung. Die Thesis bevorzugt die relative (aus): weniger fehlende Knoten; die absolute ist bei der Wertproportionalität minimal besser. Empfohlen: aus. Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
-      en: 'Size adjustment between the two layout steps: on = absolute, off = relative. The thesis prefers relative (off): fewer missing nodes; absolute is marginally better in value proportionality. Recommended: off. Affects: only the Area-True Treemap algorithm.',
+      de: 'Wahl der Größenanpassung zwischen den beiden Layoutschritten: an = absolute, aus = relative Größenanpassung. Empfohlen ist die relative (aus): weniger fehlende Knoten; die absolute ist bei der Wertproportionalität minimal besser. Empfohlen: aus. Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
+      en: 'Size adjustment between the two layout steps: on = absolute, off = relative. Recommended is relative (off): fewer missing nodes; absolute is marginally better in value proportionality. Recommended: off. Affects: only the Area-True Treemap algorithm.',
     },
     order: {
-      de: 'Strategie des zweiten Layoutschritts (relevant bei 2+ Durchläufen): „Neu" = nach der Größenanpassung neu absteigend sortieren (Thesis: empfohlen); „Behalten" = Reihenfolge aus dem ersten Durchlauf; „Platz" = Platzierung/Reihen aus dem ersten Durchlauf beibehalten. Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
-      en: 'Second layout step strategy (relevant with 2+ passes): "New" = re-sort descending after the size adjustment (thesis: recommended); "Keep" = keep the first-pass order; "Place" = keep the first-pass placement/rows. Affects: only the Area-True Treemap algorithm.',
+      de: 'Strategie des zweiten Layoutschritts (relevant bei 2+ Durchläufen): „Neu" = nach der Größenanpassung neu absteigend sortieren (empfohlen); „Behalten" = Reihenfolge aus dem ersten Durchlauf; „Platz" = Platzierung/Reihen aus dem ersten Durchlauf beibehalten. Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
+      en: 'Second layout step strategy (relevant with 2+ passes): "New" = re-sort descending after the size adjustment (recommended); "Keep" = keep the first-pass order; "Place" = keep the first-pass placement/rows. Affects: only the Area-True Treemap algorithm.',
     },
     incrementMargin: {
-      de: 'Steigert den Abstand schrittweise über mehrere Durchläufe (nur bei Durchläufen > 2 relevant, die die Thesis nicht empfiehlt). Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
-      en: 'Increases the gap gradually across multiple passes (only relevant for >2 passes, which the thesis does not recommend). Affects: only the Area-True Treemap algorithm.',
+      de: 'Steigert den Abstand schrittweise über mehrere Durchläufe (nur bei Durchläufen > 2 relevant, die nicht empfohlen sind). Wirkt auf: nur den Area-True-Treemap-Algorithmus.',
+      en: 'Increases the gap gradually across multiple passes (only relevant for >2 passes, which is not recommended). Affects: only the Area-True Treemap algorithm.',
     },
     siblingMargin: {
-      de: 'Zusätzlicher Abstand zwischen Geschwisterknoten: „Keine" = keine Geschwisterabstände; „Alle" = jeder Knoten wird um den halben Abstand verkleinert (sehr schmale Knoten verschwinden dabei); „Nur Blätter" = nur Blattknoten werden verkleinert, Abstände entstehen ausschließlich zwischen Blättern, Ordner bleiben ohne Abstand. Thesis: keine Geschwisterabstände empfohlen, stattdessen Umrandungen. Wirkt auf: beide Algorithmen („Nur Blätter" ist im Nested-Treemap nur näherungsweise abbildbar).',
-      en: 'Extra gap between sibling nodes: "None" = no sibling gaps; "All" = every node shrinks by half the gap (very thin nodes disappear in the process); "Leaves only" = only leaf nodes shrink, gaps appear exclusively between leaves, folders stay without gaps. Thesis: no sibling gaps recommended, use outlines instead. Affects: both algorithms ("leaves only" can only be approximated in the nested treemap).',
+      de: 'Zusätzlicher Abstand zwischen Geschwisterknoten: „Keine" = keine Geschwisterabstände; „Alle" = jeder Knoten wird um den halben Abstand verkleinert (sehr schmale Knoten verschwinden dabei); „Nur Blätter" = nur Blattknoten werden verkleinert, Abstände entstehen ausschließlich zwischen Blättern, Ordner bleiben ohne Abstand. Empfohlen: keine Geschwisterabstände, stattdessen Umrandungen. Wirkt auf: beide Algorithmen („Nur Blätter" ist im Nested-Treemap nur näherungsweise abbildbar).',
+      en: 'Extra gap between sibling nodes: "None" = no sibling gaps; "All" = every node shrinks by half the gap (very thin nodes disappear in the process); "Leaves only" = only leaf nodes shrink, gaps appear exclusively between leaves, folders stay without gaps. Recommended: no sibling gaps, use outlines instead. Affects: both algorithms ("leaves only" can only be approximated in the nested treemap).',
     },
     collapse: {
-      de: 'Faltet Ordnerketten (Ordner mit genau einem Ordner als Kind) zu einem Knoten zusammen. Thesis: verwenden – rund zehnmal weniger fehlende Knoten und bessere Platznutzung. Wirkt auf: beide Algorithmen.',
-      en: 'Collapses folder chains (folders with exactly one folder child) into a single node. Thesis: use it — roughly ten times fewer missing nodes and better space utilization. Affects: both algorithms.',
+      de: 'Faltet Ordnerketten (Ordner mit genau einem Ordner als Kind) zu einem Knoten zusammen. Empfohlen: verwenden – rund zehnmal weniger fehlende Knoten und bessere Platznutzung. Wirkt auf: beide Algorithmen.',
+      en: 'Collapses folder chains (folders with exactly one folder child) into a single node. Recommended: use it — roughly ten times fewer missing nodes and better space utilization. Affects: both algorithms.',
     },
     sort: {
-      de: 'Sortierung der Knoten nach Größe vor der Einfügung. Thesis: absteigend nach Größe ist optimal (bessere Seitenverhältnisse, weniger fehlende Knoten). „Mitte" wird in der Demo wie absteigend behandelt. Wirkt auf: beide Algorithmen.',
-      en: 'Sorts nodes by size before insertion. Thesis: descending by size is optimal (better aspect ratios, fewer missing nodes). "Middle" is treated like descending in this demo. Affects: both algorithms.',
+      de: 'Sortierung der Knoten nach Größe vor der Einfügung. Empfohlen: absteigend nach Größe ist optimal (bessere Seitenverhältnisse, weniger fehlende Knoten). „Mitte" wird in der Demo wie absteigend behandelt. Wirkt auf: beide Algorithmen.',
+      en: 'Sorts nodes by size before insertion. Recommended: descending by size is optimal (better aspect ratios, fewer missing nodes). "Middle" is treated like descending in this demo. Affects: both algorithms.',
     },
     metric: {
       de: 'Name des Metrik-Attributs im Datensatz (z. B. size oder rloc), dessen Wert die Fläche der Knoten bestimmt. Wirkt auf: beide Algorithmen.',
       en: 'Name of the metric attribute in the dataset (e.g. size or rloc) whose value determines node area. Affects: both algorithms.',
     },
     dataset: {
-      de: 'Wählt die Beispieldaten (flare aus der Thesis bzw. ein kleines synthetisches Beispiel) oder lädt eine eigene JSON-Datei. Kein Algorithmus-Parameter.',
-      en: 'Selects the sample data (flare from the thesis or a small synthetic sample) or loads your own JSON file. Not an algorithm parameter.',
+      de: 'Wählt die Beispieldaten (flare bzw. ein kleines synthetisches Beispiel) oder lädt eine eigene JSON-Datei. Kein Algorithmus-Parameter.',
+      en: 'Selects the sample data (flare or a small synthetic sample) or loads your own JSON file. Not an algorithm parameter.',
     },
   };
 
@@ -362,6 +399,8 @@
   interface Result {
     key: string;
     title: string;
+    /** Short role line saying whose algorithm this is (ours vs. d3 standard). */
+    role: string;
     subtitle: string;
     repoUrl: string;
     rects: TreemapRect[];
@@ -453,9 +492,27 @@
       });
     });
 
+    // Order matters: the area-true map is the first column everywhere it is
+    // compared (metrics table, verdict, panels).
     results = [
-      { key: 'area-true', title: t.areaTrue, subtitle: t.areaTrueSub, repoUrl: 'https://github.com/BenediktMehl/area-true-treemap', rects: areaTrueRects, stats: computeStats(areaTrueRects, areaTrueMs, totalLeaves, containerSize) },
-      { key: 'nested', title: t.nested, subtitle: t.nestedSub, repoUrl: 'https://github.com/d3/d3-hierarchy', rects: nestedRects, stats: computeStats(nestedRects, nestedMs, totalLeaves, containerSize) },
+      {
+        key: 'area-true',
+        title: t.areaTrue,
+        role: t.areaTrueRole,
+        subtitle: t.areaTrueSub,
+        repoUrl: 'https://github.com/BenediktMehl/area-true-treemap',
+        rects: areaTrueRects,
+        stats: computeStats(areaTrueRects, areaTrueMs, totalLeaves, containerSize),
+      },
+      {
+        key: 'nested',
+        title: t.nested,
+        role: t.nestedRole,
+        subtitle: t.nestedSub,
+        repoUrl: 'https://github.com/d3/d3-hierarchy',
+        rects: nestedRects,
+        stats: computeStats(nestedRects, nestedMs, totalLeaves, containerSize),
+      },
     ];
   }
 
@@ -644,25 +701,70 @@
   }
 
   type BetterDir = 'lower' | 'higher' | 'none';
-  const metricRows: { labelKey: string; hintKey: string; value: (s: Stats) => number; format: (s: Stats) => string; better: BetterDir }[] = [
-    { labelKey: 'mSpace', hintKey: 'hSpace', value: (s) => s.spaceUtil, format: (s) => (s.spaceUtil * 100).toFixed(1) + ' %', better: 'none' },
-    { labelKey: 'mNodes', hintKey: 'hNodes', value: (s) => s.nodes, format: (s) => String(s.nodes), better: 'none' },
-    { labelKey: 'mLeaves', hintKey: 'hLeaves', value: (s) => s.leaves, format: (s) => String(s.leaves), better: 'none' },
+
+  // The metrics with a better/worse answer come first because they are the ones
+  // that decide the verdict; the purely informational rows follow behind a
+  // divider. `divider` marks the row that opens that second group.
+  interface MetricRow {
+    labelKey: string;
+    hintKey: string;
+    value: (s: Stats) => number;
+    format: (s: Stats) => string;
+    better: BetterDir;
+    divider?: boolean;
+  }
+
+  const metricRows: MetricRow[] = [
     { labelKey: 'mMissing', hintKey: 'hMissing', value: (s) => s.missing, format: (s) => String(s.missing), better: 'lower' },
     { labelKey: 'mMeanAspect', hintKey: 'hMeanAspect', value: (s) => s.meanAspect, format: (s) => fmt(s.meanAspect), better: 'lower' },
     { labelKey: 'mMaxAspect', hintKey: 'hMaxAspect', value: (s) => s.maxAspect, format: (s) => fmt(s.maxAspect), better: 'lower' },
     { labelKey: 'mValueProp', hintKey: 'hValueProp', value: (s) => s.valuePropCV, format: (s) => fmt(s.valuePropCV), better: 'lower' },
     { labelKey: 'mTime', hintKey: 'hTime', value: (s) => s.ms, format: (s) => fmt(s.ms) + ' ms', better: 'lower' },
+    { labelKey: 'mSpace', hintKey: 'hSpace', value: (s) => s.spaceUtil, format: (s) => (s.spaceUtil * 100).toFixed(1) + ' %', better: 'none', divider: true },
+    { labelKey: 'mNodes', hintKey: 'hNodes', value: (s) => s.nodes, format: (s) => String(s.nodes), better: 'none' },
+    { labelKey: 'mLeaves', hintKey: 'hLeaves', value: (s) => s.leaves, format: (s) => String(s.leaves), better: 'none' },
   ];
 
-  function betterIndex(m: (typeof metricRows)[number], stats: Stats[]): number {
+  /** Index of the winning panel in `stats`, or -1 when nobody wins. */
+  function betterIndex(m: MetricRow, stats: Stats[]): number {
     if (m.better === 'none' || stats.length < 2) return -1;
+    // Decided on the values as the table prints them, not on the raw floats:
+    // two values that render identically (0.016 and 0.024 ms are both
+    // "0.02 ms") are a tie. Otherwise a row could show a green and a red cell
+    // carrying the same number, and the verdict would count a win that nobody
+    // can see in the table.
+    if (m.format(stats[0]) === m.format(stats[1])) return -1;
     const a = m.value(stats[0]);
     const b = m.value(stats[1]);
-    if (a === b) return -1;
     if (m.better === 'lower') return a < b ? 0 : 1;
     return a > b ? 0 : 1;
   }
+
+  // Verdict: how many of the comparable metrics each map wins, with the metric
+  // names behind it, so the headline answer needs no reading of the table.
+  // The score counts only the metrics that were actually decided — ties are
+  // reported separately, so "0/1" does not read as a defeat when four of five
+  // metrics are simply equal.
+  $: comparison = metricRows
+    .filter((m) => m.better !== 'none')
+    .map((m) => ({ label: t[m.labelKey], better: betterIndex(m, results.map((r) => r.stats)) }));
+  $: decided = comparison.filter((c) => c.better !== -1);
+  $: areaTrueWins = comparison.filter((c) => c.better === 0).map((c) => c.label);
+  $: nestedWins = comparison.filter((c) => c.better === 1).map((c) => c.label);
+  $: ties = comparison.length - decided.length;
+
+  // `tone` colours the list items of the why-block: what the area-true layout
+  // does better reads green, what d3 loses to its own padding reads red.
+  $: whyAtItems = [
+    { text: t.whyAta, tone: 'neutral' },
+    { text: t.whyAtb, tone: 'good' },
+    { text: t.whyAtc, tone: 'good' },
+  ];
+  $: whyD3Items = [
+    { text: t.whyD3a, tone: 'neutral' },
+    { text: t.whyD3b, tone: 'bad' },
+    { text: t.whyD3c, tone: 'bad' },
+  ];
 
   /** Parses a JSON string and adapts cc.json maps to the demo's
    *  tree format, so both plain trees and raw cc.json files can be opened. */
@@ -734,127 +836,18 @@
   <header>
     <div class="heading">
       <h1>{t.title}</h1>
-      <p>
+      <p class="subtitle">
         {t.subtitle} ·
         <a href="https://github.com/BenediktMehl/master-thesis" target="_blank" rel="noopener">{t.thesis} ↗</a>
       </p>
+      <p class="claim">{@html t.claim}</p>
       <div class="lang">
         <button class:active={lang === 'de'} on:click={() => (lang = 'de')}>DE</button>
         <button class:active={lang === 'en'} on:click={() => (lang = 'en')}>EN</button>
       </div>
     </div>
 
-    <div class="controls">
-      <label class="c" title={help('margin')}>
-        <span class="lbl">{t.margin}</span>
-        <span class="field">
-          <input type="range" min="0" max="3" step="0.1" bind:value={marginPercent} />
-          <output>{marginPercent.toFixed(1)}%</output>
-        </span>
-      </label>
-
-      <div class="c" title={help('floorLabels')}>
-        <span class="lbl">&nbsp;</span>
-        <button class="toggle {enableFloorLabels ? 'on' : ''}" on:click={() => (enableFloorLabels = !enableFloorLabels)}>
-          {enableFloorLabels ? '✓' : '✗'} {t.floorLabels}
-        </button>
-      </div>
-
-      <label class="c" title={help('amountOfTopLabels')}>
-        <span class="lbl">{t.amountOfTopLabels}</span>
-        <input type="number" min="-1" step="1" bind:value={amountOfTopLabels} />
-      </label>
-
-      <label class="c" title={help('labelLength')}>
-        <span class="lbl">{t.labelLength}</span>
-        <span class="field">
-          <input type="range" min="0" max="20" step="0.5" bind:value={labelPercent} />
-          <output>{labelPercent.toFixed(1)}%</output>
-        </span>
-      </label>
-
-      <div class="c" title={help('variableLabel')}>
-        <span class="lbl">&nbsp;</span>
-        <button class="toggle {variableLabelSize ? 'on' : ''}" on:click={() => (variableLabelSize = !variableLabelSize)}>
-          {variableLabelSize ? '✓' : '✗'} {t.variableLabel}
-        </button>
-      </div>
-
-      <label class="c" title={help('passes')}>
-        <span class="lbl">{t.passes}</span>
-        <input type="number" min="1" step="1" bind:value={numberOfPasses} />
-      </label>
-
-      <div class="c" title={help('scale')}>
-        <span class="lbl">&nbsp;</span>
-        <button class="toggle {useScale ? 'on' : ''}" on:click={() => (useScale = !useScale)}>
-          {useScale ? '✓' : '✗'} {t.scale}
-        </button>
-      </div>
-
-      <div class="c" title={help('simpleIncrease')}>
-        <span class="lbl">&nbsp;</span>
-        <button class="toggle {simpleIncreaseValues ? 'on' : ''}" on:click={() => (simpleIncreaseValues = !simpleIncreaseValues)}>
-          {simpleIncreaseValues ? '✓' : '✗'} {t.simpleIncrease}
-        </button>
-      </div>
-
-      <label class="c" title={help('order')}>
-        <span class="lbl">{t.order}</span>
-        <select bind:value={orderOption}>
-          {#each orderOptions as o (o)}
-            <option value={o}>{o === OrderOption.NEW_ORDER ? t.orderNew : o === OrderOption.KEEP_ORDER ? t.orderKeep : t.orderPlace}</option>
-          {/each}
-        </select>
-      </label>
-
-      <div class="c" title={help('incrementMargin')}>
-        <span class="lbl">&nbsp;</span>
-        <button class="toggle {incrementMargin ? 'on' : ''}" on:click={() => (incrementMargin = !incrementMargin)}>
-          {incrementMargin ? '✓' : '✗'} {t.incrementMargin}
-        </button>
-      </div>
-
-      <label class="c" title={help('siblingMargin')}>
-        <span class="lbl">{t.siblingMargin}</span>
-        <select bind:value={siblingMode}>
-          <option value="none">{t.siblingNone}</option>
-          <option value="all">{t.siblingAll}</option>
-          <option value="leaves">{t.siblingLeaves}</option>
-        </select>
-      </label>
-
-      <div class="c" title={help('collapse')}>
-        <span class="lbl">&nbsp;</span>
-        <button class="toggle {collapseFolders ? 'on' : ''}" on:click={() => (collapseFolders = !collapseFolders)}>
-          {collapseFolders ? '✓' : '✗'} {t.collapse}
-        </button>
-      </div>
-
-      <label class="c" title={help('sort')}>
-        <span class="lbl">{t.sort}</span>
-        <select bind:value={sorting}>
-          {#each sortingOptions as s (s)}
-            <option value={s}>
-              {s === AreaTrueSortingOption.NONE ? t.sortNone : s === AreaTrueSortingOption.ASCENDING ? t.sortAsc : s === AreaTrueSortingOption.DESCENDING ? t.sortDesc : t.sortMiddle}
-            </option>
-          {/each}
-        </select>
-      </label>
-
-      <label class="c" title={help('metric')}>
-        <span class="lbl">{t.metric}</span>
-        <input type="text" bind:value={areaMetric} />
-      </label>
-
-      <div class="c" title={help('dataset')}>
-        <span class="lbl">&nbsp;</span>
-        <label class="file">
-          📁 {t.load}
-          <input type="file" accept=".json,application/json,.cc.json" on:change={handleFileUpload} hidden />
-        </label>
-      </div>
-
+    <div class="controls data-bar">
       <div class="c" title={help('dataset')}>
         <span class="lbl">{t.dataPreset}</span>
         <select value={exampleId} on:change={loadExample} disabled={loadingExample}>
@@ -862,6 +855,14 @@
             <option value={ex.id}>{t[ex.labelKey]}</option>
           {/each}
         </select>
+      </div>
+
+      <div class="c" title={help('dataset')}>
+        <span class="lbl">&nbsp;</span>
+        <label class="file">
+          📁 {t.load}
+          <input type="file" accept=".json,application/json,.cc.json" on:change={handleFileUpload} hidden />
+        </label>
       </div>
 
       {#if loadingExample}
@@ -873,21 +874,68 @@
     </div>
   </header>
 
+  {#if results.length === 2}
+    <section class="verdict">
+      <h2>{t.verdictTitle}</h2>
+      {#if decided.length > 0}
+        <p class="score">
+          {#each results as r, i (r.key)}
+            {@const wins = i === 0 ? areaTrueWins.length : nestedWins.length}
+            {@const rival = i === 0 ? nestedWins.length : areaTrueWins.length}
+            <span class="score-item" class:win={wins > rival} class:lose={wins < rival}>
+              {r.title}: <b>{wins}</b>/{decided.length}
+            </span>
+          {/each}
+          {#if ties > 0}
+            <span class="score-item tie">{t.tieLabel}: {ties}</span>
+          {/if}
+        </p>
+      {:else}
+        <p class="score">{t.allTie}</p>
+      {/if}
+
+      {#if areaTrueWins.length > 0}
+        <div class="chip-row">
+          <span class="chip-label">{t.betterLabel}</span>
+          {#each areaTrueWins as name (name)}<span class="chip win">✓ {name}</span>{/each}
+        </div>
+      {/if}
+      {#if nestedWins.length > 0}
+        <div class="chip-row">
+          <span class="chip-label">{t.worseLabel}</span>
+          {#each nestedWins as name (name)}<span class="chip lose">✗ {name}</span>{/each}
+        </div>
+      {/if}
+    </section>
+  {/if}
+
   <section class="metrics">
     <table>
       <thead>
         <tr>
           <th>{t.metricCol}</th>
-          {#each results as r (r.key)}<th>{r.title}</th>{/each}
+          {#each results as r, i (r.key)}
+            <th class:win-col={i === 0}>
+              {r.title}
+              <span class="th-sub">{r.role}</span>
+            </th>
+          {/each}
         </tr>
       </thead>
       <tbody>
         {#each metricRows as m (m.labelKey)}
+          {#if m.divider}
+            <tr class="divider">
+              <td colspan={results.length + 1}>{t.infoRows}</td>
+            </tr>
+          {/if}
           {@const bi = betterIndex(m, results.map((r) => r.stats))}
           <tr>
             <td class="metric-label" title={t[m.hintKey]}>{t[m.labelKey]} <span class="info">ⓘ</span></td>
             {#each results as r, i (r.key)}
-              <td class:better={bi === i}>{m.format(r.stats)}</td>
+              <td class:better={bi === i} class:worse={bi !== -1 && bi !== i}>
+                {#if bi !== -1}<span class="mark" aria-hidden="true">{bi === i ? '✓' : '✗'}</span>{/if}{m.format(r.stats)}
+              </td>
             {/each}
           </tr>
         {/each}
@@ -896,11 +944,11 @@
   </section>
 
   <section class="panels">
-    {#each results as r (r.key)}
-      <div class="panel">
+    {#each results as r, i (r.key)}
+      <div class="panel" class:ours={i === 0}>
         <div class="panel-head">
           <h2>{r.title}</h2>
-          <span class="sub"><a href={r.repoUrl} target="_blank" rel="noopener">{r.subtitle} ↗</a></span>
+          <span class="sub">{r.role} · <a href={r.repoUrl} target="_blank" rel="noopener">{r.subtitle} ↗</a></span>
         </div>
         {#if r.rects.length > 0}
           <TreemapSvg rects={r.rects} {containerSize} showValues />
@@ -911,25 +959,149 @@
     {/each}
   </section>
 
+  <!-- Collapsed by default: the page leads with the result, the knobs are for
+       whoever wants to check it or explore their own data. -->
+  <details class="settings">
+    <summary>{t.settings}</summary>
+    <p class="settings-note">{t.settingsNote}</p>
+
+    <div class="group">
+      <h3 class="group-label">{t.groupLayout}</h3>
+      <div class="controls">
+        <label class="c" title={help('margin')}>
+          <span class="lbl">{t.margin}</span>
+          <span class="field">
+            <input type="range" min="0" max="3" step="0.1" bind:value={marginPercent} />
+            <output>{marginPercent.toFixed(1)}%</output>
+          </span>
+        </label>
+
+        <label class="c" title={help('siblingMargin')}>
+          <span class="lbl">{t.siblingMargin}</span>
+          <select bind:value={siblingMode}>
+            <option value="none">{t.siblingNone}</option>
+            <option value="all">{t.siblingAll}</option>
+            <option value="leaves">{t.siblingLeaves}</option>
+          </select>
+        </label>
+
+        <div class="c" title={help('floorLabels')}>
+          <span class="lbl">&nbsp;</span>
+          <button class="toggle {enableFloorLabels ? 'on' : ''}" on:click={() => (enableFloorLabels = !enableFloorLabels)}>
+            {enableFloorLabels ? '✓' : '✗'} {t.floorLabels}
+          </button>
+        </div>
+
+        <label class="c" title={help('amountOfTopLabels')}>
+          <span class="lbl">{t.amountOfTopLabels}</span>
+          <input type="number" min="-1" step="1" bind:value={amountOfTopLabels} />
+        </label>
+
+        <label class="c" title={help('labelLength')}>
+          <span class="lbl">{t.labelLength}</span>
+          <span class="field">
+            <input type="range" min="0" max="20" step="0.5" bind:value={labelPercent} />
+            <output>{labelPercent.toFixed(1)}%</output>
+          </span>
+        </label>
+
+        <div class="c" title={help('variableLabel')}>
+          <span class="lbl">&nbsp;</span>
+          <button class="toggle {variableLabelSize ? 'on' : ''}" on:click={() => (variableLabelSize = !variableLabelSize)}>
+            {variableLabelSize ? '✓' : '✗'} {t.variableLabel}
+          </button>
+        </div>
+
+        <div class="c" title={help('collapse')}>
+          <span class="lbl">&nbsp;</span>
+          <button class="toggle {collapseFolders ? 'on' : ''}" on:click={() => (collapseFolders = !collapseFolders)}>
+            {collapseFolders ? '✓' : '✗'} {t.collapse}
+          </button>
+        </div>
+
+        <label class="c" title={help('sort')}>
+          <span class="lbl">{t.sort}</span>
+          <select bind:value={sorting}>
+            {#each sortingOptions as s (s)}
+              <option value={s}>
+                {s === AreaTrueSortingOption.NONE ? t.sortNone : s === AreaTrueSortingOption.ASCENDING ? t.sortAsc : s === AreaTrueSortingOption.DESCENDING ? t.sortDesc : t.sortMiddle}
+              </option>
+            {/each}
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3 class="group-label">{t.groupArea}</h3>
+      <div class="controls">
+        <label class="c" title={help('passes')}>
+          <span class="lbl">{t.passes}</span>
+          <input type="number" min="1" step="1" bind:value={numberOfPasses} />
+        </label>
+
+        <div class="c" title={help('scale')}>
+          <span class="lbl">&nbsp;</span>
+          <button class="toggle {useScale ? 'on' : ''}" on:click={() => (useScale = !useScale)}>
+            {useScale ? '✓' : '✗'} {t.scale}
+          </button>
+        </div>
+
+        <div class="c" title={help('simpleIncrease')}>
+          <span class="lbl">&nbsp;</span>
+          <button class="toggle {simpleIncreaseValues ? 'on' : ''}" on:click={() => (simpleIncreaseValues = !simpleIncreaseValues)}>
+            {simpleIncreaseValues ? '✓' : '✗'} {t.simpleIncrease}
+          </button>
+        </div>
+
+        <label class="c" title={help('order')}>
+          <span class="lbl">{t.order}</span>
+          <select bind:value={orderOption}>
+            {#each orderOptions as o (o)}
+              <option value={o}>{o === OrderOption.NEW_ORDER ? t.orderNew : o === OrderOption.KEEP_ORDER ? t.orderKeep : t.orderPlace}</option>
+            {/each}
+          </select>
+        </label>
+
+        <div class="c" title={help('incrementMargin')}>
+          <span class="lbl">&nbsp;</span>
+          <button class="toggle {incrementMargin ? 'on' : ''}" on:click={() => (incrementMargin = !incrementMargin)}>
+            {incrementMargin ? '✓' : '✗'} {t.incrementMargin}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3 class="group-label">{t.groupData}</h3>
+      <div class="controls">
+        <label class="c" title={help('metric')}>
+          <span class="lbl">{t.metric}</span>
+          <input type="text" bind:value={areaMetric} />
+        </label>
+      </div>
+    </div>
+  </details>
+
   <section class="why">
     <h2>{t.whyTitle}</h2>
     <p class="why-lead">{t.whyLead}</p>
 
     <div class="why-grid">
       <div class="why-col at">
-        <h3>{t.whyAtHead}</h3>
+        <h3>{t.whyAtHead} <span class="chip win">{t.areaTrueRole}</span></h3>
         <ul>
-          <li>{t.whyAta}</li>
-          <li>{t.whyAtb}</li>
-          <li>{t.whyAtc}</li>
+          {#each whyAtItems as item (item.text)}
+            <li class={item.tone}>{item.text}</li>
+          {/each}
         </ul>
       </div>
-      <div class="why-col">
-        <h3>{t.whyD3Head}</h3>
+      <div class="why-col d3">
+        <h3>{t.whyD3Head} <span class="chip lose">{t.nestedRole}</span></h3>
         <ul>
-          <li>{t.whyD3a}</li>
-          <li>{t.whyD3b}</li>
-          <li>{t.whyD3c}</li>
+          {#each whyD3Items as item (item.text)}
+            <li class={item.tone}>{item.text}</li>
+          {/each}
         </ul>
       </div>
     </div>
@@ -977,10 +1149,28 @@
     letter-spacing: -0.02em;
   }
 
-  .heading p {
-    margin: 0 0 14px;
+  .subtitle {
+    margin: 0 0 10px;
     color: var(--muted);
     font-size: 14px;
+  }
+
+  /* The one-sentence pitch under the title: the reason the page exists. */
+  .claim {
+    margin: 0 0 16px;
+    font-size: 15px;
+    line-height: 1.5;
+    max-width: 80ch;
+    padding-left: 12px;
+    border-left: 3px solid var(--accent);
+  }
+
+  .claim :global(strong) {
+    font-weight: 700;
+  }
+
+  .claim :global(strong.ours) {
+    color: #b45309;
   }
 
   .lang {
@@ -1012,6 +1202,88 @@
     flex-wrap: wrap;
     gap: 10px 18px;
     align-items: flex-end;
+  }
+
+  .data-bar {
+    margin-top: 4px;
+  }
+
+  /* --- Verdict: the headline answer, before any table or map --- */
+  .verdict {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+
+  .verdict h2 {
+    margin: 0 0 8px;
+    font-size: 15px;
+  }
+
+  .score {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin: 0;
+    font-size: 14px;
+  }
+
+  .score-item b {
+    font-size: 17px;
+  }
+
+  .score-item.win {
+    color: #146c33;
+    font-weight: 600;
+  }
+
+  .score-item.lose {
+    color: #a51d1d;
+  }
+
+  .score-item.tie {
+    color: var(--muted);
+  }
+
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .chip-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    min-width: 72px;
+  }
+
+  .chip {
+    display: inline-block;
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 1px 9px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .chip.win {
+    color: #146c33;
+    background: #eaf7ef;
+    border-color: #bfe4cb;
+  }
+
+  .chip.lose {
+    color: #a51d1d;
+    background: #fdecec;
+    border-color: #f3c6c6;
   }
 
   .c {
@@ -1132,7 +1404,27 @@
   }
 
   .why-col.at {
-    border-left-color: var(--accent);
+    border-left-color: #16a34a;
+  }
+
+  .why-col.d3 {
+    border-left-color: #dc2626;
+  }
+
+  .why-col li.good {
+    color: #146c33;
+  }
+
+  .why-col li.good::marker {
+    color: #16a34a;
+  }
+
+  .why-col li.bad {
+    color: #a51d1d;
+  }
+
+  .why-col li.bad::marker {
+    color: #dc2626;
   }
 
   .why-col h3 {
@@ -1221,9 +1513,84 @@
     opacity: 0.6;
   }
 
+  th .th-sub {
+    display: block;
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  th.win-col {
+    background: #eaf7ef;
+  }
+
+  /* Winner green, loser red — both carry a mark, so the colour is never the
+     only signal. */
   .better {
-    color: #15803d;
+    color: #146c33;
+    background: #eaf7ef;
     font-weight: 700;
+  }
+
+  .worse {
+    color: #a51d1d;
+    background: #fdecec;
+  }
+
+  .mark {
+    font-size: 11px;
+    margin-right: 5px;
+  }
+
+  tr.divider td {
+    background: #f4f4f4;
+    color: var(--muted);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 5px 12px;
+  }
+
+  .settings {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    /* sits between the maps and the why-block */
+    margin: 22px 0;
+  }
+
+  .settings > summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .settings[open] > summary {
+    margin-bottom: 8px;
+  }
+
+  .settings-note {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 12px;
+    max-width: 95ch;
+  }
+
+  .group + .group {
+    margin-top: 14px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+  }
+
+  .group-label {
+    margin: 0 0 8px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
   }
 
   a {
@@ -1257,6 +1624,10 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     padding: 12px;
+  }
+
+  .panel.ours {
+    border-left: 3px solid var(--accent);
   }
 
   .panel-head {

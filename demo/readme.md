@@ -18,11 +18,33 @@ denselben sichtbaren Abstand; die Metriken darunter sind dadurch direkt vergleic
 
 Die Oberfläche gibt es auf **Deutsch und Englisch** (DE/EN-Schalter oben rechts).
 
+## Aufbau der Seite
+
+Die Seite ist auf den schnellen Überblick hin geordnet — erst das Ergebnis, dann die Belege, dann die Karten,
+zuletzt die Einstellungen:
+
+1. **Titel + Einordnung** — unter dem Titel steht in einem Satz das Ergebnis: der Area-True Treemap ist für die
+   meisten Maps in wesentlichen Aspekten besser als der herkömmliche Squarify-Ansatz des Nested Treemap aus
+   d3.js (dem Standard in der Praxis). Der Link daneben führt zur wissenschaftlichen Auswertung über 70
+   Open-Source-Projekte, aus der die Aussage stammt. Direkt darunter die Beispieldaten-Auswahl (Presets,
+   cc.json-Maps, eigener JSON-Upload).
+2. **Ergebnis-Block** — nennt für die *aktuell eingestellten* Parameter, welche Vergleichsmetrik welche Karte
+   gewinnt („Area-True Treemap: 4/5, Nested Treemap: 1/5"), darunter je ein Chip pro Metrik: grün = besser,
+   rot = schlechter. Der Nenner zählt nur die *entschiedenen* Metriken; Gleichstände stehen als eigener Wert
+   daneben („Gleichstand: 4"), und sind alle gleich, tritt der Zähler ganz zurück. Der Block reagiert live auf
+   jede Änderung.
+3. **Metriken-Tabelle** — die Zahlen dazu.
+4. **Die zwei Karten**.
+5. **Einstellungen** — eingeklappt, direkt unter den Karten: wer die Karten gesehen hat und nachjustieren will,
+   findet die Regler dort, ohne dass sie den Einstieg in die Seite dominieren.
+6. **Warum-Block** — die Begründung als Abschluss.
+
 ## Warum-Block unter den Karten
 
-Ganz unten auf der Seite steht der Block **„Warum ein anderer Algorithmus als d3.js?"**: links das Area-True-Layout
+Unter den Karten steht der Block **„Was besser ist — und was es kostet"**: links das Area-True-Layout
 (die Knotengrößen werden vor dem zweiten Durchlauf so angepasst, dass der angestrebte Abstand berücksichtigt ist),
-rechts das d3-Layout (jeder Knoten wird um den Abstand verkleinert, in Pixel). Darunter steht, was das konkret
+rechts das d3-Layout (jeder Knoten wird um den Abstand verkleinert, in Pixel). Was für den Area-True-Treemap
+spricht, steht dort grün; was d3 durch sein eigenes Padding verliert, rot. Darunter steht, was das konkret
 bedeutet — mit Verweis auf die Zeile **Fehlende Knoten** der Metriken-Tabelle oberhalb, in der man den Effekt live
 sieht — sowie aufklappbar die zwei Durchläufe des Layouts, der Mehraufwand (Rechenzeit, nur Squarify als
 Kachelungsverfahren) und Links zu README und Portierungsanleitung. Der Block ist wie die übrige Oberfläche
@@ -32,14 +54,21 @@ zweisprachig (DE/EN).
 
 Für beide Layouts werden die Kennzahlen aus der
 [Masterthesis](https://github.com/BenediktMehl/master-thesis) (Abschnitt „Bewertungsgrundlage") verglichen;
-über jede Zeile lässt sich hovern, um die Erklärung zu sehen. Zeilen, bei denen ein Wert besser ist, werden
-hervorgehoben.
+über jede Zeile lässt sich hovern, um die Erklärung zu sehen. Die Spalte **Area-True Treemap** ist als „dieser
+Algorithmus", die Spalte **Nested Treemap** als „d3.js-Standard" ausgewiesen. Zuerst stehen die Metriken mit
+Besser/Schlechter, danach hinter der Zeile „Nur informativ" die reinen Informationswerte. In jeder Vergleichszeile ist der bessere Wert grün, der schlechtere rot markiert — jeweils
+mit ✓/✗, die Farbe ist also nie das einzige Signal.
+
+Verglichen wird auf den **angezeigten** Werten, nicht auf den Rohwerten: stehen links und rechts dieselben
+Zeichen (z. B. beide „0.02 ms", weil die Berechnungszeit nur auf zwei Nachkommastellen gezeigt wird), bleibt
+die Zeile neutral und die Metrik zählt als Gleichstand. So kann keine Zeile eine grüne und eine rote Zelle mit
+derselben Zahl zeigen, und der Ergebnis-Block zählt keinen Sieg, den man in der Tabelle nicht sieht.
 
 - **Platznutzung** — Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Es gibt kein
-  Besser/Schlechter; sie steht zuerst, weil sie die *Vergleichbarkeit* der übrigen Werte bestimmt: nur wenn
-  beide Layouts ähnlich viel Fläche für Ränder, Abstände und Labels verbrauchen, sind die anderen Metriken
-  fair vergleichbar. Ein niedrigerer Wert heißt, dass mehr Platz für Ränder/Abstände draufgeht – die darunter
-  stehenden Werte sind dadurch potenziell schlechter.
+  Besser/Schlechter; sie steht deshalb in der Informationsgruppe und bestimmt dort die *Vergleichbarkeit* der
+  übrigen Werte: nur wenn beide Layouts ähnlich viel Fläche für Ränder, Abstände und Labels verbrauchen, sind
+  die anderen Metriken fair vergleichbar. Ein niedrigerer Wert heißt, dass mehr Platz für Ränder/Abstände
+  draufgeht – die betroffenen Werte sind dadurch potenziell schlechter.
 - **Knoten / Blätter** — Anzahl dargestellter Rechtecke bzw. Blattknoten (rein informativ).
 - **Fehlende Knoten** — *Knotensichtbarkeit*: Blattknoten mit Breite/Höhe ≤ 0, die komplett verschwinden.
   Wichtigste Kennzahl; bester Wert 0.
@@ -73,7 +102,11 @@ npm run dev
 
 ## Bedienung
 
-Alle Änderungen werden live angewendet. Die folgenden Einstellungen wirken auf **beide** Layouts:
+Alle Einstellungen stehen **eingeklappt unter den Karten** („Einstellungen", zwischen den Karten und dem
+Warum-Block) und sind dort in drei Gruppen sortiert: *Layout der Karten*, *Nur Area-True Treemap* und *Daten*.
+Jede Änderung wird live angewendet — auch der Ergebnis-Block und die Tabelle darüber reagieren sofort.
+
+Die folgenden Einstellungen wirken auf **beide** Layouts:
 
 - **Margin** (0–3 %) — Abstand zwischen einem Ordner und seinen Kindern (beim d3-Panel als `paddingOuter`
   mit dem realisierten Wert). Thesis-Empfehlung: 0,5–3 %.
