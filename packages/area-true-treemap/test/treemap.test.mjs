@@ -234,6 +234,69 @@ test("getFloorLabelPadding + DEFAULT_FLOOR_LABEL_CONFIG stay usable as resolver"
   assertValid(root, 1000, 1000);
 });
 
+// Folders wide enough that an absolute minimum inside the resolver binds
+// (95/0.15 = 633 px up to 95/0.028 = 3393 px), so a strip computed in the wrong
+// units cannot cancel out.
+const wideTree = {
+  name: "root",
+  children: [
+    { name: "f1", children: Array.from({ length: 40 }, (_, i) => ({ name: "a" + i, attributes: { size: 100 } })) },
+    { name: "f2", children: Array.from({ length: 35 }, (_, i) => ({ name: "b" + i, attributes: { size: 100 } })) },
+  ],
+};
+
+function wideLayout(labelLength) {
+  const W = 1346.13;
+  return treemap()
+    .size([W, W])
+    .margin(12.5 / W)
+    .numberOfPasses(2)
+    .applySiblingMargin(true)
+    .floorLabels(3)
+    .labelLength(labelLength)(hierarchy(wideTree).sum(size));
+}
+
+function labelledFolders(root) {
+  return root.descendants().filter((n) => n.children);
+}
+
+/** The strip the layout actually drew above a folder's children. */
+function drawnStrip(node) {
+  return Math.min(...node.children.map((c) => c.y0)) - node.y0;
+}
+
+test("a resolver's absolute label length is reserved as an absolute length", () => {
+  // Asked for 95 px, reserved 95 px. Resolved in the inflated layout square this
+  // came out as 80 px, and a drawer sizing the text on the finished rectangle
+  // then ran the labels into the children by that 16 %.
+  for (const node of labelledFolders(wideLayout(() => 95))) {
+    const strip = drawnStrip(node);
+    assert.ok(Math.abs(strip - 95) < 0.01, node.data.name + ": reserved " + strip.toFixed(2) + " px for a requested 95 px");
+  }
+});
+
+test("the reserved label strip never falls short of what a drawer computes", () => {
+  const MARGIN = 12.5;
+  const root = wideLayout((node) => getFloorLabelPadding(node.y1 - node.y0, node.depth, DEFAULT_FLOOR_LABEL_CONFIG));
+  const folders = labelledFolders(root);
+  for (const node of folders) {
+    const strip = drawnStrip(node);
+    const wanted = getFloorLabelPadding(node.y1 - node.y0, node.depth, DEFAULT_FLOOR_LABEL_CONFIG);
+    // The resolver runs before the sibling margin is cut out of the boxes, so it
+    // is asked about a rectangle `margin` taller than the drawn one. Label
+    // padding grows monotonically with that height, so the strip it reserves is
+    // never the smaller one - the direction that would push children into the
+    // text. The excess is bounded by the steepest branch of the padding
+    // function, maxFraction per pixel of height.
+    assert.ok(strip >= wanted, node.data.name + ": reserved " + strip.toFixed(2) + " px, a drawer computes " + wanted.toFixed(2) + " px");
+    assert.ok(
+      strip <= wanted + MARGIN * DEFAULT_FLOOR_LABEL_CONFIG.maxFraction,
+      node.data.name + ": reserved " + strip.toFixed(2) + " px for " + wanted.toFixed(2) + " px wanted",
+    );
+  }
+  assert.ok(folders.length >= 3, "the fixture should exercise several folders, saw " + folders.length);
+});
+
 test("collapseFolders merges single-child chains into shared rectangles", () => {
   const chain = { name: "root", children: [
     { name: "a", children: [

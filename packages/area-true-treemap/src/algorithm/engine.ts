@@ -46,6 +46,25 @@ function resolveLabelLength(labelLength: LabelLength, node: SquarifyNode): numbe
 }
 
 /**
+ * The node as the rectangle it will be drawn as: lengths scaled onto the
+ * canvas, everything else — depth, value, children — passed through untouched.
+ *
+ * A label-size resolver reads the node's own size, so it has to see the size
+ * the node ends up with rather than the inflated layout square it is laid out
+ * in. Child rectangles in the view are *not* scaled; the resolver sizes the one
+ * strip it is called for.
+ */
+function canvasView(node: SquarifyNode, drawScale: number): SquarifyNode {
+    return {
+        ...node,
+        x0: node.x0 * drawScale,
+        y0: node.y0 * drawScale,
+        x1: node.x1 * drawScale,
+        y1: node.y1 * drawScale,
+    };
+}
+
+/**
  * Lay out `root` in place: sets the initial layout square to
  * `sqrt(root.value)` and runs the configured number of passes.
  */
@@ -93,10 +112,19 @@ export function runLayout(root: SquarifyNode, options: EngineOptions): void {
     // is left as it was.
     const drawScale = twoPass ? (width + currentMargin) / square : 1;
     const layoutMargin = currentMargin / drawScale;
-    // A label-length *function* derives its value from the node's own width, so
-    // it is scale-free and already correct in the layout square.
+    // A label-length *function* is written against the finished rectangle — that
+    // is the box the label has to fit into, and the box a drawer sizes the text
+    // against later. A resolver that clamps against an absolute length
+    // (getFloorLabelPadding's rootMin/subMin) computes that length in whatever
+    // units it is handed, so handing it the inflated square made the strip come
+    // out `drawScale` short on screen: 95 asked for, 80 drawn on a 1346 px map.
+    // Resolve in canvas units, keep the result in layout units — the same
+    // conversion the numeric label length already gets.
+    const labelLengthOption = options.labelLength;
     const layoutLabelLength: LabelLength =
-        typeof options.labelLength === "function" ? options.labelLength : options.labelLength / drawScale;
+        typeof labelLengthOption === "function"
+            ? (node: SquarifyNode) => labelLengthOption(canvasView(node, drawScale)) / drawScale
+            : labelLengthOption / drawScale;
 
     root.x1 = square;
     root.y1 = square;
