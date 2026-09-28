@@ -181,6 +181,15 @@ function stats(rects, totalLeaves, ms) {
     const mean = ratios.reduce((sum, x) => sum + x, 0) / ratios.length;
     valuePropCv = Math.sqrt(ratios.reduce((sum, x) => sum + (x - mean) ** 2, 0) / ratios.length) / mean;
   }
+  // Quartile coefficient of dispersion, the measure the demo shows: the area-true
+  // layout inflates a subtree to make room for the gaps inside it, which on large
+  // maps pushes a few nodes far above their value. A variance-based measure is
+  // dominated by those few and hides how tight the bulk of the map is.
+  const sortedRatios = [...ratios].sort((a, b) => a - b);
+  const at = (p) => (sortedRatios.length > 0 ? sortedRatios[Math.min(sortedRatios.length - 1, Math.floor(sortedRatios.length * p))] : 0);
+  const p25 = at(0.25);
+  const p75 = at(0.75);
+  const valuePropQcd = p75 + p25 > 0 ? (p75 - p25) / (p75 + p25) : 0;
   const leafArea = leaves.reduce((sum, r) => sum + r.width * r.height, 0);
   const sorted = [...aspects].sort((a, b) => a - b);
   return {
@@ -191,6 +200,7 @@ function stats(rects, totalLeaves, ms) {
     medianAspect: sorted.length > 0 ? sorted[Math.floor(sorted.length / 2)] : 0,
     maxAspect: aspects.length > 0 ? Math.max(...aspects) : 0,
     valuePropCv,
+    valuePropQcd,
     space: SIZE > 0 ? leafArea / (SIZE * SIZE) : 0,
     ms,
   };
@@ -233,6 +243,7 @@ for (const config of CONFIGS) {
   row("Mean aspect ratio", a.meanAspect.toFixed(2), b.meanAspect.toFixed(2));
   row("Max aspect ratio", a.maxAspect.toFixed(1), b.maxAspect.toFixed(1));
   row("Value proportionality (CV)", a.valuePropCv.toFixed(3), b.valuePropCv.toFixed(3));
+  row("Value proportionality (quartile disp.)", a.valuePropQcd.toFixed(3), b.valuePropQcd.toFixed(3));
   row("Space utilization", (a.space * 100).toFixed(1) + " %", (b.space * 100).toFixed(1) + " %");
   row("Compute time", a.ms.toFixed(3) + " ms", b.ms.toFixed(3) + " ms");
   console.log("");

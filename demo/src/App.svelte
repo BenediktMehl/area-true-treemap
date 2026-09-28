@@ -36,7 +36,7 @@
       infoRows: 'Nur informativ — kein Besser/Schlechter',
       settings: 'Einstellungen',
       settingsNote:
-        'Die Standardwerte sind die Empfehlung aus der wissenschaftlichen Auswertung. Alle Einstellungen wirken auf beide Karten, außer in der Gruppe „Nur Area-True Treemap“.',
+        'Die Standardwerte orientieren sich an der Empfehlung aus der wissenschaftlichen Auswertung; die Margin wird stattdessen pro Map aus deren Blattgrößen abgeleitet (ein Zehntel der typischen Blattkante), der Geschwisterabstand ist abweichend eingestellt. Alle Einstellungen wirken auf beide Karten, außer in der Gruppe „Nur Area-True Treemap“.',
       groupLayout: 'Layout der Karten',
       groupArea: 'Nur Area-True Treemap',
       groupData: 'Daten',
@@ -81,22 +81,26 @@
       mNodes: 'Knoten',
       mLeaves: 'Blätter',
       mMissing: 'Fehlende Knoten',
-      mMeanAspect: 'Ø Seitenverhältnis',
-      mMaxAspect: 'Max Seitenverhältnis',
+      mAspect: 'Ø Seitenverhältnis',
       mValueProp: 'Wertproportionalität',
       mSpace: 'Platznutzung',
+      mGap: 'Realisierter Abstand',
       mTime: 'Berechnungszeit',
-      hNodes: 'Anzahl aller dargestellten Rechtecke (Ordner und Dateien). Rein informativ — kein „besserer" Wert.',
-      hLeaves: 'Anzahl der Blattknoten (Dateien) im Layout. Rein informativ — kein „besserer" Wert.',
+      hNodes:
+        'Anzahl der Rechtecke mit Fläche > 0 (Ordner und Dateien) — Knoten, die komplett verschwinden, zählen in beiden Karten nach derselben Regel nicht mit. Die Zeile ist deshalb nicht die Summe aus Blättern und fehlenden Knoten: die fehlenden sind per Definition nicht Teil der Zeichnung. Rein informativ — kein „besserer" Wert.',
+      hLeaves: 'Anzahl der Blattknoten (Dateien) mit Fläche > 0. Rein informativ — kein „besserer" Wert.',
       hMissing:
         'Knotensichtbarkeit: Anzahl Blattknoten, deren Breite oder Höhe ≤ 0 ist und die dadurch komplett verschwinden. Bester Wert: 0 (keine fehlenden Knoten).',
-      hMeanAspect:
-        'Seitenverhältnis: Durchschnittliches Verhältnis der längeren zur kürzeren Seite über alle Knoten. Bester Wert: 1 (Quadrat).',
-      hMaxAspect: 'Schlechtestes (größtes) Seitenverhältnis über alle Knoten. Bester Wert: 1 (Quadrat).',
+      hAspect:
+        'Seitenverhältnis: Durchschnitt des Verhältnisses der längeren zur kürzeren Seite über alle Knoten, ohne die 10 größten Werte. Bester Wert: 1 (Quadrat). Die 10 größten Werte sind Sub-Pixel-Streifen — Knoten, die nur noch als Splitter existieren, weshalb ihr Seitenverhältnis in die Hunderte oder Tausende geht. Ein ungetrimmter Mittelwert wird von ihnen bestimmt statt von der Karte. Ein Median ist daneben nicht nötig: das Trimmen erledigt dasselbe.',
       hValueProp:
-        'Wertproportionalität: Varianzkoeffizient des Fläche/Metrik-Verhältnisses über alle Knoten. Bester Wert: 0 (perfekt proportional).',
+        'Wertproportionalität: Quartilsdispersionskoeffizient des Fläche/Metrik-Verhältnisses, (p75 − p25) / (p75 + p25), über alle Knoten. Bester Wert: 0 (perfekt proportional). Gemessen wird die mittlere Hälfte der Knoten: einzelne Ausreißer — etwa Knoten, deren Fläche weit über ihrem Wert liegt, weil das Layout Platz für die Abstände in ihrem Teilbaum reserviert — verschieben den Wert nicht mehr, anders als beim Varianzkoeffizienten.',
       hSpace:
         'Platznutzung (Vergleichbarkeit): Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Es gibt kein Besser/Schlechter – wichtig ist nur, dass beide Werte ähnlich sind, damit die beiden Outputs überhaupt verglichen werden können. Hinweis: Ein niedrigerer Wert bedeutet, dass mehr Platz für Ränder, Abstände usw. verbraucht wird und die Vergleichswerte dadurch potentiell schlechter ausfallen.',
+      hGap:
+        'Realisierter Abstand: der Abstand, den das Layout tatsächlich zeichnet, in Pixel — gemessen an der Ausgabe des jeweiligen Layouts. Er ergibt sich aus der Margin in Prozent mal Kartenbreite, beide Panels werden mit demselben Wert gezeichnet. Rein informativ — kein „besserer" Wert.',
+      spaceNote:
+        'Die Margin ({gap} px) ist größer als die mittlere Blattkante dieser Map ({edge} px). Dann bestimmt der Abstand, was zu sehen ist, und nicht die Metrik: Beide Karten bestehen fast nur aus Abstand, die Vergleichswerte sagen kaum noch etwas aus. Für große Maps einen kleineren Margin-Wert wählen.',
       hTime: 'Zeitaufwand: Reine Berechnungszeit des Layout-Algorithmus in ms (ohne Rendering). Bester Wert: möglichst niedrig.',
       areaTrue: 'Area-True Treemap',
       areaTrueSub: 'area-true-treemap',
@@ -120,7 +124,7 @@
       whyAtc:
         'Beschriftungen, Abstände nur zwischen Blattknoten und das Zusammenfassen von Ordnerketten sind bereits Teil des Layouts.',
       whyLive:
-        'Genau das zeigt die Zeile „Fehlende Knoten" in der Tabelle oben: Mit den Standardeinstellungen (1 % Abstand, Geschwisterabstand „Alle") fehlen bei d3 4 von 220 Blattknoten, hier 0; bei 3 % Abstand sind es 67 gegenüber 6. Beide Layouts verwenden dabei denselben realisierten Abstand.',
+        'Genau das zeigt die Zeile „Fehlende Knoten" in der Tabelle oben: Mit den Standardeinstellungen (0,5 % Abstand, Geschwisterabstand „Alle", wie sie die Regel für flare ergibt) fehlt beim Nested Treemap 1 von 220 Blattknoten, hier 0 — bei 1 % Abstand sind es 16 gegenüber 0, der Effekt wächst also mit dem Abstand. Beide Layouts verwenden dabei denselben realisierten Abstand.',
       whyMore: 'Wie das Layout den Abstand berücksichtigt — und was das kostet',
       whyHow:
         'Das Layout wird in zwei Durchläufen berechnet: Der erste Durchlauf erzeugt ein vorläufiges Layout ohne Abstände. Darauf aufbauend werden die Knotengrößen so angepasst, dass die angestrebten Abstände berücksichtigt sind (Größenanpassung); der zweite Durchlauf erzeugt daraus das endgültige Layout. Der Abstand ist relativ: 1 % entspricht 1 % der Seitenlänge des Wurzelknotens.',
@@ -143,7 +147,7 @@
       infoRows: 'Informational only — no better/worse',
       settings: 'Settings',
       settingsNote:
-        'The defaults are the recommendation of the scientific evaluation. Every setting affects both maps unless it is in the “Area-True Treemap only” group.',
+        'The defaults follow the recommendation of the scientific evaluation; the margin instead is derived from each map’s own leaf sizes (a tenth of the typical leaf edge), and the sibling margin is set differently. Every setting affects both maps unless it is in the “Area-True Treemap only” group.',
       groupLayout: 'Layout of the maps',
       groupArea: 'Area-True Treemap only',
       groupData: 'Data',
@@ -188,22 +192,26 @@
       mNodes: 'Nodes',
       mLeaves: 'Leaves',
       mMissing: 'Missing nodes',
-      mMeanAspect: 'Mean aspect ratio',
-      mMaxAspect: 'Max aspect ratio',
+      mAspect: 'Mean aspect ratio',
       mValueProp: 'Value proportionality',
       mSpace: 'Space utilization',
+      mGap: 'Realized gap',
       mTime: 'Compute time',
-      hNodes: 'Number of all rendered rectangles (folders and files). Informational only — no "better" value.',
-      hLeaves: 'Number of leaf nodes (files) in the layout. Informational only — no "better" value.',
+      hNodes:
+        'Number of rectangles with area > 0 (folders and files) — nodes that disappear entirely do not count, by the same rule in both maps. The row is therefore not the sum of leaves plus missing nodes: the missing ones are by definition not part of the drawing. Informational only — no "better" value.',
+      hLeaves: 'Number of leaf nodes (files) with area > 0. Informational only — no "better" value.',
       hMissing:
         'Node visibility: number of leaf nodes whose width or height ≤ 0, so they disappear entirely. Best value: 0 (no missing nodes).',
-      hMeanAspect:
-        'Aspect ratio: average ratio of the longer to the shorter side across all nodes. Best value: 1 (square).',
-      hMaxAspect: 'Worst (largest) aspect ratio across all nodes. Best value: 1 (square).',
+      hAspect:
+        'Aspect ratio: average of the longer-to-shorter side ratio across all nodes, leaving out the 10 largest values. Best value: 1 (square). Those 10 are sub-pixel slivers — nodes that only survive as a thin strip, which is why their aspect ratio runs into the hundreds or thousands. A plain average is decided by them rather than by the map. A median is not needed next to it: trimming does the same job.',
       hValueProp:
-        'Value proportionality: coefficient of variation of the area/metric ratio across all nodes. Best value: 0 (perfectly proportional).',
+        'Value proportionality: quartile coefficient of dispersion of the area/metric ratio, (p75 − p25) / (p75 + p25), across all nodes. Best value: 0 (perfectly proportional). It measures the middle half of the nodes: single outliers — such as a node whose area is far above its value because the layout reserves room for the gaps inside its subtree — no longer move the value, unlike with the coefficient of variation.',
       hSpace:
         'Space utilization (comparability): fraction of the root area occupied by leaf nodes. There is no better or worse — what matters is only that both values are similar, so the two outputs can be compared at all. Note: a lower value means that more space is consumed by margins, paddings etc., which can make the compared values look worse.',
+      hGap:
+        'Realized gap: the gap the layout actually draws, in pixels — measured on the output of each layout. It follows from the margin in percent times the map width, and both panels are drawn with the same value. Informational only — no "better" value.',
+      spaceNote:
+        'The margin ({gap} px) is larger than the mean leaf edge of this map ({edge} px). The gap, not the metric, then decides what is drawn: both maps are almost entirely gap, and the compared values say little. Pick a smaller margin for large maps.',
       hTime: 'Time: pure layout computation time in ms (without rendering). Best value: as low as possible.',
       areaTrue: 'Area-True Treemap',
       areaTrueSub: 'area-true-treemap',
@@ -225,7 +233,7 @@
       whyAtb: 'That keeps the area of every node proportional to its value, and no node loses its area.',
       whyAtc: 'Labels, gaps only between leaf nodes and collapsing folder chains are already part of the layout.',
       whyLive:
-        'That is exactly what the “Missing nodes” row in the table above shows: with the default settings (1 % gap, sibling margin “All”) 4 of 220 leaf nodes are missing with d3 and 0 here; at a 3 % gap it is 67 versus 6. Both layouts use the same realized gap.',
+        'That is exactly what the “Missing nodes” row in the table above shows: with the default settings (0.5 % gap, sibling margin “All”, which is what the rule yields for flare) 1 of 220 leaf nodes is missing with the Nested Treemap and 0 here — at a 1 % gap it is 16 versus 0, so the effect grows with the gap. Both layouts use the same realized gap.',
       whyMore: 'How the layout takes the gap into account — and what it costs',
       whyHow:
         'The layout is computed in two passes: the first pass produces a preliminary layout without gaps. Based on it, the node sizes are adjusted so that the intended gaps are taken into account (size adjustment); the second pass produces the final layout from those sizes. The gap is relative: 1 % means 1 % of the side length of the root node.',
@@ -354,14 +362,23 @@
   let loadingExample = false;
 
   // Algorithm settings (area-true squarify).
-  // Defaults follow the recommendation table of the master thesis (Fazit of
-  // the improve-squarify chapter): relative size adjustment, gap 0.5–3 %
-  // (chosen 1 %), floor labels N = 3 / L = 3 % on the top levels (recommended
-  // N 2–5, L 3–10 %), sorting descending, collapse folder chains, two passes
-  // only. Sibling margins default to "all" (the thesis recommends none, but the
-  // UI starts with the gap realized between all siblings).
+  // The margin slider's range. The derived default (defaultMarginPercent) snaps
+  // to the same step and never goes below the smallest one — the slider can be
+  // moved to 0, but a gap the demo picks should be a gap one can see.
+  const MARGIN_MIN_PERCENT = 0.1;
+  const MARGIN_MAX_PERCENT = 3;
+  const MARGIN_STEP_PERCENT = 0.1;
+
+  // Most defaults follow the recommendation table of the master thesis (Fazit
+  // of the improve-squarify chapter): relative size adjustment, floor labels
+  // N = 3 / L = 3 % on the top levels (recommended N 2–5, L 3–10 %), sorting
+  // descending, collapse folder chains, two passes only. Two are derived
+  // instead: the gap comes from the map's own leaf sizes (see
+  // defaultMarginPercent — the thesis' 0.5–3 % assume leaves far bigger than the
+  // bundled cc.json maps have), and sibling margins default to "all" although
+  // the thesis recommends none. Both are meant to be moved by the sliders.
   let areaMetric = 'size';
-  let marginPercent = 1;
+  let marginPercent = defaultMarginPercent(loadedData, areaMetric);
   let enableFloorLabels = true;
   let amountOfTopLabels = 3;
   let labelPercent = 3;
@@ -389,10 +406,13 @@
     nodes: number;
     leaves: number;
     missing: number;
-    meanAspect: number;
-    maxAspect: number;
-    valuePropCV: number;
+    /** Mean aspect ratio without the largest `ASPECT_TRIM` values. */
+    trimmedAspect: number;
+    /** Quartile coefficient of dispersion of the area/metric ratio. */
+    valueProp: number;
     spaceUtil: number;
+    /** Gap the layout actually drew, measured on its own output. */
+    realizedGapPx: number;
     ms: number;
   }
 
@@ -427,9 +447,25 @@
     return elapsed / iterations;
   }
 
-  $: {
-    const totalLeaves = countLeaves(loadedData);
+  $: totalLeaves = countLeaves(loadedData);
 
+  // The margin the user asked for, in the demo's own pixels (the layout works in
+  // fraction of the map width), and the edge a leaf would have if the leaves
+  // shared the map evenly. A margin above that edge decides what is visible
+  // instead of the metric: every gap is then wider than the leaf it separates,
+  // so both maps end up as mostly gap. The note under the Platznutzung row says
+  // so, because that row is where the effect becomes visible.
+  $: marginPx = (marginPercent / 100) * containerSize;
+  $: meanLeafEdgePx = totalLeaves > 0 ? containerSize / Math.sqrt(totalLeaves) : 0;
+  // Two decimals on purpose: at the default gap the margin and the leaf edge are
+  // close together, and one decimal would print the same number twice ("1.2 px
+  // is larger than 1.2 px").
+  $: spaceNote =
+    marginPx > meanLeafEdgePx
+      ? t.spaceNote.replace('{gap}', marginPx.toFixed(2)).replace('{edge}', meanLeafEdgePx.toFixed(2))
+      : '';
+
+  $: {
     // --- 1) Area-True Treemap (area-true squarify, d3-style API) ---
     // The layout is configured like d3-hierarchy: wrap the tree, sum the leaf
     // metrics, then call the configured layout function on the wrapped root.
@@ -492,6 +528,12 @@
       });
     });
 
+    // The gap each panel actually drew, measured on its own output rather than
+    // taken from the value that was fed in — so a layout that draws a different
+    // gap than it was configured with shows up in the table instead of hiding in
+    // the mirroring.
+    const nestedGapPx = outerInsetPx(nestedRects, enableFloorLabels);
+
     // Order matters: the area-true map is the first column everywhere it is
     // compared (metrics table, verdict, panels).
     results = [
@@ -502,7 +544,7 @@
         subtitle: t.areaTrueSub,
         repoUrl: 'https://github.com/BenediktMehl/area-true-treemap',
         rects: areaTrueRects,
-        stats: computeStats(areaTrueRects, areaTrueMs, totalLeaves, containerSize),
+        stats: computeStats(areaTrueRects, areaTrueMs, totalLeaves, containerSize, realizedMarginPx),
       },
       {
         key: 'nested',
@@ -511,43 +553,120 @@
         subtitle: t.nestedSub,
         repoUrl: 'https://github.com/d3/d3-hierarchy',
         rects: nestedRects,
-        stats: computeStats(nestedRects, nestedMs, totalLeaves, containerSize),
+        stats: computeStats(nestedRects, nestedMs, totalLeaves, containerSize, nestedGapPx),
       },
     ];
   }
 
-  function computeStats(rects: TreemapRect[], ms: number, totalLeaves: number, size: number): Stats {
-    // Only positive-area leaves count: the area-true layout keeps zero-area
-    // ("missing") nodes in its rect list, while flattenD3 drops them — counting
-    // visible leaves in both panels yields the same "missing" metric.
-    const leaves = rects.filter((r) => r.isLeaf && r.width > 0 && r.height > 0);
-    const aspects = rects
-      .filter((r) => r.width > 0 && r.height > 0)
-      .map((r) => Math.max(r.width / r.height, r.height / r.width));
-    const meanAspect = aspects.length ? aspects.reduce((s, a) => s + a, 0) / aspects.length : 0;
-    const maxAspect = aspects.length ? Math.max(...aspects) : 0;
+  /** How many of the largest aspect ratios the mean leaves out. */
+  const ASPECT_TRIM = 10;
 
-    const ratios = rects.filter((r) => r.value > 0 && r.width > 0 && r.height > 0).map((r) => (r.width * r.height) / r.value);
-    let valuePropCV = 0;
-    if (ratios.length > 1) {
-      const mean = ratios.reduce((s, x) => s + x, 0) / ratios.length;
-      const variance = ratios.reduce((s, x) => s + (x - mean) ** 2, 0) / ratios.length;
-      valuePropCV = Math.sqrt(variance) / mean;
-    }
+  /**
+   * Mean aspect ratio over all rectangles except the `ASPECT_TRIM` largest ones.
+   *
+   * Those are the sub-pixel slivers: a rectangle that survived as a fraction of a
+   * pixel has an aspect ratio in the hundreds or thousands (Apache OpenOffice,
+   * d3 panel: a single node above 1400), and a plain mean is decided by them
+   * rather than by the map. Trimming the top values is what the median was there
+   * for, so this is the one aspect-ratio value the table needs.
+   */
+  function trimmedMeanAspect(aspects: number[]): number {
+    if (aspects.length === 0) return 0;
+    const kept = aspects.length > ASPECT_TRIM ? [...aspects].sort((a, b) => a - b).slice(0, aspects.length - ASPECT_TRIM) : aspects;
+    return kept.reduce((s, a) => s + a, 0) / kept.length;
+  }
+
+  /**
+   * (p75 - p25) / (p75 + p25): how wide the middle half of the area/metric
+   * ratios spreads, relative to its own level. 0 = the middle half is perfectly
+   * proportional, and it stays comparable across panels because it is
+   * scale-free.
+   *
+   * Used instead of the coefficient of variation: the area-true layout inflates
+   * a subtree to make room for the gaps inside it, which on large maps gives a
+   * handful of nodes an area orders of magnitude above their value. A
+   * variance-based measure is dominated by exactly those few nodes (single
+   * outliers move it by 10x) and hides how tight the bulk of the map actually
+   * is. The quartiles ignore the tails by construction.
+   */
+  function quartileCoefficientOfDispersion(values: number[]): number {
+    if (values.length < 2) return 0;
+    const sorted = [...values].sort((a, b) => a - b);
+    const at = (p: number) => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * p))];
+    const p25 = at(0.25);
+    const p75 = at(0.75);
+    return p75 + p25 > 0 ? (p75 - p25) / (p75 + p25) : 0;
+  }
+
+  function computeStats(rects: TreemapRect[], ms: number, totalLeaves: number, size: number, realizedGapPx: number): Stats {
+    // Every rect here has already been filtered to a positive rectangle by the
+    // flatten functions, so one pass defines the base all rows share: `nodes` is
+    // the number of drawn rectangles (folders and files) and `leaves` the drawn
+    // leaves — the same two measurements in both panels.
+    const drawn = rects.filter((r) => r.width > 0 && r.height > 0);
+    const leaves = drawn.filter((r) => r.isLeaf);
+    const aspects = drawn.map((r) => Math.max(r.width / r.height, r.height / r.width));
+    const trimmedAspect = trimmedMeanAspect(aspects);
+
+    const ratios = drawn.filter((r) => r.value > 0).map((r) => (r.width * r.height) / r.value);
+    const valueProp = quartileCoefficientOfDispersion(ratios);
 
     const leafArea = leaves.reduce((s, r) => s + r.width * r.height, 0);
     const spaceUtil = size > 0 ? leafArea / (size * size) : 0;
 
     return {
-      nodes: rects.length,
+      nodes: drawn.length,
       leaves: leaves.length,
       missing: totalLeaves - leaves.length,
-      meanAspect,
-      maxAspect,
-      valuePropCV,
+      trimmedAspect,
+      valueProp,
       spaceUtil,
+      realizedGapPx,
       ms,
     };
+  }
+
+  /**
+   * Default gap for a map, derived from the map itself: a tenth of the typical
+   * (median) leaf edge, in percent of the map width.
+   *
+   * The median describes the leaf a reader actually sees — a mean is pulled up by
+   * the few huge files and by leaves that carry no value at all. At a tenth, a
+   * leaf of that size keeps ~80 % of its edge (≈ 64 % of its area), so the gap
+   * never becomes the thing one looks at. On the large bundled maps the rule
+   * lands on the slider's smallest step: that is the honest answer for 114k
+   * leaves on a 400 px canvas, where a leaf is about a pixel wide.
+   */
+  function defaultMarginPercent(tree: TreeNode, metric: string): number {
+    const values: number[] = [];
+    let total = 0;
+    const visit = (node: TreeNode): void => {
+      if (!node.children || node.children.length === 0) {
+        const value = node.attributes?.[metric] ?? 0;
+        if (value > 0) {
+          values.push(value);
+          total += value;
+        }
+        return;
+      }
+      for (const child of node.children) visit(child);
+    };
+    visit(tree);
+    if (values.length === 0 || total <= 0) return MARGIN_MIN_PERCENT;
+
+    values.sort((a, b) => a - b);
+    const median = values[Math.floor(values.length / 2)];
+    // edge = size * sqrt(median / total), and a tenth of it as a share of size.
+    const percent = 10 * Math.sqrt(median / total);
+    const stepped = Math.floor(percent / MARGIN_STEP_PERCENT) * MARGIN_STEP_PERCENT;
+    return Math.min(MARGIN_MAX_PERCENT, Math.max(MARGIN_MIN_PERCENT, Number(stepped.toFixed(1))));
+  }
+
+  /** Load a map together with the gap that map's geometry asks for. */
+  function setLoadedData(data: TreeNode, metric: string): void {
+    loadedData = data;
+    areaMetric = metric;
+    marginPercent = defaultMarginPercent(data, metric);
   }
 
   function countLeaves(tree: TreeNode): number {
@@ -651,22 +770,39 @@
     return rects;
   }
 
-  /** Flatten the wrapped hierarchy of the area-true layout into render rects. */
+  /**
+   * Flatten the wrapped hierarchy of the area-true layout into render rects.
+   *
+   * Only nodes with a positive rectangle are emitted, exactly like flattenD3.
+   * The wrapped tree keeps every node of the input — including subtrees the
+   * layout dropped (value 0) and nodes it squeezed to zero area, whose x0/y0/x1/y1
+   * stay at 0. They are never drawn, so counting them as "nodes" would report a
+   * number that no map shows (on netbeans: 58607 instead of the 23407 rectangles
+   * actually on the canvas). Dropping them here is what makes the Knoten row
+   * count the same thing in both panels.
+   */
   function flattenWrapped(root: HierarchyNode<TreeNode>, labelTopLevels: number): TreemapRect[] {
     const rects: TreemapRect[] = [];
     const walk = (n: HierarchyNode<TreeNode>): void => {
-      rects.push({
-        x: n.x0 ?? 0,
-        y: n.y0 ?? 0,
-        width: (n.x1 ?? 0) - (n.x0 ?? 0),
-        height: (n.y1 ?? 0) - (n.y0 ?? 0),
-        name: n.data.name,
-        depth: n.depth,
-        isLeaf: !n.children || n.children.length === 0,
-        hasLabel: labelTopLevels > 0 && !!n.children && n.children.length > 0 && n.depth < labelTopLevels,
-        value: n.value ?? 0,
-        attributes: n.data.attributes,
-      });
+      const width = (n.x1 ?? 0) - (n.x0 ?? 0);
+      const height = (n.y1 ?? 0) - (n.y0 ?? 0);
+      if (width > 0 && height > 0) {
+        rects.push({
+          x: n.x0 ?? 0,
+          y: n.y0 ?? 0,
+          width,
+          height,
+          name: n.data.name,
+          depth: n.depth,
+          isLeaf: !n.children || n.children.length === 0,
+          hasLabel: labelTopLevels > 0 && !!n.children && n.children.length > 0 && n.depth < labelTopLevels,
+          value: n.value ?? 0,
+          attributes: n.data.attributes,
+        });
+      }
+      // Recursion is independent of the push: a node without area can still be
+      // dropped in one panel and drawn in the other, and the walk must reach
+      // every node either way.
       if (n.children) for (const c of n.children) walk(c);
     };
     walk(root);
@@ -675,8 +811,11 @@
 
   /** Realized outer gap of the area-true layout (root edge to its children). */
   function outerInsetPx(rects: TreemapRect[], rootLabeled: boolean): number {
-    const root = rects[0];
-    const d1 = rects.filter((r) => r.depth === 1 && r.width > 0 && r.height > 0);
+    // By depth, not by position: the flatten functions drop rects without area,
+    // so the first entry is only guaranteed to be the root while the root has
+    // one — and a wrong "root" here would silently report a wrong gap.
+    const root = rects.find((r) => r.depth === 0);
+    const d1 = rects.filter((r) => r.depth === 1);
     if (!root || d1.length === 0) return 0;
     const candidates = [
       Math.min(...d1.map((r) => r.x)) - root.x,
@@ -690,10 +829,21 @@
 
   /** Thickness of the root label strip (its children start below it). */
   function rootLabelStripPx(rects: TreemapRect[], rootLabeled: boolean): number {
-    const root = rects[0];
-    const d1 = rects.filter((r) => r.depth === 1 && r.width > 0 && r.height > 0);
+    const root = rects.find((r) => r.depth === 0);
+    const d1 = rects.filter((r) => r.depth === 1);
     if (!root || !rootLabeled || d1.length === 0) return 0;
     return Math.max(0, Math.min(...d1.map((r) => r.y)) - root.y);
+  }
+
+  /**
+   * Milliseconds without decimals that carry nothing: a layout that takes a whole
+   * number of milliseconds reads as "40 ms", not "40.00 ms". Values below a
+   * millisecond keep their two decimals ("0.02 ms") — that is where the
+   * measurement's sub-millisecond precision is the whole point.
+   */
+  function fmtMs(ms: number): string {
+    const rounded = Number(ms.toFixed(2));
+    return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
   }
 
   function fmt(v: number, digits = 2): string {
@@ -715,12 +865,12 @@
   }
 
   const metricRows: MetricRow[] = [
+    { labelKey: 'mValueProp', hintKey: 'hValueProp', value: (s) => s.valueProp, format: (s) => fmt(s.valueProp), better: 'lower' },
     { labelKey: 'mMissing', hintKey: 'hMissing', value: (s) => s.missing, format: (s) => String(s.missing), better: 'lower' },
-    { labelKey: 'mMeanAspect', hintKey: 'hMeanAspect', value: (s) => s.meanAspect, format: (s) => fmt(s.meanAspect), better: 'lower' },
-    { labelKey: 'mMaxAspect', hintKey: 'hMaxAspect', value: (s) => s.maxAspect, format: (s) => fmt(s.maxAspect), better: 'lower' },
-    { labelKey: 'mValueProp', hintKey: 'hValueProp', value: (s) => s.valuePropCV, format: (s) => fmt(s.valuePropCV), better: 'lower' },
-    { labelKey: 'mTime', hintKey: 'hTime', value: (s) => s.ms, format: (s) => fmt(s.ms) + ' ms', better: 'lower' },
+    { labelKey: 'mAspect', hintKey: 'hAspect', value: (s) => s.trimmedAspect, format: (s) => fmt(s.trimmedAspect), better: 'lower' },
+    { labelKey: 'mTime', hintKey: 'hTime', value: (s) => s.ms, format: (s) => fmtMs(s.ms) + ' ms', better: 'lower' },
     { labelKey: 'mSpace', hintKey: 'hSpace', value: (s) => s.spaceUtil, format: (s) => (s.spaceUtil * 100).toFixed(1) + ' %', better: 'none', divider: true },
+    { labelKey: 'mGap', hintKey: 'hGap', value: (s) => s.realizedGapPx, format: (s) => fmt(s.realizedGapPx) + ' px', better: 'none' },
     { labelKey: 'mNodes', hintKey: 'hNodes', value: (s) => s.nodes, format: (s) => String(s.nodes), better: 'none' },
     { labelKey: 'mLeaves', hintKey: 'hLeaves', value: (s) => s.leaves, format: (s) => String(s.leaves), better: 'none' },
   ];
@@ -785,8 +935,7 @@
     reader.onload = (event) => {
       try {
         const { data, metric } = dataFromJson(event.target?.result as string);
-        loadedData = data;
-        if (metric) areaMetric = metric;
+        setLoadedData(data, metric ?? areaMetric);
       } catch {
         alert(lang === 'de' ? 'Ungültige JSON-Datei' : 'Invalid JSON file');
       }
@@ -802,16 +951,14 @@
     exampleId = id;
 
     if (example.data) {
-      loadedData = example.data;
-      areaMetric = example.metric;
+      setLoadedData(example.data, example.metric);
       return;
     }
     if (!example.url) return;
 
     const cached = exampleCache.get(example.url);
     if (cached) {
-      loadedData = cached;
-      areaMetric = example.metric;
+      setLoadedData(cached, example.metric);
       return;
     }
 
@@ -822,8 +969,7 @@
       // A dropped cc.json also works: the JSON itself decides the format.
       const { data, metric } = dataFromJson(await response.text());
       exampleCache.set(example.url, data);
-      loadedData = data;
-      areaMetric = metric ?? example.metric;
+      setLoadedData(data, metric ?? example.metric);
     } catch {
       alert(lang === 'de' ? `cc.json konnte nicht geladen werden: ${example.url}` : `Could not load cc.json: ${example.url}`);
     } finally {
@@ -938,6 +1084,12 @@
               </td>
             {/each}
           </tr>
+          {#if m.labelKey === 'mSpace' && spaceNote}
+            <!-- Directly under the row it explains: the margin no longer fits the
+                 map, so this row's "are both values similar" question is answered
+                 with "both are almost zero". -->
+            <tr class="space-note"><td colspan={results.length + 1}>{spaceNote}</td></tr>
+          {/if}
         {/each}
       </tbody>
     </table>
@@ -971,7 +1123,13 @@
         <label class="c" title={help('margin')}>
           <span class="lbl">{t.margin}</span>
           <span class="field">
-            <input type="range" min="0" max="3" step="0.1" bind:value={marginPercent} />
+            <input
+              type="range"
+              min="0"
+              max={MARGIN_MAX_PERCENT}
+              step={MARGIN_STEP_PERCENT}
+              bind:value={marginPercent}
+            />
             <output>{marginPercent.toFixed(1)}%</output>
           </span>
         </label>
@@ -1541,6 +1699,17 @@
   .mark {
     font-size: 11px;
     margin-right: 5px;
+  }
+
+  /* Advisory under the Platznutzung row. Amber rather than green/red: it says
+     that the numbers in this row say little, not that one of them is worse. */
+  tr.space-note td {
+    background: #fff8ec;
+    border-left: 3px solid var(--accent);
+    color: #7a4a06;
+    font-size: 12px;
+    line-height: 1.45;
+    padding: 8px 12px;
   }
 
   tr.divider td {

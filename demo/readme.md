@@ -64,21 +64,43 @@ Zeichen (z. B. beide „0.02 ms", weil die Berechnungszeit nur auf zwei Nachkomm
 die Zeile neutral und die Metrik zählt als Gleichstand. So kann keine Zeile eine grüne und eine rote Zelle mit
 derselben Zahl zeigen, und der Ergebnis-Block zählt keinen Sieg, den man in der Tabelle nicht sieht.
 
+Die Reihenfolge der Liste folgt der Tabelle: erst die Vergleichsmetriken, dann die Informationswerte.
+
+- **Wertproportionalität** — Quartilsdispersionskoeffizient des Fläche/Metrik-Verhältnisses,
+  `(p75 − p25) / (p75 + p25)` (0 = die mittlere Hälfte der Knoten ist perfekt proportional). Gemessen wird
+  bewusst nicht der Varianzkoeffizient: das Area-True-Layout reserviert in einem Teilbaum Platz für dessen
+  Abstände, wodurch auf großen Maps einzelne Knoten eine um Größenordnungen zu große Fläche bekommen — ein
+  varianzbasiertes Maß wird von genau diesen wenigen Knoten bestimmt (Faktor 10 und mehr) und verdeckt, wie
+  eng die Masse tatsächlich liegt. Die Quartile blenden die Ränder konstruktionsbedingt aus.
+- **Fehlende Knoten** — *Knotensichtbarkeit*: Blattknoten mit Breite/Höhe ≤ 0, die komplett verschwinden.
+  Wichtigste Kennzahl; bester Wert 0.
+- **Ø Seitenverhältnis** — Durchschnitt des Verhältnisses der längeren zur kürzeren Seite (1 = Quadrat) über
+  alle Knoten, **ohne die 10 größten Werte**. Die sind Sub-Pixel-Streifen — Knoten, die nur noch als schmaler
+  Splitter existieren, weshalb ihr Seitenverhältnis in die Hunderte oder Tausende geht. Ungetrimmt bestimmen
+  sie den Wert statt der Karte: bei `httpd` stand für die d3-Karte 1475,51, getrimmt sind es 1,93. Grenze der
+  Regel: auf sehr großen Maps reichen 10 Werte nicht — bei Apache OpenOffice bleiben 4,59 gegenüber einem
+  Median von rund 2,2, weil dort nicht zehn, sondern Tausende Streifen existieren. Das Maximum steht nicht in
+  der Tabelle, weil es genau von diesen Streifen dominiert wird.
+- **Berechnungszeit** — reine Layout-Berechnung in ms, gemittelt über viele Durchläufe (Warm-up + Messung bis
+  ~20 ms Budget, max. 500 Iterationen), damit auch Sub-Millisekunden-Werte stabil sind. Rendering ist nicht
+  enthalten.
 - **Platznutzung** — Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Es gibt kein
   Besser/Schlechter; sie steht deshalb in der Informationsgruppe und bestimmt dort die *Vergleichbarkeit* der
   übrigen Werte: nur wenn beide Layouts ähnlich viel Fläche für Ränder, Abstände und Labels verbrauchen, sind
   die anderen Metriken fair vergleichbar. Ein niedrigerer Wert heißt, dass mehr Platz für Ränder/Abstände
-  draufgeht – die betroffenen Werte sind dadurch potenziell schlechter.
-- **Knoten / Blätter** — Anzahl dargestellter Rechtecke bzw. Blattknoten (rein informativ).
-- **Fehlende Knoten** — *Knotensichtbarkeit*: Blattknoten mit Breite/Höhe ≤ 0, die komplett verschwinden.
-  Wichtigste Kennzahl; bester Wert 0.
-- **Ø / Max Seitenverhältnis** — Verhältnis der längeren zur kürzeren Seite (1 = Quadrat). Das **Maximum** wird
-  von einzelnen Sub-Pixel-Streifen dominiert und ist daher nur als Ausreißer-Indikator zu lesen; der Mittelwert
-  ist robuster, der Median (siehe Benchmark-Skript) am aussagekräftigsten.
-- **Wertproportionalität** — Varianzkoeffizient des Fläche/Metrik-Verhältnisses (0 = perfekt proportional).
-- **Berechnungszeit** — reine Layout-Berechnung in ms, gemittelt über viele Durchläufe (Warm-up + Messung bis
-  ~20 ms Budget, max. 500 Iterationen), damit auch Sub-Millisekunden-Werte stabil sind. Rendering ist nicht
-  enthalten.
+  draufgeht – die betroffenen Werte sind dadurch potenziell schlechter. Direkt unter der Zeile steht ein
+  Hinweis, wenn die eingestellte Margin größer ist als die mittlere Blattkante der geladenen Map: dann
+  bestimmt der Abstand, was zu sehen ist, beide Karten bestehen fast nur aus Abstand, und für die Map ist ein
+  kleinerer Margin-Wert nötig.
+- **Realisierter Abstand** — der Abstand, den das Layout tatsächlich zeichnet, in Pixel, jeweils an der Ausgabe
+  des Panels gemessen (nicht der hineingereichte Wert). Er ergibt sich aus der Margin in Prozent mal
+  Kartenbreite; beide Panels werden mit demselben Wert gezeichnet. Rein informativ — kein Besser/Schlechter.
+- **Knoten / Blätter** — Anzahl der Rechtecke mit Fläche > 0 bzw. der Blattknoten darunter (rein informativ).
+  Gezählt wird nur, was Fläche hat: Knoten mit Breite/Höhe ≤ 0 werden in beiden Panels vor dem Zählen verworfen,
+  sonst stünden links alle Knoten der Datei (bei `netbeans` 58607) und rechts nur die sichtbaren (17967) — zwei
+  verschiedene Messungen in einer Zeile. Die Zeile ist deshalb auch nicht die Summe aus Blättern und
+  fehlenden Knoten: die fehlenden sind per Definition nicht Teil der Zeichnung. (Unabhängig davon zeichnet die
+  Karte selbst nur Rechtecke ab 6 px, siehe unten.)
 
 Die Farbgebung nutzt die d3.js-„Lava"-Skala (`interpolateInferno` aus `d3-scale-chromatic`), nach Tiefe
 abgestuft; sehr kleine Rechtecke (< 6 px) werden nicht gezeichnet. Beschriftet wird nur, wo das Layout auch
@@ -141,9 +163,21 @@ Nur auf das Area-True-Layout wirken (d3 kennt keine Entsprechung):
 - **Margin erhöhen** — steigert den Abstand schrittweise über mehrere Durchläufe (nur bei Durchläufen > 2
   relevant).
 
-Die Defaults folgen der Empfehlungstabelle der Thesis (Abstand 1 %, Labels N = 3 / L = 3 %, Sortierung
-absteigend, Ordnerketten an, zwei Durchläufe), mit einer Ausnahme: der Geschwisterabstand startet auf „Alle",
-weil das auch der Default der Bibliothek ist (die Thesis empfiehlt hier „Keine" plus Umrandungen).
+Die Defaults folgen der Empfehlungstabelle der Thesis (Labels N = 3 / L = 3 %, Sortierung absteigend,
+Ordnerketten an, zwei Durchläufe), mit zwei Ausnahmen:
+
+- **Der Abstand wird pro Map abgeleitet, nicht fest vorgegeben**: er beträgt ein Zehntel der *typischen*
+  (medianen) Blattkante, auf 0,1 %-Schritte abgerundet und auf 0,1–3 % begrenzt. Der Median beschreibt das
+  Blatt, das man tatsächlich sieht — ein Mittelwert wird von den wenigen großen Dateien und von Blättern ohne
+  Wert nach oben gezogen. Bei einem Zehntel behält ein solches Blatt rund 80 % seiner Kante (≈ 64 % seiner
+  Fläche), der Abstand wird also nie zum bestimmenden Element. Für `flare` ergibt die Regel 0,5 %, für JUnit 4
+  0,3 %, für httpd 0,1 %; bei den ganz großen Maps landet sie auf der kleinsten Stufe des Reglers, was die
+  ehrliche Antwort für 114 672 Blätter auf 400 px ist. Die feste Thesis-Empfehlung 0,5–3 % setzt deutlich
+  größere Blätter voraus, als die mitgelieferten cc.json-Maps haben.
+- **Der Geschwisterabstand** startet auf „Alle", weil das auch der Default der Bibliothek ist (die Thesis
+  empfiehlt hier „Keine" plus Umrandungen).
+
+Beides lässt sich über die Regler verschieben; der abgeleitete Abstand wird bei jedem Map-Wechsel neu gesetzt.
 
 ## Datenformat
 
