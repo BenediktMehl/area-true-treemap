@@ -28,7 +28,6 @@
       // ever reaches the markup.
       claim:
         'Für die meisten Maps ist der <strong class="ours">Area-True Treemap</strong> in wesentlichen Aspekten besser als der herkömmliche Squarify-Ansatz des <strong>Nested Treemap</strong> in d3.js.',
-      infoRows: 'Nur informativ — kein Besser/Schlechter',
       settings: 'Einstellungen',
       settingsNote:
         'Die Standardwerte orientieren sich an der Empfehlung aus der wissenschaftlichen Auswertung; die Margin wird stattdessen pro Map aus deren Blattgrößen abgeleitet (ein Zehntel der typischen Blattkante), der Geschwisterabstand ist abweichend eingestellt. Alle Einstellungen wirken auf beide Karten, außer in der Gruppe „Nur Area-True Treemap“.',
@@ -91,7 +90,7 @@
       hValueProp:
         'Wertproportionalität: Quartilsdispersionskoeffizient des Fläche/Metrik-Verhältnisses, (p75 − p25) / (p75 + p25), über alle Knoten. Bester Wert: 0 (perfekt proportional). Gemessen wird die mittlere Hälfte der Knoten: einzelne Ausreißer — etwa Knoten, deren Fläche weit über ihrem Wert liegt, weil das Layout Platz für die Abstände in ihrem Teilbaum reserviert — verschieben den Wert nicht mehr, anders als beim Varianzkoeffizienten.',
       hSpace:
-        'Platznutzung (Vergleichbarkeit): Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Wichtig ist nur, dass beide Werte ähnlich sind, damit die beiden Outputs überhaupt verglichen werden können. Hinweis: Ein niedrigerer Wert bedeutet, dass mehr Platz für Ränder, Abstände usw. verbraucht wird und die Vergleichswerte dadurch potentiell schlechter ausfallen.',
+        'Platznutzung (Vergleichbarkeit): Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Wichtig ist nur, dass beide Werte ähnlich sind, damit die beiden Outputs überhaupt verglichen werden können. Hinweis: Ein niedrigerer Wert bedeutet, dass mehr Platz für Ränder, Abstände usw. verbraucht wird und die Vergleichswerte dadurch potentiell schlechter ausfallen. Nur informativ — kein Besser/Schlechter: Diese Zeile eröffnet die Informationswerte; für sie und die folgenden gibt es keine bessere oder schlechtere Karte.',
       hGap:
         'Realisierter Abstand: der Abstand, den das Layout tatsächlich zeichnet, in Pixel — gemessen an der Ausgabe des jeweiligen Layouts. Er ergibt sich aus der Margin in Prozent mal Kartenbreite, beide Panels werden mit demselben Wert gezeichnet.',
       spaceNote:
@@ -134,7 +133,6 @@
       thesis: 'scientific evaluation (70 projects)',
       claim:
         'For most maps the <strong class="ours">Area-True Treemap</strong> is better in the essential aspects than the conventional squarify approach of the <strong>Nested Treemap</strong> in d3.js.',
-      infoRows: 'Informational only — no better/worse',
       settings: 'Settings',
       settingsNote:
         'The defaults follow the recommendation of the scientific evaluation; the margin instead is derived from each map’s own leaf sizes (a tenth of the typical leaf edge), and the sibling margin is set differently. Every setting affects both maps unless it is in the “Area-True Treemap only” group.',
@@ -197,7 +195,7 @@
       hValueProp:
         'Value proportionality: quartile coefficient of dispersion of the area/metric ratio, (p75 − p25) / (p75 + p25), across all nodes. Best value: 0 (perfectly proportional). It measures the middle half of the nodes: single outliers — such as a node whose area is far above its value because the layout reserves room for the gaps inside its subtree — no longer move the value, unlike with the coefficient of variation.',
       hSpace:
-        'Space utilization (comparability): fraction of the root area occupied by leaf nodes. What matters is only that both values are similar, so the two outputs can be compared at all. Note: a lower value means that more space is consumed by margins, paddings etc., which can make the compared values look worse.',
+        'Space utilization (comparability): fraction of the root area occupied by leaf nodes. What matters is only that both values are similar, so the two outputs can be compared at all. Note: a lower value means that more space is consumed by margins, paddings etc., which can make the compared values look worse. Informational only — no better/worse: this row opens the informational values; for it and the ones below there is no better or worse map.',
       hGap:
         'Realized gap: the gap the layout actually draws, in pixels — measured on the output of each layout. It follows from the margin in percent times the map width, and both panels are drawn with the same value.',
       spaceNote:
@@ -843,15 +841,15 @@
   type BetterDir = 'lower' | 'higher' | 'none';
 
   // The metrics with a better/worse answer come first because they are the ones
-  // that carry a ✓/✗ mark; the purely informational rows follow behind a
-  // divider. `divider` marks the row that opens that second group.
+  // that carry a ✓/✗ mark; the purely informational rows follow behind them
+  // without a mark. Platznutzung opens that second group, and says so in its
+  // hint — the group has no row of its own to announce it.
   interface MetricRow {
     labelKey: string;
     hintKey: string;
     value: (s: Stats) => number;
     format: (s: Stats) => string;
     better: BetterDir;
-    divider?: boolean;
   }
 
   const metricRows: MetricRow[] = [
@@ -859,7 +857,7 @@
     { labelKey: 'mMissing', hintKey: 'hMissing', value: (s) => s.missing, format: (s) => String(s.missing), better: 'lower' },
     { labelKey: 'mAspect', hintKey: 'hAspect', value: (s) => s.trimmedAspect, format: (s) => fmt(s.trimmedAspect), better: 'lower' },
     { labelKey: 'mTime', hintKey: 'hTime', value: (s) => s.ms, format: (s) => fmtMs(s.ms) + ' ms', better: 'lower' },
-    { labelKey: 'mSpace', hintKey: 'hSpace', value: (s) => s.spaceUtil, format: (s) => (s.spaceUtil * 100).toFixed(1) + ' %', better: 'none', divider: true },
+    { labelKey: 'mSpace', hintKey: 'hSpace', value: (s) => s.spaceUtil, format: (s) => (s.spaceUtil * 100).toFixed(1) + ' %', better: 'none' },
     { labelKey: 'mGap', hintKey: 'hGap', value: (s) => s.realizedGapPx, format: (s) => fmt(s.realizedGapPx) + ' px', better: 'none' },
     { labelKey: 'mNodes', hintKey: 'hNodes', value: (s) => s.nodes, format: (s) => String(s.nodes), better: 'none' },
     { labelKey: 'mLeaves', hintKey: 'hLeaves', value: (s) => s.leaves, format: (s) => String(s.leaves), better: 'none' },
@@ -1011,11 +1009,6 @@
       </thead>
       <tbody>
         {#each metricRows as m (m.labelKey)}
-          {#if m.divider}
-            <tr class="divider">
-              <td colspan={results.length + 1}>{t.infoRows}</td>
-            </tr>
-          {/if}
           {@const bi = betterIndex(m, results.map((r) => r.stats))}
           <tr>
             <td class="metric-label" title={t[m.hintKey]}>{t[m.labelKey]} <span class="info">ⓘ</span></td>
@@ -1597,15 +1590,6 @@
     font-size: 12px;
     line-height: 1.45;
     padding: 8px 12px;
-  }
-
-  tr.divider td {
-    background: #f4f4f4;
-    color: var(--muted);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding: 5px 12px;
   }
 
   .settings {

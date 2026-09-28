@@ -51,7 +51,8 @@ Für beide Layouts werden die Kennzahlen aus der
 [Masterthesis](https://github.com/BenediktMehl/master-thesis) (Abschnitt „Bewertungsgrundlage") verglichen;
 über jede Zeile lässt sich hovern, um die Erklärung zu sehen. Die Spalte **Area-True Treemap** ist als „dieser
 Algorithmus", die Spalte **Nested Treemap** als „d3.js-Standard" ausgewiesen. Zuerst stehen die Metriken mit
-Besser/Schlechter, danach hinter der Zeile „Nur informativ" die reinen Informationswerte. In jeder Vergleichszeile ist der bessere Wert grün, der schlechtere rot markiert — jeweils
+Besser/Schlechter, danach die reinen Informationswerte; dass eine Zeile zur zweiten Gruppe gehört, sagt ihr
+Hinweis. In jeder Vergleichszeile ist der bessere Wert grün, der schlechtere rot markiert — jeweils
 mit ✓/✗, die Farbe ist also nie das einzige Signal.
 
 Verglichen wird auf den **angezeigten** Werten, nicht auf den Rohwerten: stehen links und rechts dieselben
@@ -79,14 +80,15 @@ Die Reihenfolge der Liste folgt der Tabelle: erst die Vergleichsmetriken, dann d
 - **Berechnungszeit** — reine Layout-Berechnung in ms, gemittelt über viele Durchläufe (Warm-up + Messung bis
   ~20 ms Budget, max. 500 Iterationen), damit auch Sub-Millisekunden-Werte stabil sind. Rendering ist nicht
   enthalten.
-- **Platznutzung** — Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Sie steht in der
+- **Platznutzung** — Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Sie eröffnet die
   Informationsgruppe und bestimmt dort die *Vergleichbarkeit* der übrigen Werte: nur wenn beide Layouts
   ähnlich viel Fläche für Ränder, Abstände und Labels verbrauchen, sind
   die anderen Metriken fair vergleichbar. Ein niedrigerer Wert heißt, dass mehr Platz für Ränder/Abstände
   draufgeht – die betroffenen Werte sind dadurch potenziell schlechter. Direkt unter der Zeile steht ein
   Hinweis, wenn die eingestellte Margin größer ist als die mittlere Blattkante der geladenen Map: dann
   bestimmt der Abstand, was zu sehen ist, beide Karten bestehen fast nur aus Abstand, und für die Map ist ein
-  kleinerer Margin-Wert nötig.
+  kleinerer Margin-Wert nötig. Ihr Hinweis sagt außerdem, dass die Zeile die Informationswerte eröffnet und
+  für sie und die folgenden kein Besser/Schlechter gilt — die Gruppe hat keine eigene Trennzeile mehr.
 - **Realisierter Abstand** — der Abstand, den das Layout tatsächlich zeichnet, in Pixel, jeweils an der Ausgabe
   des Panels gemessen (nicht der hineingereichte Wert). Er ergibt sich aus der Margin in Prozent mal
   Kartenbreite; beide Panels werden mit demselben Wert gezeichnet.
