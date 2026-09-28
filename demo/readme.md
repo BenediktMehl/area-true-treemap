@@ -84,9 +84,9 @@ Die Reihenfolge der Liste folgt der Tabelle: erst die Vergleichsmetriken, dann d
 - **Berechnungszeit** — reine Layout-Berechnung in ms, gemittelt über viele Durchläufe (Warm-up + Messung bis
   ~20 ms Budget, max. 500 Iterationen), damit auch Sub-Millisekunden-Werte stabil sind. Rendering ist nicht
   enthalten.
-- **Platznutzung** — Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Es gibt kein
-  Besser/Schlechter; sie steht deshalb in der Informationsgruppe und bestimmt dort die *Vergleichbarkeit* der
-  übrigen Werte: nur wenn beide Layouts ähnlich viel Fläche für Ränder, Abstände und Labels verbrauchen, sind
+- **Platznutzung** — Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Sie steht in der
+  Informationsgruppe und bestimmt dort die *Vergleichbarkeit* der übrigen Werte: nur wenn beide Layouts
+  ähnlich viel Fläche für Ränder, Abstände und Labels verbrauchen, sind
   die anderen Metriken fair vergleichbar. Ein niedrigerer Wert heißt, dass mehr Platz für Ränder/Abstände
   draufgeht – die betroffenen Werte sind dadurch potenziell schlechter. Direkt unter der Zeile steht ein
   Hinweis, wenn die eingestellte Margin größer ist als die mittlere Blattkante der geladenen Map: dann
@@ -94,13 +94,13 @@ Die Reihenfolge der Liste folgt der Tabelle: erst die Vergleichsmetriken, dann d
   kleinerer Margin-Wert nötig.
 - **Realisierter Abstand** — der Abstand, den das Layout tatsächlich zeichnet, in Pixel, jeweils an der Ausgabe
   des Panels gemessen (nicht der hineingereichte Wert). Er ergibt sich aus der Margin in Prozent mal
-  Kartenbreite; beide Panels werden mit demselben Wert gezeichnet. Rein informativ — kein Besser/Schlechter.
-- **Knoten / Blätter** — Anzahl der Rechtecke mit Fläche > 0 bzw. der Blattknoten darunter (rein informativ).
-  Gezählt wird nur, was Fläche hat: Knoten mit Breite/Höhe ≤ 0 werden in beiden Panels vor dem Zählen verworfen,
-  sonst stünden links alle Knoten der Datei (bei `netbeans` 58607) und rechts nur die sichtbaren (17967) — zwei
-  verschiedene Messungen in einer Zeile. Die Zeile ist deshalb auch nicht die Summe aus Blättern und
-  fehlenden Knoten: die fehlenden sind per Definition nicht Teil der Zeichnung. (Unabhängig davon zeichnet die
-  Karte selbst nur Rechtecke ab 6 px, siehe unten.)
+  Kartenbreite; beide Panels werden mit demselben Wert gezeichnet.
+- **Knoten / Blätter** — Anzahl der Rechtecke mit Fläche > 0 bzw. der Blattknoten darunter. Gezählt wird nur,
+  was Fläche hat: Knoten mit Breite/Höhe ≤ 0 werden in beiden Panels vor dem Zählen verworfen, sonst stünden
+  links alle Knoten der Datei (bei `netbeans` 58607) und rechts nur die sichtbaren (17967) — zwei verschiedene
+  Messungen in einer Zeile. Die Zeile ist deshalb auch nicht die Summe aus Blättern und fehlenden Knoten: die
+  fehlenden sind per Definition nicht Teil der Zeichnung. (Unabhängig davon zeichnet die Karte selbst nur
+  Rechtecke ab 6 px, siehe unten.)
 
 Die Farbgebung nutzt die d3.js-„Lava"-Skala (`interpolateInferno` aus `d3-scale-chromatic`), nach Tiefe
 abgestuft; sehr kleine Rechtecke (< 6 px) werden nicht gezeichnet. Beschriftet wird nur, wo das Layout auch

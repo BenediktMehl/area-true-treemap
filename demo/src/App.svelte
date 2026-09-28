@@ -87,8 +87,8 @@
       mGap: 'Realisierter Abstand',
       mTime: 'Berechnungszeit',
       hNodes:
-        'Anzahl der Rechtecke mit Fläche > 0 (Ordner und Dateien) — Knoten, die komplett verschwinden, zählen in beiden Karten nach derselben Regel nicht mit. Die Zeile ist deshalb nicht die Summe aus Blättern und fehlenden Knoten: die fehlenden sind per Definition nicht Teil der Zeichnung. Rein informativ — kein „besserer" Wert.',
-      hLeaves: 'Anzahl der Blattknoten (Dateien) mit Fläche > 0. Rein informativ — kein „besserer" Wert.',
+        'Anzahl der Rechtecke mit Fläche > 0 (Ordner und Dateien) — Knoten, die komplett verschwinden, zählen in beiden Karten nach derselben Regel nicht mit. Die Zeile ist deshalb nicht die Summe aus Blättern und fehlenden Knoten: die fehlenden sind per Definition nicht Teil der Zeichnung.',
+      hLeaves: 'Anzahl der Blattknoten (Dateien) mit Fläche > 0.',
       hMissing:
         'Knotensichtbarkeit: Anzahl Blattknoten, deren Breite oder Höhe ≤ 0 ist und die dadurch komplett verschwinden. Bester Wert: 0 (keine fehlenden Knoten).',
       hAspect:
@@ -96,9 +96,9 @@
       hValueProp:
         'Wertproportionalität: Quartilsdispersionskoeffizient des Fläche/Metrik-Verhältnisses, (p75 − p25) / (p75 + p25), über alle Knoten. Bester Wert: 0 (perfekt proportional). Gemessen wird die mittlere Hälfte der Knoten: einzelne Ausreißer — etwa Knoten, deren Fläche weit über ihrem Wert liegt, weil das Layout Platz für die Abstände in ihrem Teilbaum reserviert — verschieben den Wert nicht mehr, anders als beim Varianzkoeffizienten.',
       hSpace:
-        'Platznutzung (Vergleichbarkeit): Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Es gibt kein Besser/Schlechter – wichtig ist nur, dass beide Werte ähnlich sind, damit die beiden Outputs überhaupt verglichen werden können. Hinweis: Ein niedrigerer Wert bedeutet, dass mehr Platz für Ränder, Abstände usw. verbraucht wird und die Vergleichswerte dadurch potentiell schlechter ausfallen.',
+        'Platznutzung (Vergleichbarkeit): Anteil der Wurzelfläche, der von Blattknoten eingenommen wird. Wichtig ist nur, dass beide Werte ähnlich sind, damit die beiden Outputs überhaupt verglichen werden können. Hinweis: Ein niedrigerer Wert bedeutet, dass mehr Platz für Ränder, Abstände usw. verbraucht wird und die Vergleichswerte dadurch potentiell schlechter ausfallen.',
       hGap:
-        'Realisierter Abstand: der Abstand, den das Layout tatsächlich zeichnet, in Pixel — gemessen an der Ausgabe des jeweiligen Layouts. Er ergibt sich aus der Margin in Prozent mal Kartenbreite, beide Panels werden mit demselben Wert gezeichnet. Rein informativ — kein „besserer" Wert.',
+        'Realisierter Abstand: der Abstand, den das Layout tatsächlich zeichnet, in Pixel — gemessen an der Ausgabe des jeweiligen Layouts. Er ergibt sich aus der Margin in Prozent mal Kartenbreite, beide Panels werden mit demselben Wert gezeichnet.',
       spaceNote:
         'Die Margin ({gap} px) ist größer als die mittlere Blattkante dieser Map ({edge} px). Dann bestimmt der Abstand, was zu sehen ist, und nicht die Metrik: Beide Karten bestehen fast nur aus Abstand, die Vergleichswerte sagen kaum noch etwas aus. Für große Maps einen kleineren Margin-Wert wählen.',
       hTime: 'Zeitaufwand: Reine Berechnungszeit des Layout-Algorithmus in ms (ohne Rendering). Bester Wert: möglichst niedrig.',
@@ -198,8 +198,8 @@
       mGap: 'Realized gap',
       mTime: 'Compute time',
       hNodes:
-        'Number of rectangles with area > 0 (folders and files) — nodes that disappear entirely do not count, by the same rule in both maps. The row is therefore not the sum of leaves plus missing nodes: the missing ones are by definition not part of the drawing. Informational only — no "better" value.',
-      hLeaves: 'Number of leaf nodes (files) with area > 0. Informational only — no "better" value.',
+        'Number of rectangles with area > 0 (folders and files) — nodes that disappear entirely do not count, by the same rule in both maps. The row is therefore not the sum of leaves plus missing nodes: the missing ones are by definition not part of the drawing.',
+      hLeaves: 'Number of leaf nodes (files) with area > 0.',
       hMissing:
         'Node visibility: number of leaf nodes whose width or height ≤ 0, so they disappear entirely. Best value: 0 (no missing nodes).',
       hAspect:
@@ -207,9 +207,9 @@
       hValueProp:
         'Value proportionality: quartile coefficient of dispersion of the area/metric ratio, (p75 − p25) / (p75 + p25), across all nodes. Best value: 0 (perfectly proportional). It measures the middle half of the nodes: single outliers — such as a node whose area is far above its value because the layout reserves room for the gaps inside its subtree — no longer move the value, unlike with the coefficient of variation.',
       hSpace:
-        'Space utilization (comparability): fraction of the root area occupied by leaf nodes. There is no better or worse — what matters is only that both values are similar, so the two outputs can be compared at all. Note: a lower value means that more space is consumed by margins, paddings etc., which can make the compared values look worse.',
+        'Space utilization (comparability): fraction of the root area occupied by leaf nodes. What matters is only that both values are similar, so the two outputs can be compared at all. Note: a lower value means that more space is consumed by margins, paddings etc., which can make the compared values look worse.',
       hGap:
-        'Realized gap: the gap the layout actually draws, in pixels — measured on the output of each layout. It follows from the margin in percent times the map width, and both panels are drawn with the same value. Informational only — no "better" value.',
+        'Realized gap: the gap the layout actually draws, in pixels — measured on the output of each layout. It follows from the margin in percent times the map width, and both panels are drawn with the same value.',
       spaceNote:
         'The margin ({gap} px) is larger than the mean leaf edge of this map ({edge} px). The gap, not the metric, then decides what is drawn: both maps are almost entirely gap, and the compared values say little. Pick a smaller margin for large maps.',
       hTime: 'Time: pure layout computation time in ms (without rendering). Best value: as low as possible.',
