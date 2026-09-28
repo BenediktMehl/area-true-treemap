@@ -13,10 +13,17 @@
   export let minSize = 6;
   export let showValues = true;
 
-  $: depthRange = {
-    min: Math.min(...rects.map((r) => r.depth), 0),
-    max: Math.max(...rects.map((r) => r.depth), 1),
-  };
+  // Reduced instead of Math.min(...rects.map(...)): spreading one argument per
+  // rect overflows the stack once a map has ~100k nodes (cc.json maps like
+  // Apache OpenOffice do), which would leave this component on the previous map
+  // while the table already shows the new one.
+  $: depthRange = rects.reduce(
+    (range, r) => ({
+      min: Math.min(range.min, r.depth),
+      max: Math.max(range.max, r.depth),
+    }),
+    { min: 0, max: 1 },
+  );
 
   // Rects are in pre-order (root first); render them so the root ends up behind.
   $: visibleRects = rects.filter((r) => r.width >= minSize || r.height >= minSize);
