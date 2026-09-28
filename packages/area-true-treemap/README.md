@@ -113,10 +113,11 @@ and `node.value` is not modified.
 | — | `.value()`, `.numberOfPasses()`, `.collapseFolders()`, `.order()`, `.scale()`, `.simpleIncreaseValues()`, `.incrementMargin()` |
 
 **Measured advantage** (`flare`, 220 leaves, 400×400, identical realized gaps for both libraries, same label
-strips): at a 3 % sibling gap the d3 layout loses 67 leaves, this library 6; at 1 % it is 4 vs. 0. At the
-recommended settings (1 % gap, no sibling gaps) both keep every node, while value proportionality is slightly
-better here (CV 0.210 vs. 0.262). The price is roughly 2-3× the layout compute time (0.21 ms vs. 0.075 ms) —
-both far below a frame budget.
+strips): at the 1 % gap the demo ships with, the d3 layout loses 16 leaves, this library none; at a 3 % sibling
+gap both lose most of the map (149 vs. 141 leaves), because a gap that wide is past what the canvas can carry
+at this node count. At the recommended settings (1 % gap, no sibling gaps) both lose a single leaf, while value
+proportionality is slightly better here (CV 0.240 vs. 0.304). The price is roughly 2-3× the layout compute time
+(0.21 ms vs. 0.075 ms) — both far below a frame budget.
 
 The complete guide (what the algorithm does differently, the full option mapping, the reproducible benchmark,
 the trade-offs and when *not* to switch) lives in the repository:

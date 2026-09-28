@@ -35,8 +35,8 @@ mutates the wrapped tree in place and returns the root, every node ends up with 
 The important difference is *what the gap costs*: d3 insets every rectangle, so a node smaller than the padding
 collapses to zero area and disappears. `area-true-treemap` grows the node values during the layout so the
 requested gap fits **without** taking that area away from the smallest nodes - at equal realized gaps it loses
-roughly an order of magnitude fewer leaves (measured: 6 vs. 67 on the flare dataset at a 3 % sibling gap, and
-0 vs. 4 at the 1 % gap the demo ships with - see [section 7](#7-advantages-measured)).
+fewer leaves (measured on the flare dataset at the 1 % gap the demo ships with: none here, 16 of 220 with d3 -
+see [section 7](#7-advantages-measured)).
 
 Checklist for a port:
 
@@ -278,17 +278,18 @@ measured with area-true-treemap 4.0.0:
 
 | Metric | area-true (1 % gap, no sibling gaps) | d3 nested (same gap) | area-true (3 % gap, sibling gaps) | d3 nested (same gap) |
 | --- | --- | --- | --- | --- |
-| Missing leaves | **0** | 0 | **6** | 67 |
-| Median aspect ratio | 1.72 | 1.77 | 2.35 | 1.90 |
-| Value proportionality (CV) | **0.210** | 0.262 | 0.846 | 0.759 |
-| Space utilization | 65.3 % | 66.5 % | 23.9 % | 29.6 % |
+| Missing leaves | **1** | 1 | **141** | 149 |
+| Median aspect ratio | 1.72 | 1.75 | 2.99 | 2.45 |
+| Value proportionality (CV) | **0.240** | 0.304 | 1.347 | 1.036 |
+| Space utilization | 60.8 % | 62.1 % | 5.0 % | 10.1 % |
 | Compute time | 0.21 ms | 0.075 ms | 0.076 ms | 0.037 ms |
 
-The headline is the *missing leaves* column: at a 3 % sibling gap the d3 layout loses 67 of 220 leaves
-(30 %), the area-true layout 6. Same input, same gap, same canvas. At the smaller gap the demo ships with
-(1 %) the difference is 4 missing leaves for d3 versus 0 here - and at larger gaps it grows further (measured
-on `junit4`, 625 leaves, 1000×1000: 178 vs. 226 missing at 1 % sibling gaps, 355 vs. 445 at 3 %, again
-area-true first).
+The headline is the *missing leaves* column: at the gap the demo ships with (1 %, sibling gaps) the d3 layout
+loses 16 of 220 leaves, the area-true layout none. Same input, same gap, same canvas. It holds for larger maps
+too (measured on `junit4`, 625 leaves, 1000×1000: 244 vs. 317 missing at 1 % sibling gaps, area-true first).
+At a 3 % sibling gap both layouts lose most of the map (149 vs. 141 on `flare`, 623 vs. 612 on `junit4`) -
+a gap that wide is past what the canvas can carry at these node counts, which is the range the README warns
+about above ~3 %.
 
 That is not a rendering trick: the same SVG, same rectangles, just rectangles that did not lose their area to
 the padding.
@@ -312,9 +313,9 @@ one setter each:
 - **Compute time**: roughly 2-3× a plain d3 squarify (0.21 ms vs. 0.075 ms for flare at 400×400; 0.74 ms vs.
   0.23 ms for 625 leaves at 1000×1000). Both are far below a frame budget, and the library does not re-run on
   every frame unless you ask it to.
-- **Median aspect ratio**: essentially identical (1.72 vs. 1.77 at the recommended settings) - the gap does
+- **Median aspect ratio**: essentially identical (1.72 vs. 1.75 at the recommended settings) - the gap does
   not come out of the layout quality.
-- **Space utilization**: comparable at equal gaps (65.3 % vs. 66.5 %), which is what makes the other numbers
+- **Space utilization**: comparable at equal gaps (60.8 % vs. 62.1 %), which is what makes the other numbers
   comparable at all.
 
 ## 8. Trade-offs and when not to switch
@@ -327,11 +328,11 @@ one setter each:
   recommends *no* sibling gaps and outlines instead; if you need them, prefer
   `siblingMarginLeavesOnly(true)` or margins `≤ 1 %`.
   Heads-up: the library constructor defaults are `margin(0.02)` **with** `applySiblingMargin(true)` (the
-  library default). On a 625-leaf map that default costs ~84 extra invisible leaves compared
-  to the same 2 % gap with sibling gaps switched off (257 vs. 173 missing leaves).
+  library default). That default costs ~260 extra invisible leaves compared to the same 2 % gap with sibling
+  gaps switched off (`junit4`, 625 leaves, 1000×1000: 581 vs. 321 missing leaves).
 - **Very large maps at a small canvas.** If a leaf's value share is below one pixel, no algorithm can show it.
-  At 1000×1000 both libraries lose about the same number of leaves on `junit4` (163 vs. 163 at 1 % gap), which
-  is a resolution limit, not an algorithm property - render bigger or filter tiny nodes.
+  At 1000×1000 both libraries lose a comparable number of leaves on `junit4` (163 vs. 177 at 1 % gap, no
+  sibling gaps), which is a resolution limit, not an algorithm property - render bigger or filter tiny nodes.
 - **Animated transitions.** If you rely on `treemapResquarify`'s stable re-layouts, this library will not
   reproduce them.
 - **Other tilings.** Slice-and-dice, binary or `sliceDice` layouts are not available.

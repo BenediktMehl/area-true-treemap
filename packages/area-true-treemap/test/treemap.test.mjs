@@ -95,11 +95,58 @@ test("margin separates sibling nodes when enabled and lets them touch otherwise"
   const withMargin = treemap().size([1000, 1000]).margin(0.05).numberOfPasses(2).applySiblingMargin(true)(hierarchy(flat).sum(size));
   const nodes = new Map(withMargin.descendants().map((n) => [n.data.name, n]));
   const gap = distance(nodes.get("a"), nodes.get("b"));
-  assert.ok(gap > 0 && gap < 50, "sibling gap should be roughly margin (~50px), got " + gap);
+  assert.ok(Math.abs(gap - 50) < 1e-6, "sibling gap should be the configured margin (50px), got " + gap);
 
   const withoutMargin = treemap().size([1000, 1000]).margin(0.05).numberOfPasses(2).applySiblingMargin(false)(hierarchy(flat).sum(size));
   const nodes2 = new Map(withoutMargin.descendants().map((n) => [n.data.name, n]));
   assert.ok(Math.abs(distance(nodes2.get("a"), nodes2.get("b"))) < 1e-6, "siblings should touch when applySiblingMargin is false");
+});
+
+test("the drawn margin is the configured one, even when the tree is deep", () => {
+  // The value inflation makes the layout square grow; the margin has to grow
+  // with it. On a shallow tree the square barely moves, so this needs a tree
+  // deep enough to make the difference visible (it used to draw 2.4px instead
+  // of 4px here).
+  const bushy = (depth, seed) =>
+    depth === 0
+      ? { name: "leaf" + seed, attributes: { size: 1 + ((seed * 7919) % 997) } }
+      : { name: "f" + seed, children: [0, 1, 2].map((i) => bushy(depth - 1, seed * 3 + i)) };
+
+  const canvas = 400;
+  const margin = 0.01 * canvas; // 4px
+  const root = treemap()
+    .size([canvas, canvas])
+    .margin(0.01)
+    .numberOfPasses(2)
+    .applySiblingMargin(true)(hierarchy(bushy(6, 1)).sum(size));
+
+  // Only visible nodes: nodes that the margin shrank to zero sit on (0,0) in
+  // layout space and end up at a small negative offset after the write-back —
+  // they carry no area, so nothing of them is drawn.
+  for (const node of root.descendants()) {
+    if (node.x1 - node.x0 <= 0 || node.y1 - node.y0 <= 0) continue;
+    assert.ok(
+      node.x0 >= -1e-6 && node.y0 >= -1e-6 && node.x1 <= canvas + 1e-6 && node.y1 <= canvas + 1e-6,
+      node.data.name + " inside canvas",
+    );
+  }
+
+  const gaps = [];
+  for (const node of root.descendants()) {
+    const kids = (node.children ?? []).filter((c) => c.x1 - c.x0 > 0 && c.y1 - c.y0 > 0);
+    if (kids.length === 0) continue;
+    const insets = [
+      Math.min(...kids.map((c) => c.x0)) - node.x0,
+      node.x1 - Math.max(...kids.map((c) => c.x1)),
+      Math.min(...kids.map((c) => c.y0)) - node.y0,
+      node.y1 - Math.max(...kids.map((c) => c.y1)),
+    ].filter((v) => v > 1e-9);
+    if (insets.length > 0) gaps.push(Math.min(...insets));
+  }
+  assert.ok(gaps.length > 0, "expected at least one folder with visible children");
+  for (const gap of gaps) {
+    assert.ok(Math.abs(gap - margin) < 1e-6, "drawn margin should be " + margin + "px, got " + gap);
+  }
 });
 
 test("sibling margins: all nodes vs leaves only", () => {

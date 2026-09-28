@@ -73,10 +73,35 @@ export function runLayout(root: SquarifyNode, options: EngineOptions): void {
     } else {
         increaseValues(root, currentMargin, options.applySiblingMargin, 0, options.labelsEnabled, options.labelLength);
     }
-    root.x1 = Math.sqrt(root.value);
-    root.y1 = Math.sqrt(root.value);
-    const scaleNow = options.scale && options.numberOfPasses === 2;
-    squarify(root, currentMargin, scaleNow, options.sortingOption, options.orderOption, options.labelsEnabled, options.labelLength);
+
+    // Everything below happens in the inflated layout square of side
+    // `sqrt(root.value)`; the write-back at the end scales that square onto the
+    // requested `width`. Margin and label length are lengths, so they have to
+    // live in the same square — otherwise every node is charged for the
+    // configured margin while only a fraction of it is drawn, and the rest stays
+    // behind as unused space inside the folder rectangles. That fraction is
+    // `width / sqrt(root.value)`, which barely moves on small maps (which is why
+    // this went unnoticed there) but collapses on large, deep ones.
+    const twoPass = options.numberOfPasses === 2;
+    const square = Math.sqrt(root.value);
+    // Two corrections at once: lengths scale with the square, and the root's own
+    // border is dropped when the square is mapped onto the canvas, which zooms
+    // the drawing by `width / (square - layoutMargin)`. Solving
+    //   layoutMargin * width / (square - layoutMargin) = currentMargin
+    // for layoutMargin leaves exactly `currentMargin` on screen. Only the
+    // supported two-pass layout is corrected here; the multi-pass branch below
+    // is left as it was.
+    const drawScale = twoPass ? (width + currentMargin) / square : 1;
+    const layoutMargin = currentMargin / drawScale;
+    // A label-length *function* derives its value from the node's own width, so
+    // it is scale-free and already correct in the layout square.
+    const layoutLabelLength: LabelLength =
+        typeof options.labelLength === "function" ? options.labelLength : options.labelLength / drawScale;
+
+    root.x1 = square;
+    root.y1 = square;
+    const scaleNow = options.scale && twoPass;
+    squarify(root, layoutMargin, scaleNow, options.sortingOption, options.orderOption, options.labelsEnabled, layoutLabelLength);
 
     if (options.numberOfPasses > 2) {
         oldMargin = currentMargin;
@@ -92,10 +117,13 @@ export function runLayout(root: SquarifyNode, options: EngineOptions): void {
     }
 
     if (options.applySiblingMargin) {
+        // The multi-pass branch above rewrites `currentMargin` as it goes and is
+        // not covered by the correction, so it keeps shrinking by that value.
+        const shrinkMargin = twoPass ? layoutMargin : currentMargin;
         if (options.siblingMarginLeavesOnly) {
-            shrinkLeavesOnly(root, currentMargin);
+            shrinkLeavesOnly(root, shrinkMargin);
         } else {
-            shrink(root, currentMargin);
+            shrink(root, shrinkMargin);
         }
     }
 }
