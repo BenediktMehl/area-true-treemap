@@ -28,11 +28,6 @@
       // ever reaches the markup.
       claim:
         'Für die meisten Maps ist der <strong class="ours">Area-True Treemap</strong> in wesentlichen Aspekten besser als der herkömmliche Squarify-Ansatz des <strong>Nested Treemap</strong> in d3.js.',
-      verdictTitle: 'Ergebnis bei den aktuellen Einstellungen',
-      betterLabel: 'Besser',
-      worseLabel: 'Schlechter',
-      tieLabel: 'Gleichstand',
-      allTie: 'Bei diesen Einstellungen sind alle Vergleichsmetriken gleich.',
       infoRows: 'Nur informativ — kein Besser/Schlechter',
       settings: 'Einstellungen',
       settingsNote:
@@ -139,11 +134,6 @@
       thesis: 'scientific evaluation (70 projects)',
       claim:
         'For most maps the <strong class="ours">Area-True Treemap</strong> is better in the essential aspects than the conventional squarify approach of the <strong>Nested Treemap</strong> in d3.js.',
-      verdictTitle: 'Result with the current settings',
-      betterLabel: 'Better',
-      worseLabel: 'Worse',
-      tieLabel: 'Tie',
-      allTie: 'With these settings all compared metrics are equal.',
       infoRows: 'Informational only — no better/worse',
       settings: 'Settings',
       settingsNote:
@@ -535,7 +525,7 @@
     const nestedGapPx = outerInsetPx(nestedRects, enableFloorLabels);
 
     // Order matters: the area-true map is the first column everywhere it is
-    // compared (metrics table, verdict, panels).
+    // compared (metrics table, panels).
     results = [
       {
         key: 'area-true',
@@ -853,7 +843,7 @@
   type BetterDir = 'lower' | 'higher' | 'none';
 
   // The metrics with a better/worse answer come first because they are the ones
-  // that decide the verdict; the purely informational rows follow behind a
+  // that carry a ✓/✗ mark; the purely informational rows follow behind a
   // divider. `divider` marks the row that opens that second group.
   interface MetricRow {
     labelKey: string;
@@ -881,27 +871,13 @@
     // Decided on the values as the table prints them, not on the raw floats:
     // two values that render identically (0.016 and 0.024 ms are both
     // "0.02 ms") are a tie. Otherwise a row could show a green and a red cell
-    // carrying the same number, and the verdict would count a win that nobody
-    // can see in the table.
+    // carrying the same number.
     if (m.format(stats[0]) === m.format(stats[1])) return -1;
     const a = m.value(stats[0]);
     const b = m.value(stats[1]);
     if (m.better === 'lower') return a < b ? 0 : 1;
     return a > b ? 0 : 1;
   }
-
-  // Verdict: how many of the comparable metrics each map wins, with the metric
-  // names behind it, so the headline answer needs no reading of the table.
-  // The score counts only the metrics that were actually decided — ties are
-  // reported separately, so "0/1" does not read as a defeat when four of five
-  // metrics are simply equal.
-  $: comparison = metricRows
-    .filter((m) => m.better !== 'none')
-    .map((m) => ({ label: t[m.labelKey], better: betterIndex(m, results.map((r) => r.stats)) }));
-  $: decided = comparison.filter((c) => c.better !== -1);
-  $: areaTrueWins = comparison.filter((c) => c.better === 0).map((c) => c.label);
-  $: nestedWins = comparison.filter((c) => c.better === 1).map((c) => c.label);
-  $: ties = comparison.length - decided.length;
 
   // `tone` colours the list items of the why-block: what the area-true layout
   // does better reads green, what d3 loses to its own padding reads red.
@@ -1019,41 +995,6 @@
       {/if}
     </div>
   </header>
-
-  {#if results.length === 2}
-    <section class="verdict">
-      <h2>{t.verdictTitle}</h2>
-      {#if decided.length > 0}
-        <p class="score">
-          {#each results as r, i (r.key)}
-            {@const wins = i === 0 ? areaTrueWins.length : nestedWins.length}
-            {@const rival = i === 0 ? nestedWins.length : areaTrueWins.length}
-            <span class="score-item" class:win={wins > rival} class:lose={wins < rival}>
-              {r.title}: <b>{wins}</b>/{decided.length}
-            </span>
-          {/each}
-          {#if ties > 0}
-            <span class="score-item tie">{t.tieLabel}: {ties}</span>
-          {/if}
-        </p>
-      {:else}
-        <p class="score">{t.allTie}</p>
-      {/if}
-
-      {#if areaTrueWins.length > 0}
-        <div class="chip-row">
-          <span class="chip-label">{t.betterLabel}</span>
-          {#each areaTrueWins as name (name)}<span class="chip win">✓ {name}</span>{/each}
-        </div>
-      {/if}
-      {#if nestedWins.length > 0}
-        <div class="chip-row">
-          <span class="chip-label">{t.worseLabel}</span>
-          {#each nestedWins as name (name)}<span class="chip lose">✗ {name}</span>{/each}
-        </div>
-      {/if}
-    </section>
-  {/if}
 
   <section class="metrics">
     <table>
@@ -1366,62 +1307,8 @@
     margin-top: 4px;
   }
 
-  /* --- Verdict: the headline answer, before any table or map --- */
-  .verdict {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--accent);
-    border-radius: 6px;
-    padding: 14px 16px;
-    margin-bottom: 18px;
-  }
-
-  .verdict h2 {
-    margin: 0 0 8px;
-    font-size: 15px;
-  }
-
-  .score {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 18px;
-    margin: 0;
-    font-size: 14px;
-  }
-
-  .score-item b {
-    font-size: 17px;
-  }
-
-  .score-item.win {
-    color: #146c33;
-    font-weight: 600;
-  }
-
-  .score-item.lose {
-    color: #a51d1d;
-  }
-
-  .score-item.tie {
-    color: var(--muted);
-  }
-
-  .chip-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-    margin-top: 10px;
-  }
-
-  .chip-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--muted);
-    min-width: 72px;
-  }
-
+  /* Chips tag the two layouts in the why-block: green for what the area-true
+     layout does better, red for what d3 loses to its own padding. */
   .chip {
     display: inline-block;
     font-size: 12px;

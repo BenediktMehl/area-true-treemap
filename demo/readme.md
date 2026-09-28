@@ -28,16 +28,11 @@ zuletzt die Einstellungen:
    d3.js (dem Standard in der Praxis). Der Link daneben führt zur wissenschaftlichen Auswertung über 70
    Open-Source-Projekte, aus der die Aussage stammt. Direkt darunter die Beispieldaten-Auswahl (Presets,
    cc.json-Maps, eigener JSON-Upload).
-2. **Ergebnis-Block** — nennt für die *aktuell eingestellten* Parameter, welche Vergleichsmetrik welche Karte
-   gewinnt („Area-True Treemap: 4/5, Nested Treemap: 1/5"), darunter je ein Chip pro Metrik: grün = besser,
-   rot = schlechter. Der Nenner zählt nur die *entschiedenen* Metriken; Gleichstände stehen als eigener Wert
-   daneben („Gleichstand: 4"), und sind alle gleich, tritt der Zähler ganz zurück. Der Block reagiert live auf
-   jede Änderung.
-3. **Metriken-Tabelle** — die Zahlen dazu.
-4. **Die zwei Karten**.
-5. **Einstellungen** — eingeklappt, direkt unter den Karten: wer die Karten gesehen hat und nachjustieren will,
+2. **Metriken-Tabelle** — die Zahlen dazu; welche Karte welche Metrik gewinnt, steht in der Tabelle selbst.
+3. **Die zwei Karten**.
+4. **Einstellungen** — eingeklappt, direkt unter den Karten: wer die Karten gesehen hat und nachjustieren will,
    findet die Regler dort, ohne dass sie den Einstieg in die Seite dominieren.
-6. **Warum-Block** — die Begründung als Abschluss.
+5. **Warum-Block** — die Begründung als Abschluss.
 
 ## Warum-Block unter den Karten
 
@@ -62,7 +57,7 @@ mit ✓/✗, die Farbe ist also nie das einzige Signal.
 Verglichen wird auf den **angezeigten** Werten, nicht auf den Rohwerten: stehen links und rechts dieselben
 Zeichen (z. B. beide „0.02 ms", weil die Berechnungszeit nur auf zwei Nachkommastellen gezeigt wird), bleibt
 die Zeile neutral und die Metrik zählt als Gleichstand. So kann keine Zeile eine grüne und eine rote Zelle mit
-derselben Zahl zeigen, und der Ergebnis-Block zählt keinen Sieg, den man in der Tabelle nicht sieht.
+derselben Zahl zeigen.
 
 Die Reihenfolge der Liste folgt der Tabelle: erst die Vergleichsmetriken, dann die Informationswerte.
 
@@ -126,7 +121,7 @@ npm run dev
 
 Alle Einstellungen stehen **eingeklappt unter den Karten** („Einstellungen", zwischen den Karten und dem
 Warum-Block) und sind dort in drei Gruppen sortiert: *Layout der Karten*, *Nur Area-True Treemap* und *Daten*.
-Jede Änderung wird live angewendet — auch der Ergebnis-Block und die Tabelle darüber reagieren sofort.
+Jede Änderung wird live angewendet — auch die Tabelle und die Karten darüber reagieren sofort.
 
 Die folgenden Einstellungen wirken auf **beide** Layouts:
 
